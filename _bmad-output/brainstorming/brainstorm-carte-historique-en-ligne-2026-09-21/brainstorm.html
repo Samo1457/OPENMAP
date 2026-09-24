@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OPENMAP — Carnet de campagne</title>
+<meta name="description" content="Carnet illustré de la session de brainstorming OPENMAP : cartes historiques et géopolitiques animées, façon Canva à l'esprit RTS.">
+<style>
+  :root{
+    --parchment:#ecdcb2;
+    --parchment-2:#e2cd9a;
+    --parchment-3:#d5bb82;
+    --ink:#3a2914;
+    --ink-soft:#5c4426;
+    --ink-faint:#8a6f47;
+    --gold:#a9770f;
+    --gold-bright:#d6a530;
+    --red:#9c3b2e;
+    --blue:#2c4d78;
+    --green:#3f6b3a;
+    --purple:#5f3d7a;
+    --wood:#2a1e12;
+    --wood-2:#1a1109;
+    --parch-shadow:rgba(42,25,10,.38);
+    --overshoot:cubic-bezier(.34,1.56,.64,1);
+    --serif:Georgia,'Palatino Linotype','Iowan Old Style',serif;
+    --display:'Trebuchet MS','Segoe UI',sans-serif;
+    --mono:'Courier New',Courier,monospace;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    font-family:var(--serif);
+    color:var(--ink);
+    background-color:var(--parchment);
+    background-image:
+      radial-gradient(circle at 12% 8%, rgba(255,250,232,.5), transparent 40%),
+      radial-gradient(circle at 90% 15%, rgba(255,250,232,.35), transparent 45%),
+      radial-gradient(circle at 50% 100%, rgba(120,84,32,.18), transparent 55%),
+      repeating-linear-gradient(115deg, rgba(120,84,32,.035) 0px, rgba(120,84,32,.035) 2px, transparent 2px, transparent 6px);
+    overflow-x:hidden;
+  }
+  a{color:inherit;}
+  .icon{width:1em;height:1em;display:inline-block;vertical-align:-0.15em;fill:none;stroke:currentColor;}
+  h1,h2,h3,h4{font-family:var(--display);margin:0;letter-spacing:.02em;}
+  p{line-height:1.65;margin:.4em 0;}
+  ul{margin:.4em 0;padding-left:1.3em;}
+  li{margin:.3em 0;line-height:1.55;}
+
+  /* ---------- layout shells ---------- */
+  main{max-width:1180px;margin:0 auto;padding:0 5vw 6rem;}
+  section.panel{position:relative;margin:5.5rem auto;}
+  .panel-inner{
+    background:linear-gradient(160deg,var(--parchment-2),var(--parchment-3));
+    border:2px solid var(--ink-faint);
+    box-shadow:0 10px 0 -4px var(--parch-shadow), 0 18px 30px -10px var(--parch-shadow), inset 0 0 60px rgba(120,84,32,.15);
+    padding:2.6rem clamp(1.2rem,4vw,3.2rem);
+  }
+  .blob-1{border-radius:14px 42px 18px 46px / 40px 16px 44px 14px;}
+  .blob-2{border-radius:46px 16px 40px 20px / 18px 44px 14px 38px;}
+  .blob-3{border-radius:20px 50px 16px 34px / 34px 18px 48px 16px;}
+  .blob-4{border-radius:38px 14px 44px 18px / 16px 38px 18px 44px;}
+  .tilt-l{transform:rotate(-.35deg);}
+  .tilt-r{transform:rotate(.35deg);}
+
+  .tear{display:block;width:100%;height:22px;color:var(--ink-faint);opacity:.55;margin:1.6rem 0;}
+
+  .section-kicker{
+    display:inline-flex;align-items:center;gap:.5em;
+    font-family:var(--display);font-weight:700;text-transform:uppercase;letter-spacing:.14em;
+    font-size:.78rem;color:var(--parchment);background:var(--ink);
+    padding:.4em 1em;border-radius:3px 12px 3px 12px;
+    box-shadow:0 3px 0 var(--wood-2);
+  }
+  .section-title{font-size:clamp(1.5rem,3.4vw,2.3rem);margin:.5rem 0 .3rem;color:var(--ink);}
+  .section-sub{color:var(--ink-soft);font-style:italic;max-width:56em;}
+
+  /* ---------- hero ---------- */
+  .hero{
+    position:relative;padding:5rem 5vw 4rem;text-align:center;
+    background:
+      radial-gradient(ellipse at 50% -10%, rgba(255,255,255,.28), transparent 60%),
+      linear-gradient(180deg, var(--wood-2), var(--wood) 60%, var(--parchment) 100%);
+    color:var(--parchment);
+    overflow:hidden;
+  }
+  .hero::before{
+    content:"";position:absolute;inset:0;
+    background-image:repeating-linear-gradient(90deg, rgba(255,255,255,.03) 0 1px, transparent 1px 14px);
+    pointer-events:none;
+  }
+  .hero-inner{max-width:820px;margin:0 auto;position:relative;}
+  .hero-eyebrow{
+    font-family:var(--display);text-transform:uppercase;letter-spacing:.3em;font-size:.72rem;
+    color:var(--gold-bright);margin-bottom:1.1rem;
+  }
+  .hero-title{
+    font-size:clamp(2.6rem,9vw,5.2rem);letter-spacing:.08em;
+    color:var(--parchment);
+    text-shadow:0 2px 0 var(--wood-2), 0 0 28px rgba(214,165,48,.45);
+    margin-bottom:.4rem;
+  }
+  .hero-title .sword{width:.75em;height:.75em;margin:0 .2em;color:var(--gold-bright);}
+  .hero-tagline{font-size:clamp(1rem,2.1vw,1.25rem);color:var(--parchment-2);max-width:36em;margin:0 auto 1.6rem;}
+  .hero-meta{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;margin-bottom:2rem;}
+  .meta-chip{
+    font-family:var(--mono);font-size:.78rem;letter-spacing:.02em;
+    background:rgba(0,0,0,.28);border:1px solid rgba(214,165,48,.5);
+    color:var(--gold-bright);padding:.4em .9em;border-radius:999px;
+    display:inline-flex;align-items:center;gap:.4em;
+  }
+  .hero-goal{
+    text-align:left;background:rgba(0,0,0,.25);border-left:3px solid var(--gold-bright);
+    padding:1rem 1.3rem;border-radius:2px 14px 2px 14px;color:var(--parchment);
+    font-size:.96rem;
+  }
+
+  /* ---------- trail nav ---------- */
+  .trail{
+    display:flex;flex-wrap:wrap;gap:.4rem;justify-content:center;
+    padding:1.1rem 5vw;background:var(--wood);position:sticky;top:0;z-index:30;
+    box-shadow:0 4px 14px rgba(0,0,0,.35);
+  }
+  .trail-stop{
+    font-family:var(--display);font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;
+    color:var(--parchment-2);text-decoration:none;padding:.4em .75em;border-radius:999px;
+    border:1px solid rgba(214,165,48,.25);transition:transform .35s var(--overshoot),background .25s,color .25s;
+    white-space:nowrap;
+  }
+  .trail-stop:hover,.trail-stop.active{
+    background:var(--gold-bright);color:var(--wood-2);transform:translateY(-2px) scale(1.05);
+    border-color:var(--gold-bright);
+  }
+
+  /* ---------- generic bits ---------- */
+  .badge{
+    display:inline-flex;align-items:center;gap:.4em;font-family:var(--display);
+    font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;font-weight:700;
+    padding:.3em .8em;border-radius:999px;color:#fff;
+  }
+  .badge.user{background:var(--blue);}
+  .badge.coach{background:var(--purple);}
+  .badge.insight{background:var(--gold);}
+  .badge.decision{background:var(--red);}
+
+  .quote-line{
+    display:flex;gap:.7rem;align-items:flex-start;margin:.85rem 0;
+    padding:.7rem .9rem;background:rgba(255,255,255,.28);border-radius:4px 14px 4px 14px;
+    border:1px dashed var(--ink-faint);
+  }
+  .quote-line p{margin:0;font-size:.96rem;}
+
+  /* ============ TECHNIQUE 1 — Cross-Pollination ============ */
+  .cross-grid{display:flex;flex-wrap:wrap;gap:1.4rem;justify-content:center;margin:2rem 0 1rem;}
+  .source-card{
+    flex:1 1 240px;max-width:290px;background:var(--parchment);
+    border:2px solid var(--ink-faint);padding:1.2rem 1.2rem 1.4rem;text-align:left;
+    box-shadow:4px 6px 0 var(--parch-shadow);
+    transition:transform .4s var(--overshoot);
+  }
+  .source-card:hover{transform:translateY(-6px) rotate(-.6deg);}
+  .source-card h4{display:flex;align-items:center;gap:.5em;font-size:1rem;color:var(--ink);margin-bottom:.5em;}
+  .source-card .icon{width:1.3em;height:1.3em;color:var(--gold);}
+  .source-card ul{padding-left:1.1em;font-size:.9rem;color:var(--ink-soft);}
+  .fuse-arrow{display:flex;justify-content:center;margin:.6rem 0;color:var(--gold);}
+  .fuse-arrow svg{width:2.2rem;height:2.2rem;animation:floatY 2.4s ease-in-out infinite;}
+  @keyframes floatY{0%,100%{transform:translateY(0);}50%{transform:translateY(6px);}}
+  .signature-card{
+    max-width:640px;margin:0 auto;text-align:center;
+    background:linear-gradient(160deg,var(--wood),var(--wood-2));color:var(--parchment);
+    border:2px solid var(--gold-bright);padding:1.8rem 1.6rem;
+    border-radius:10px 34px 10px 34px;box-shadow:0 10px 26px rgba(0,0,0,.4);
+  }
+  .signature-card h3{color:var(--gold-bright);font-size:1.2rem;margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.06em;}
+  .organic-traits{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;margin-top:1rem;}
+  .organic-traits span{
+    font-family:var(--mono);font-size:.78rem;background:rgba(214,165,48,.15);
+    border:1px solid rgba(214,165,48,.5);color:var(--parchment-2);padding:.35em .8em;border-radius:6px;
+  }
+  .wobble-swatch{
+    width:34px;height:34px;display:inline-block;margin-right:.4em;vertical-align:middle;
+    background:var(--red);border-radius:60% 40% 55% 45% / 45% 55% 40% 60%;
+    animation:pulseHeart 1.8s ease-in-out infinite;
+  }
+  @keyframes pulseHeart{0%,100%{transform:scale(1);}45%{transform:scale(1.1);}60%{transform:scale(.97);}}
+
+  /* ============ TECHNIQUE 2 — Analogical Thinking ============ */
+  .analogy-banner{
+    text-align:center;font-family:var(--display);font-size:clamp(1.05rem,2.3vw,1.5rem);
+    color:var(--ink);padding:1.1rem 1.4rem;margin:1.6rem auto 2.2rem;max-width:46em;
+    background:repeating-linear-gradient(180deg,transparent,transparent 2px);
+    border-top:3px double var(--ink-faint);border-bottom:3px double var(--ink-faint);
+  }
+  .analogy-banner b{color:var(--red);}
+  .rosetta{display:grid;grid-template-columns:1fr auto 1fr;gap:.6rem 1rem;align-items:center;max-width:760px;margin:0 auto;}
+  .rosetta .col-head{font-family:var(--display);text-transform:uppercase;letter-spacing:.1em;font-size:.75rem;text-align:center;padding-bottom:.4rem;border-bottom:2px solid var(--ink-faint);}
+  .rosetta .from{background:rgba(44,77,120,.12);border:1px solid rgba(44,77,120,.4);padding:.6em .9em;border-radius:4px 12px 4px 12px;font-size:.92rem;}
+  .rosetta .to{background:rgba(156,59,46,.1);border:1px solid rgba(156,59,46,.4);padding:.6em .9em;border-radius:12px 4px 12px 4px;font-size:.92rem;}
+  .rosetta .mid{color:var(--gold);width:1.6rem;height:1.6rem;}
+  .templates-note{
+    margin-top:2rem;background:var(--parchment);border:2px dashed var(--ink-faint);
+    padding:1.1rem 1.3rem;border-radius:6px 20px 6px 20px;font-size:.95rem;
+  }
+
+  /* ============ TECHNIQUE 3 — Job To Be Done ============ */
+  .mission-ticket{
+    max-width:700px;margin:1.6rem auto 2.2rem;background:var(--parchment);
+    border:2px solid var(--ink);border-left-width:10px;padding:1.2rem 1.5rem;
+    border-radius:2px 18px 2px 18px;position:relative;
+  }
+  .mission-ticket .tag{font-family:var(--mono);font-size:.72rem;letter-spacing:.1em;color:var(--red);text-transform:uppercase;}
+  .mission-ticket p{font-size:1.02rem;margin-top:.3rem;}
+  .dumbbell{display:flex;align-items:center;justify-content:center;gap:.4rem;margin:2rem auto;max-width:640px;}
+  .dumbbell .weight{
+    flex:0 0 auto;width:120px;height:120px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;text-align:center;
+    font-family:var(--display);font-size:.78rem;font-weight:700;color:#fff;padding:.6em;
+    box-shadow:inset 0 0 0 4px rgba(255,255,255,.18), 4px 6px 0 var(--parch-shadow);
+  }
+  .dumbbell .weight.a{background:var(--blue);}
+  .dumbbell .weight.b{background:var(--red);}
+  .dumbbell .bar{flex:1 1 auto;height:10px;background:var(--ink-faint);position:relative;max-width:160px;border-radius:6px;}
+  .dumbbell .bar .tag{
+    position:absolute;left:50%;top:-2.1em;transform:translateX(-50%);
+    font-family:var(--mono);font-size:.68rem;background:var(--ink);color:var(--gold-bright);
+    padding:.25em .6em;border-radius:4px;white-space:nowrap;
+  }
+  .gap-gauge{max-width:760px;margin:2.4rem auto 1rem;}
+  .gauge-track{
+    display:flex;height:64px;border-radius:8px;overflow:hidden;border:2px solid var(--ink);
+    box-shadow:3px 5px 0 var(--parch-shadow);
+  }
+  .gauge-track > div{display:flex;align-items:center;justify-content:center;text-align:center;font-family:var(--display);font-size:.78rem;font-weight:700;padding:.3em;color:#fff;}
+  .gauge-track .amateur{flex:1;background:repeating-linear-gradient(135deg,var(--ink-faint),var(--ink-faint) 8px,#8a6f47 8px,#8a6f47 16px);}
+  .gauge-track .target{flex:1.3;background:linear-gradient(120deg,var(--gold),var(--gold-bright));color:var(--wood-2);}
+  .gauge-track .pro{flex:1;background:repeating-linear-gradient(135deg,var(--blue),var(--blue) 8px,#1d3557 8px,#1d3557 16px);}
+  .gauge-caption{display:flex;justify-content:space-between;font-size:.74rem;font-family:var(--mono);color:var(--ink-soft);margin-top:.4rem;}
+  .stat-row{display:flex;flex-wrap:wrap;gap:.9rem;justify-content:center;margin-top:2rem;}
+  .stat-pill{
+    background:var(--ink);color:var(--parchment);padding:.7em 1.1em;border-radius:999px;
+    font-family:var(--mono);font-size:.82rem;display:flex;align-items:center;gap:.5em;
+    box-shadow:0 3px 0 var(--wood-2);transition:transform .4s var(--overshoot);
+  }
+  .stat-pill:hover{transform:translateY(-3px) scale(1.04);}
+  .stat-pill .icon{color:var(--gold-bright);}
+
+  /* ============ TECHNIQUE 4 — Persona Journey ============ */
+  .persona-wrap{display:flex;flex-wrap:wrap;gap:2rem;align-items:flex-start;margin:1.8rem 0;}
+  .persona-card{
+    flex:0 0 260px;background:linear-gradient(160deg,var(--wood),var(--wood-2));color:var(--parchment);
+    border:2px solid var(--gold-bright);border-radius:14px 40px 14px 40px;padding:1.4rem;
+    box-shadow:0 8px 20px rgba(0,0,0,.35);
+  }
+  .persona-portrait{
+    width:84px;height:84px;border-radius:50%;margin:0 auto .8rem;
+    background:radial-gradient(circle at 35% 30%, #d9c290, var(--gold) 55%, var(--wood-2) 100%);
+    display:flex;align-items:center;justify-content:center;font-family:var(--display);
+    font-size:1.6rem;font-weight:700;color:var(--wood-2);border:3px solid var(--gold-bright);
+  }
+  .persona-card h4{text-align:center;color:var(--gold-bright);font-size:1.05rem;margin-bottom:.15rem;}
+  .persona-role{text-align:center;font-size:.78rem;font-family:var(--mono);color:var(--parchment-2);margin-bottom:.9rem;}
+  .persona-stats{list-style:none;padding:0;margin:0;font-size:.86rem;}
+  .persona-stats li{display:flex;justify-content:space-between;gap:.5em;padding:.35em 0;border-bottom:1px dotted rgba(214,165,48,.3);}
+  .persona-stats li span:first-child{color:var(--gold-bright);font-family:var(--mono);font-size:.72rem;text-transform:uppercase;}
+  .journey-path{flex:1 1 380px;position:relative;padding-left:1.5rem;border-left:3px dashed var(--ink-faint);}
+  .journey-step{margin-bottom:1.3rem;position:relative;}
+  .journey-step::before{
+    content:"";position:absolute;left:-1.94rem;top:.2rem;width:14px;height:14px;border-radius:50%;
+    background:var(--gold-bright);border:2px solid var(--ink);
+  }
+  .journey-step h5{font-family:var(--display);font-size:.88rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ink);margin-bottom:.2rem;}
+  .fork{display:flex;gap:1rem;flex-wrap:wrap;margin-top:.6rem;}
+  .fork-branch{
+    flex:1 1 160px;padding:.8em 1em;border-radius:4px 16px 4px 16px;font-size:.88rem;
+  }
+  .fork-branch.stay{background:rgba(63,107,58,.14);border:1.5px solid var(--green);}
+  .fork-branch.leave{background:rgba(156,59,46,.12);border:1.5px solid var(--red);}
+  .fork-branch b{display:block;font-family:var(--display);font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.2rem;}
+  .fork-branch.stay b{color:var(--green);}
+  .fork-branch.leave b{color:var(--red);}
+  .verdict-banner{
+    margin-top:1.8rem;text-align:center;font-family:var(--display);font-weight:700;
+    background:var(--gold);color:var(--wood-2);padding:.8em 1.2em;border-radius:6px;
+    box-shadow:0 4px 0 var(--wood-2);font-size:.95rem;
+  }
+
+  /* ============ INTEL / COMPETITOR ============ */
+  .intel-panel{
+    background:linear-gradient(160deg,#241a10,#150e07);color:#d8c79a;
+    border:2px solid #4a3820;position:relative;padding:2.6rem clamp(1.2rem,4vw,3rem);
+    font-family:var(--mono);
+  }
+  .stamp{
+    position:absolute;top:1.6rem;right:1.8rem;width:110px;height:110px;border-radius:50%;
+    border:3px double var(--red);color:var(--red);display:flex;align-items:center;justify-content:center;
+    text-align:center;font-family:var(--display);font-weight:700;font-size:.72rem;letter-spacing:.08em;
+    transform:rotate(14deg);opacity:.75;text-transform:uppercase;
+  }
+  .intel-panel h3{font-family:var(--display);color:#e3b23c;text-transform:uppercase;letter-spacing:.08em;font-size:1.05rem;margin-bottom:.3rem;}
+  .intel-target{font-size:1.15rem;color:#f1e2bd;font-family:var(--display);margin-bottom:1.2rem;}
+  .intel-target span{color:#e3b23c;}
+  .intel-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.9rem;margin:1.2rem 0 1.6rem;}
+  .intel-item{background:rgba(255,255,255,.04);border:1px solid #4a3820;padding:.7em .9em;border-radius:4px;font-size:.82rem;}
+  .intel-item b{display:block;color:#e3b23c;font-family:var(--display);font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.25em;}
+  .enemy-tags{display:flex;flex-wrap:wrap;gap:.5rem;margin:.6rem 0 1.4rem;}
+  .enemy-tags span{border:1px solid #6b5330;padding:.3em .7em;border-radius:999px;font-size:.75rem;color:#c9b083;}
+  .blind-spot{
+    background:rgba(227,178,60,.1);border-left:4px solid #e3b23c;padding:1em 1.2em;border-radius:2px 14px 2px 14px;
+    font-family:var(--serif);color:#f1e2bd;font-size:.95rem;
+  }
+
+  /* ============ CONVERGENCE ============ */
+  .cluster-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:1.1rem;margin-top:1.8rem;}
+  .cluster{
+    padding:1.1rem 1.1rem 1.3rem;border-radius:16px 6px 16px 6px;color:#fff;
+    box-shadow:3px 5px 0 var(--parch-shadow);transition:transform .4s var(--overshoot);
+  }
+  .cluster:hover{transform:translateY(-5px) rotate(-.5deg);}
+  .cluster b{display:block;font-family:var(--display);font-size:.8rem;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.4em;}
+  .cluster p{font-size:.83rem;margin:0;opacity:.95;}
+  .cluster.c1{background:linear-gradient(160deg,var(--red),#7a2c22);}
+  .cluster.c2{background:linear-gradient(160deg,var(--gold),#8a6108);}
+  .cluster.c3{background:linear-gradient(160deg,var(--blue),#1d3557);}
+  .cluster.c4{background:linear-gradient(160deg,var(--green),#2c4d29);}
+  .cluster.c5{background:linear-gradient(160deg,var(--purple),#40295a);}
+
+  /* ============ SPECS ============ */
+  .spec-block{margin-top:3.2rem;}
+  .spec-head{display:flex;align-items:center;gap:.7rem;margin-bottom:.3rem;}
+  .spec-head .icon-badge{
+    width:2.6rem;height:2.6rem;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    color:#fff;flex:0 0 auto;box-shadow:0 3px 0 var(--parch-shadow);
+  }
+  .spec-head .icon-badge svg{width:1.4rem;height:1.4rem;}
+  .spec-block.kf .icon-badge{background:var(--gold);}
+  .spec-block.anim .icon-badge{background:var(--red);}
+  .spec-block.tmpl .icon-badge{background:var(--blue);}
+  .spec-block.tools .icon-badge{background:var(--green);}
+  .spec-head h3{font-size:1.25rem;}
+  .spec-body{background:rgba(255,255,255,.32);border:1.5px solid var(--ink-faint);padding:1.4rem 1.5rem;border-radius:6px 22px 6px 22px;}
+
+  /* Kit de Faction inheritance tree */
+  .heritage-tree{display:flex;flex-direction:column;align-items:center;margin:1rem 0 1.6rem;}
+  .parent-node{
+    background:var(--ink);color:var(--parchment);padding:.6em 1.3em;border-radius:8px;
+    font-family:var(--display);font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;
+    box-shadow:0 3px 0 var(--wood-2);
+  }
+  .tree-lines{width:2px;height:22px;background:var(--ink-faint);}
+  .children-row{display:flex;gap:1.4rem;flex-wrap:wrap;justify-content:center;position:relative;padding-top:.4rem;}
+  .child-node{
+    background:#fff;border:2px solid var(--ink-faint);padding:.5em 1em;border-radius:8px;
+    font-size:.82rem;text-align:center;min-width:110px;position:relative;
+  }
+  .child-node::before{content:"";position:absolute;top:-1rem;left:50%;width:2px;height:1rem;background:var(--ink-faint);}
+  .child-node .inherit{display:block;font-family:var(--mono);font-size:.64rem;color:var(--green);margin-top:.2em;}
+  .child-node .override{display:block;font-family:var(--mono);font-size:.64rem;color:var(--red);}
+  .field-list{columns:2;column-gap:1.6rem;margin-top:1.2rem;}
+  .field-list div{break-inside:avoid;font-size:.84rem;margin-bottom:.7rem;padding-left:1.4rem;position:relative;}
+  .field-list div::before{content:counter(f);counter-increment:f;position:absolute;left:0;top:.05em;font-family:var(--mono);font-size:.7rem;color:var(--gold);font-weight:700;}
+  .field-list{counter-reset:f;}
+  .era-tags{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1rem;}
+  .era-tags span{background:var(--gold);color:#fff;font-family:var(--display);font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;padding:.3em .8em;border-radius:999px;}
+  .risk-note{margin-top:1.1rem;background:rgba(156,59,46,.1);border-left:3px solid var(--red);padding:.7em 1em;font-size:.85rem;border-radius:2px 10px 2px 10px;}
+
+  /* animation system */
+  .act-timeline{display:flex;align-items:center;margin:1.2rem 0 1.6rem;}
+  .act{flex:1;text-align:center;position:relative;}
+  .act .dot{width:16px;height:16px;border-radius:50%;background:var(--red);margin:0 auto .5em;border:2px solid var(--ink);}
+  .act .line{position:absolute;top:7px;height:2px;background:var(--ink-faint);width:100%;left:50%;z-index:-1;}
+  .act:last-child .line{display:none;}
+  .act b{display:block;font-family:var(--display);font-size:.78rem;text-transform:uppercase;}
+  .act p{font-size:.76rem;color:var(--ink-soft);margin:.2em 1em 0;}
+  .feature-chips{display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0;}
+  .feature-chips span{
+    font-size:.78rem;font-family:var(--mono);background:rgba(156,59,46,.1);border:1px solid rgba(156,59,46,.4);
+    color:var(--red);padding:.3em .7em;border-radius:6px;
+  }
+  .fog-demo{
+    margin-top:1.4rem;height:90px;border-radius:6px;border:2px solid var(--ink);position:relative;overflow:hidden;
+    background:
+      repeating-linear-gradient(90deg,var(--green) 0 18px, #345c30 18px 36px),
+      repeating-linear-gradient(0deg,transparent 0 17px, rgba(0,0,0,.08) 17px 18px);
+  }
+  .fog-demo::after{
+    content:"BROUILLARD DE GUERRE — survolez pour le lever";
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:0 1rem;
+    font-family:var(--mono);font-size:.72rem;letter-spacing:.05em;color:#e9e2cf;
+    background:linear-gradient(120deg,rgba(70,70,70,.95),rgba(120,120,120,.9) 40%,rgba(70,70,70,.95));
+    background-size:220% 100%;
+    animation:fogDrift 7s linear infinite;
+    transition:opacity .8s ease;
+  }
+  .fog-demo:hover::after{opacity:0;}
+  @keyframes fogDrift{0%{background-position:0 0;}100%{background-position:220% 0;}}
+
+  /* templates */
+  .tmpl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.7rem;margin:1rem 0 1.4rem;}
+  .tmpl-tile{
+    aspect-ratio:4/3;border-radius:6px 16px 6px 16px;border:2px solid var(--ink);
+    display:flex;align-items:flex-end;padding:.5em .6em;color:#fff;font-family:var(--display);
+    font-size:.74rem;text-transform:uppercase;letter-spacing:.02em;position:relative;overflow:hidden;
+  }
+  .tmpl-tile::before{content:"";position:absolute;inset:0;opacity:.5;background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.12) 0 6px, transparent 6px 12px);}
+  .tmpl-tile span{position:relative;z-index:1;}
+  .tmpl-tile.t1{background:linear-gradient(160deg,#7a5a2c,#4a3a1a);}
+  .tmpl-tile.t2{background:linear-gradient(160deg,#5c4426,#2a1e12);}
+  .tmpl-tile.t3{background:linear-gradient(160deg,var(--blue),#1d3557);}
+  .tmpl-tile.t4{background:linear-gradient(160deg,var(--green),#264022);}
+  .madlib{margin-top:1rem;font-size:.92rem;line-height:2;}
+  .madlib .blank{
+    display:inline-block;border-bottom:2px dotted var(--ink);padding:0 .5em;font-family:var(--mono);
+    color:var(--red);font-weight:700;
+  }
+  .flex-note{display:flex;gap:.6em;align-items:flex-start;margin-top:1rem;font-size:.86rem;background:rgba(63,107,58,.1);border-left:3px solid var(--green);padding:.7em 1em;border-radius:2px 10px 2px 10px;}
+
+  /* toolbox */
+  .toolbar{
+    display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;margin-top:1.2rem;
+    background:var(--wood);padding:1.1rem;border-radius:10px;box-shadow:inset 0 0 0 2px rgba(214,165,48,.3);
+  }
+  .tool-btn{
+    display:flex;flex-direction:column;align-items:center;gap:.3em;width:88px;padding:.6em .3em;
+    background:linear-gradient(160deg,#4a3620,#2c2013);border:1px solid rgba(214,165,48,.4);border-radius:8px;
+    color:var(--parchment-2);font-family:var(--display);font-size:.62rem;text-transform:uppercase;letter-spacing:.02em;
+    transition:transform .35s var(--overshoot),background .25s;text-align:center;
+  }
+  .tool-btn svg{width:1.3rem;height:1.3rem;color:var(--gold-bright);}
+  .tool-btn:hover{transform:translateY(-4px) scale(1.07);background:linear-gradient(160deg,#6a4e2c,#3a2a18);}
+  .tool-groups{display:flex;flex-wrap:wrap;justify-content:center;gap:1.8rem;margin-top:.8rem;}
+  .tool-group-label{width:100%;text-align:center;font-family:var(--mono);font-size:.68rem;color:var(--ink-soft);letter-spacing:.08em;text-transform:uppercase;margin:1.2rem 0 -.4rem;}
+
+  /* ============ SYNTHESIS / CLIMAX ============ */
+  .synth-panel{
+    background:
+      radial-gradient(circle at 50% 0%, rgba(214,165,48,.25), transparent 55%),
+      linear-gradient(165deg,var(--wood),var(--wood-2) 70%);
+    color:var(--parchment);border:3px solid var(--gold-bright);
+    border-radius:20px 60px 20px 60px;padding:3rem clamp(1.4rem,5vw,3.6rem);
+    box-shadow:0 20px 50px rgba(0,0,0,.5), inset 0 0 80px rgba(214,165,48,.08);
+    text-align:center;position:relative;
+  }
+  .seal{
+    width:120px;height:120px;border-radius:50%;margin:0 auto 1.4rem;
+    background:radial-gradient(circle at 35% 30%, #e3b23c, var(--gold) 55%, #6b4a10 100%);
+    border:4px solid var(--wood-2);box-shadow:0 6px 16px rgba(0,0,0,.5), inset 0 0 0 3px rgba(255,255,255,.25);
+    display:flex;align-items:center;justify-content:center;
+    animation:floatBadge 3.4s ease-in-out infinite;
+  }
+  @keyframes floatBadge{0%,100%{transform:translateY(0) rotate(0deg);}50%{transform:translateY(-6px) rotate(3deg);}}
+  .seal svg{width:2.6rem;height:2.6rem;color:var(--wood-2);}
+  .synth-panel h2{font-size:clamp(1.5rem,3.6vw,2.4rem);color:var(--gold-bright);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.6rem;}
+  .synth-lead{max-width:52em;margin:0 auto 1.6rem;font-size:1.05rem;color:var(--parchment-2);text-align:left;}
+  .diff-angle{
+    max-width:52em;margin:0 auto 2.2rem;text-align:left;background:rgba(214,165,48,.1);
+    border-left:4px solid var(--gold-bright);padding:1rem 1.3rem;border-radius:2px 14px 2px 14px;
+  }
+  .diff-angle b{color:var(--gold-bright);}
+  .moscow{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;text-align:left;max-width:980px;margin:0 auto;}
+  .moscow .col{background:rgba(255,255,255,.05);border:1px solid rgba(214,165,48,.35);border-radius:10px;padding:1rem 1.1rem;}
+  .moscow .col h4{font-family:var(--display);font-size:.82rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.6rem;padding-bottom:.4rem;border-bottom:1px solid rgba(214,165,48,.3);}
+  .moscow .must h4{color:#e3b23c;}
+  .moscow .should h4{color:#c9d6e6;}
+  .moscow .could h4{color:#c8a36b;}
+  .moscow .wont h4{color:#a86a63;}
+  .moscow ul{padding-left:1.1em;margin:0;}
+  .moscow li{font-size:.82rem;color:var(--parchment-2);margin-bottom:.5em;}
+  .moscow .wont li{text-decoration:line-through;opacity:.65;}
+  .closing-note{margin-top:2.2rem;font-family:var(--mono);font-size:.8rem;color:var(--parchment-2);opacity:.85;}
+
+  footer{text-align:center;padding:2.4rem 5vw 3rem;color:var(--ink-soft);font-family:var(--mono);font-size:.78rem;}
+  footer .icon{color:var(--gold);margin-right:.3em;}
+
+  @media (max-width:640px){
+    .rosetta{grid-template-columns:1fr;}
+    .rosetta .mid{transform:rotate(90deg);margin:0 auto;}
+    .field-list{columns:1;}
+    .persona-wrap{flex-direction:column;}
+  }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="tornEdge" viewBox="0 0 1200 30" preserveAspectRatio="none">
+      <path d="M0,15 L40,5 L80,20 L120,8 L160,18 L200,6 L240,22 L280,4 L320,16 L360,10 L400,20 L440,6 L480,18 L520,8 L560,22 L600,4 L640,16 L680,10 L720,20 L760,6 L800,18 L840,8 L880,22 L920,4 L960,16 L1000,10 L1040,20 L1080,6 L1120,18 L1160,10 L1200,15" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="chevronDown" viewBox="0 0 24 24"><path d="M4 8 L12 18 L20 8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="iconFlag" viewBox="0 0 24 24"><path d="M5 3v18M5 4h12l-3 4 3 4H5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+    <symbol id="iconSword" viewBox="0 0 24 24"><path d="M3 21l6-6M14 3l7 7-9 9-4-4 9-9zM14 3l-2 2M17 14l3 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="iconEye" viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+    <symbol id="iconArrowRight" viewBox="0 0 24 24"><path d="M4 12h15M13 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="iconShield" viewBox="0 0 24 24"><path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5l8-3z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+    <symbol id="iconCompass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M15.5 8.5l-2 5-5 2 2-5z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="iconCrown" viewBox="0 0 24 24"><path d="M3 18h18M4 18l1-9 4 4 3-6 3 6 4-4 1 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+    <symbol id="iconMap" viewBox="0 0 24 24"><path d="M9 3 3 5v16l6-2 6 2 6-2V3l-6 2-6-2z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 3v16M15 5v16" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+    <symbol id="iconWand" viewBox="0 0 24 24"><path d="M4 20 15 9M13 3l1.5 3L18 7.5 15 9l-1.5 3L12 9 9 7.5 12 6z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol>
+    <symbol id="iconLayers" viewBox="0 0 24 24"><path d="M12 2 2 8l10 6 10-6-10-6zM2 16l10 6 10-6M2 12l10 6 10-6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol>
+    <symbol id="iconExport" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="iconClock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 7v5l3.5 2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="iconCamera" viewBox="0 0 24 24"><path d="M4 8h3l2-2h6l2 2h3v11H4z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="12" cy="13.5" r="3.4" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+    <symbol id="iconUndo" viewBox="0 0 24 24"><path d="M7 7 3 11l4 4M3 11h11a6 6 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="iconText" viewBox="0 0 24 24"><path d="M4 5h16M12 5v14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="iconUpload" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 20h16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="iconPin" viewBox="0 0 24 24"><path d="M12 22s7-7.5 7-12a7 7 0 1 0-14 0c0 4.5 7 12 7 12z" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="10" r="2.4" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+  </defs>
+</svg>
+
+<header class="hero">
+  <div class="hero-inner">
+    <p class="hero-eyebrow">Carnet de campagne — brainstorming</p>
+    <h1 class="hero-title"><svg class="sword icon"><use href="#iconSword"/></svg>OPENMAP<svg class="sword icon"><use href="#iconSword"/></svg></h1>
+    <p class="hero-tagline">Des cartes historiques et géopolitiques animées, aussi simples à faire qu'un visuel Canva — avec l'âme d'un jeu de stratégie.</p>
+    <div class="hero-meta">
+      <span class="meta-chip"><svg class="icon"><use href="#iconCompass"/></svg>21–24 septembre 2026</span>
+      <span class="meta-chip"><svg class="icon"><use href="#iconFlag"/></svg>Mode : Partenaire créatif</span>
+      <span class="meta-chip"><svg class="icon"><use href="#iconShield"/></svg>Statut : session complète</span>
+    </div>
+    <div class="hero-goal">
+      <p><strong>Objectif de la mission :</strong> faciliter la création rapide de cartes animées et personnalisables pour les créateurs de contenu historique et géopolitique — simple comme Canva, imports de visuels propres, export multi-formats (image/vidéo), design ludique inspiré des RTS.</p>
+    </div>
+  </div>
+</header>
+
+<nav class="trail" aria-label="Sommaire de la campagne" id="trailNav">
+  <a href="#t1" class="trail-stop">I. Butin croisé</a>
+  <a href="#t2" class="trail-stop">II. Miroir Canva</a>
+  <a href="#t3" class="trail-stop">III. La mission</a>
+  <a href="#t4" class="trail-stop">IV. Éclaireur</a>
+  <a href="#intel" class="trail-stop">Renseignement</a>
+  <a href="#convergence" class="trail-stop">Convergence</a>
+  <a href="#specs" class="trail-stop">Plans de bataille</a>
+  <a href="#synthese" class="trail-stop">Décret final</a>
+</nav>
+
+<main>
+
+  <!-- ===================== TECHNIQUE 1 : CROSS-POLLINATION ===================== -->
+  <section class="panel" id="t1">
+    <div class="panel-inner blob-1 tilt-l">
+      <span class="section-kicker"><svg class="icon"><use href="#iconWand"/></svg>Technique 1 — Cross-Pollination</span>
+      <h2 class="section-title">Du butin volé à trois mondes voisins</h2>
+      <p class="section-sub">On pille sans complexe trois univers pour assembler le geste animé d'OPENMAP — puis on en tire une règle signature.</p>
+
+      <div class="cross-grid">
+        <div class="source-card">
+          <h4><svg class="icon"><use href="#iconSword"/></svg>Jeux de stratégie (RTS)</h4>
+          <ul>
+            <li>Time-lapse de bataille</li>
+            <li>Barres de territoire</li>
+            <li>Flèches de mouvement de troupes animées</li>
+            <li>Brouillard de guerre qui se lève progressivement</li>
+          </ul>
+          <span class="badge coach">coach</span>
+        </div>
+        <div class="source-card">
+          <h4><svg class="icon"><use href="#iconMap"/></svg>Infographie</h4>
+          <ul>
+            <li>Cartes illustrées, compréhensibles</li>
+            <li>Légendes progressives</li>
+            <li>Chaque flèche / date / territoire apparaît au bon moment (kinetic typography)</li>
+          </ul>
+          <span class="badge user">utilisateur</span>
+        </div>
+        <div class="source-card">
+          <h4><svg class="icon"><use href="#iconCamera"/></svg>Motion design</h4>
+          <ul>
+            <li>Créateurs de contenu / vulgarisateurs</li>
+            <li>« Zoom motivé » — la caméra pan/zoom vers ce qui compte</li>
+            <li>Rythme façon timeline Kurzgesagt appliqué à une carte</li>
+          </ul>
+          <span class="badge user">utilisateur</span>
+        </div>
+      </div>
+
+      <div class="fuse-arrow"><svg viewBox="0 0 24 24"><use href="#chevronDown"/></svg></div>
+
+      <div class="signature-card">
+        <h3><span class="wobble-swatch"></span>Le geste volé : l'animation</h3>
+        <p>Chaque territoire ou troupe reçoit une micro-animation par défaut (pulse avant changement de couleur, flèche qui se dessine en direct comme un trait de stylo), calée sur une <strong>timeline scrubbable</strong> — jamais un simple lecteur play/pause.</p>
+        <p style="margin-top:.8rem;">Règle d'animation signature retenue : <strong>organique</strong>.</p>
+        <div class="organic-traits">
+          <span>bordures tremblées à la main</span>
+          <span>easing overshoot (pas linéaire)</span>
+          <span>pulsation façon battement de cœur</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <svg class="tear"><use href="#tornEdge"/></svg>
+
+  <!-- ===================== TECHNIQUE 2 : ANALOGICAL THINKING ===================== -->
+  <section class="panel" id="t2">
+    <div class="panel-inner blob-2 tilt-r">
+      <span class="section-kicker"><svg class="icon"><use href="#iconLayers"/></svg>Technique 2 — Pensée analogique</span>
+      <h2 class="section-title">Le miroir Canva</h2>
+      <p class="section-sub">Une analogie centrale, puis une pierre de Rosette pour traduire chaque mécanisme Canva en équivalent cartographique.</p>
+
+      <p class="analogy-banner">« OPENMAP, c'est le <b>Canva</b> des cartes historiques »</p>
+
+      <div class="rosetta">
+        <div class="col-head">Chez Canva</div>
+        <div></div>
+        <div class="col-head">Chez OPENMAP</div>
+
+        <div class="from">Brand Kit (couleur, police, logo réutilisables en un clic)</div>
+        <svg class="icon mid"><use href="#iconArrowRight"/></svg>
+        <div class="to"><strong>Kit de Faction</strong> — couleur, emblème, police, style de flèche/frontière propre à chaque camp, réutilisable en un clic sur toute la carte</div>
+
+        <div class="from">Drag-and-drop</div>
+        <svg class="icon mid"><use href="#iconArrowRight"/></svg>
+        <div class="to">Territoires, flèches et icônes posés à la souris sur le canvas</div>
+
+        <div class="from">Templates prêts à l'emploi</div>
+        <svg class="icon mid"><use href="#iconArrowRight"/></svg>
+        <div class="to">Fonds de carte historiques prêts à l'emploi (Europe 1914, Méditerranée antique, campagne napoléonienne…)</div>
+
+        <div class="from">Facilité d'utilisation générale</div>
+        <svg class="icon mid"><use href="#iconArrowRight"/></svg>
+        <div class="to">Trames d'animation en 3 actes (avant / pendant / après la bataille) — à remplir comme un mad-lib</div>
+      </div>
+
+      <div class="templates-note">
+        <strong>Idée dérivée (coach) :</strong> les templates ne sont pas que des fonds de carte — ce sont aussi des trames narratives pré-écrites qu'on complète, exactement comme on remplit un template Canva déjà mis en page.
+      </div>
+    </div>
+  </section>
+
+  <svg class="tear"><use href="#tornEdge"/></svg>
+
+  <!-- ===================== TECHNIQUE 3 : JOB TO BE DONE ===================== -->
+  <section class="panel" id="t3">
+    <div class="panel-inner blob-3 tilt-l">
+      <span class="section-kicker"><svg class="icon"><use href="#iconClock"/></svg>Technique 3 — Job to Be Done</span>
+      <h2 class="section-title">La mission qu'on engage vraiment</h2>
+      <p class="section-sub">Pour quel « job » un créateur recrute-t-il OPENMAP — et quel vide de marché ce job révèle-t-il ?</p>
+
+      <div class="mission-ticket">
+        <div class="tag">Ordre de mission</div>
+        <p>Obtenir une belle carte (animée ou non), personnalisée, informative — faite rapidement et simplement.</p>
+      </div>
+
+      <div class="dumbbell">
+        <div class="weight a">Rapide<br>+ Simple</div>
+        <div class="bar"><span class="tag">le vrai job</span></div>
+        <div class="weight b">Beau<br>+ Informatif</div>
+      </div>
+      <p style="text-align:center;font-style:italic;color:var(--ink-soft);max-width:36em;margin:0 auto;">Tension centrale : le vrai job est probablement « avoir l'air pro sans compétences en design / motion ».</p>
+
+      <div class="gap-gauge">
+        <div class="gauge-track">
+          <div class="amateur">Bricolage amateur<br>(Photoshop / AE / Illustrator seul)</div>
+          <div class="target">OPENMAP<br>vise ce milieu</div>
+          <div class="pro">Suite pro<br>ou prestataire motion designer</div>
+        </div>
+        <div class="gauge-caption"><span>Résultat pro, vitesse amateur</span><span>Gap de marché en « haltère »</span></div>
+      </div>
+
+      <div class="stat-row">
+        <span class="stat-pill"><svg class="icon"><use href="#iconClock"/></svg>Douleur : le temps passé</span>
+        <span class="stat-pill"><svg class="icon"><use href="#iconExport"/></svg>Douleur : le prix des outils (Adobe)</span>
+        <span class="stat-pill"><svg class="icon"><use href="#iconMap"/></svg>Web-based, pas d'install lourde</span>
+        <span class="stat-pill"><svg class="icon"><use href="#iconCompass"/></svg>Métrique clé : temps jusqu'à la 1ʳᵉ carte</span>
+      </div>
+    </div>
+  </section>
+
+  <svg class="tear"><use href="#tornEdge"/></svg>
+
+  <!-- ===================== TECHNIQUE 4 : PERSONA JOURNEY ===================== -->
+  <section class="panel" id="t4">
+    <div class="panel-inner blob-4 tilt-r">
+      <span class="section-kicker"><svg class="icon"><use href="#iconPin"/></svg>Technique 4 — Persona Journey</span>
+      <h2 class="section-title">L'éclaireur : Terrabellum</h2>
+      <p class="section-sub">On suit un persona concret à travers son premier contact avec l'outil, jusqu'à la fourche qui décide s'il reste ou s'il part.</p>
+
+      <div class="persona-wrap">
+        <div class="persona-card">
+          <div class="persona-portrait">T</div>
+          <h4>Terrabellum</h4>
+          <div class="persona-role">YouTubeur géopolitique</div>
+          <ul class="persona-stats">
+            <li><span>Contenu</span><span>Histoire &amp; géopolitique</span></li>
+            <li><span>Scope</span><span>Passé + actualité chaude</span></li>
+            <li><span>Attend</span><span>Rapidité + personnalisation</span></li>
+            <li><span>Craint</span><span>Le carcan du template figé</span></li>
+          </ul>
+        </div>
+
+        <div class="journey-path">
+          <div class="journey-step">
+            <h5>Premier contact</h5>
+            <p>Ce qu'il remarque en premier en ouvrant l'outil : <strong>l'accessibilité des outils</strong>.</p>
+          </div>
+          <div class="journey-step">
+            <h5>Élargissement du scope</h5>
+            <p>Persona géopolitique — pas seulement historique. Cartes de conflits actuels, frontières qui bougent, alliances : pas que du passé, aussi de l'actualité chaude.</p>
+          </div>
+          <div class="journey-step">
+            <h5>La fourche</h5>
+            <p>Le moment où tout se joue :</p>
+            <div class="fork">
+              <div class="fork-branch stay"><b>Il reste si</b>des templates d'animation sont utilisables rapidement.</div>
+              <div class="fork-branch leave"><b>Il part si</b>c'est impossible de personnaliser.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="verdict-banner">Vitesse (templates) ET personnalisation profonde sont toutes les deux non-négociables — un template qui ne se personnalise pas fait fuir l'utilisateur.</div>
+    </div>
+  </section>
+
+  <svg class="tear"><use href="#tornEdge"/></svg>
+
+  <!-- ===================== INTEL : COMPETITOR ===================== -->
+  <section class="panel" id="intel">
+    <div class="intel-panel panel-inner">
+      <div class="stamp">reconnaissance</div>
+      <h3><svg class="icon"><use href="#iconEye"/></svg>Rapport de reconnaissance — mi-session</h3>
+      <div class="intel-target">Cible identifiée : <span>AnimateMyMap.com</span> — « Cinematic Map Video Studio »</div>
+      <p style="max-width:44em;">Pages dédiées « History Map Animation » et « War Map Animation Maker » (conquêtes/campagnes) : exactement le même créneau qu'OPENMAP.</p>
+
+      <div class="intel-grid">
+        <div class="intel-item"><b>Caméra</b>5 modes : top-down / bounce / fly / orbit / sweep, easing auto</div>
+        <div class="intel-item"><b>Frontières</b>9 animations de frontière + 6 reveals</div>
+        <div class="intel-item"><b>Habillage</b>Drapeaux + modèles 3D</div>
+        <div class="intel-item"><b>Mouvement</b>Flèches bézier</div>
+        <div class="intel-item"><b>Territoires</b>195 pays + territoires + formes custom (pen tool)</div>
+        <div class="intel-item"><b>Export</b>MP4 jusqu'à 4K</div>
+        <div class="intel-item"><b>Offre</b>3 paliers Free / Basic / Pro (prix non publics)</div>
+      </div>
+
+      <p style="font-family:var(--serif);color:#f1e2bd;">Le marché est déjà validé et peuplé — pas un océan bleu :</p>
+      <div class="enemy-tags">
+        <span>Animaps</span><span>Easymotion</span><span>Mapimator</span><span>AnimateMyTravel</span>
+      </div>
+
+      <div class="blind-spot">
+        <strong>Angle mort probable des concurrents :</strong> positionnement « cinématique / pro » générique, aucun Kit de Faction (branding par camp), pas de style organique / RTS ludique assumé, pas d'ancrage Canva (simplicité + templates + drag-drop) explicite. Il reste un espace de différenciation clair pour OPENMAP.
+      </div>
+    </div>
+  </section>
+
+  <svg class="tear"><use href="#tornEdge"/></svg>
+
+  <!-- ===================== CONVERGENCE ===================== -->
+  <section class="panel" id="convergence">
+    <div class="panel-inner blob-2 tilt-l">
+      <span class="section-kicker"><svg class="icon"><use href="#iconLayers"/></svg>Convergence — Affinity Clustering</span>
+      <h2 class="section-title">Cinq amas d'idées</h2>
+      <p class="section-sub">Toutes les idées de la session regroupées en cinq familles cohérentes.</p>
+      <div class="cluster-grid">
+        <div class="cluster c1"><b>1 · Style visuel / animation</b><p>RTS + signature organique : bordures tremblées, overshoot, pulsations.</p></div>
+        <div class="cluster c2"><b>2 · Simplicité façon Canva</b><p>Kit de Faction, templates, drag-and-drop, structure mad-lib.</p></div>
+        <div class="cluster c3"><b>3 · Positionnement marché</b><p>JTBD, gap « haltère », pricing web-based accessible.</p></div>
+        <div class="cluster c4"><b>4 · Scope de contenu élargi</b><p>Géopolitique actuelle — pas seulement l'histoire ancienne.</p></div>
+        <div class="cluster c5"><b>5 · Tension critique</b><p>Vitesse (templates) vs personnalisation profonde — les deux non-négociables.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <svg class="tear"><use href="#tornEdge"/></svg>
+
+  <!-- ===================== DEEP-DIVE SPECS ===================== -->
+  <section class="panel" id="specs">
+    <span class="section-kicker"><svg class="icon"><use href="#iconMap"/></svg>Plans de bataille</span>
+    <h2 class="section-title" style="margin-top:.5rem;">Les quatre chantiers de spécification</h2>
+    <p class="section-sub">Une fois les idées convergées, quatre systèmes ont été détaillés jusqu'au niveau d'un cahier des charges.</p>
+
+    <!-- Kit de Faction -->
+    <div class="spec-block kf">
+      <div class="spec-head">
+        <div class="icon-badge"><svg><use href="#iconFlag"/></svg></div>
+        <h3>Le Kit de Faction</h3>
+      </div>
+      <div class="spec-body">
+        <p>Bundle réutilisable par camp — 1 clic applique tout ; modifier le kit met à jour tous les éléments assignés partout, façon <em>design token</em>. Nuance vs le Brand Kit Canva : ici il faut <strong>plusieurs kits simultanés</strong> sur une même carte, comme les couleurs de civilisation d'un RTS.</p>
+
+        <p style="margin-top:1rem;"><strong>Mécanique d'héritage</strong> — un kit parent définit le style de base ; les kits enfants héritent, sauf ce qu'ils personnalisent :</p>
+        <div class="heritage-tree">
+          <div class="parent-node">Alliés — frontière, police, texture de base</div>
+          <div class="tree-lines"></div>
+          <div class="children-row">
+            <div class="child-node">France<span class="inherit">hérite : police, texture</span><span class="override">override : couleur, emblème</span></div>
+            <div class="child-node">Royaume-Uni<span class="inherit">hérite : police, texture</span><span class="override">override : couleur, emblème</span></div>
+            <div class="child-node">USA<span class="inherit">hérite : police, texture</span><span class="override">override : couleur, emblème</span></div>
+          </div>
+        </div>
+        <p style="font-size:.85rem;color:var(--ink-soft);">Si le parent change de style, les enfants suivent — sauf ce qu'ils ont explicitement personnalisé.</p>
+
+        <p style="margin-top:1.2rem;"><strong>Neuf champs de spécification :</strong></p>
+        <div class="field-list">
+          <div>Identité : nom auto-affiché, ère associée, kit parent optionnel</div>
+          <div>Couleurs : remplissage territoire, contour, survol/sélection</div>
+          <div>Emblème : drapeau/blason upload ou bibliothèque, + variante mini</div>
+          <div>Typographie : police des labels de la faction</div>
+          <div>Style de territoire : épaisseur contour, intensité du tremblé organique, easing/overshoot par défaut</div>
+          <div>Style de mouvement : épaisseur/style de flèche, forme de tête, vitesse d'animation</div>
+          <div>Icônes d'unités optionnelles (infanterie / cavalerie / marine)</div>
+          <div>Héritage : kit parent + liste des champs overridés vs hérités</div>
+          <div>Métadonnées bibliothèque : officiel (OPENMAP) vs perso, tags de recherche</div>
+        </div>
+
+        <div class="era-tags">
+          <span>Antiquité</span><span>Moyen Âge</span><span>Temps modernes</span><span>Ère contemporaine</span>
+        </div>
+        <p style="font-size:.85rem;color:var(--ink-soft);margin-top:.5rem;">Priorisation du contenu v1 : principales factions par ère plutôt que l'exhaustivité au lancement.</p>
+
+        <div class="risk-note">Risque identifié : une bibliothèque de drapeaux/kits « bien fournie dès le départ » est un vrai chantier de contenu (exactitude historique, droits/domaine public) — à traiter en phase d'implémentation, pas en brainstorming. Sources candidates évoquées à explorer : flaglog.com/historical, fr.flagsdb.com, touslesdrapeaux.xyz/empires.html — licences à vérifier avant tout usage commercial.</div>
+      </div>
+    </div>
+
+    <!-- Système d'animation -->
+    <div class="spec-block anim">
+      <div class="spec-head">
+        <div class="icon-badge"><svg><use href="#iconCamera"/></svg></div>
+        <h3>Le système d'animation</h3>
+      </div>
+      <div class="spec-body">
+        <p>Timeline maître scrubbable, avec une trame narrative en 3 actes par défaut — modifiable, et complétable par des beats/keyframes custom sur des dates ou événements.</p>
+        <div class="act-timeline">
+          <div class="act"><div class="dot"></div><b>Avant</b><p>Mise en place des territoires et factions</p><div class="line"></div></div>
+          <div class="act"><div class="dot"></div><b>Pendant</b><p>Mouvements, bascules de territoire, flèches</p><div class="line"></div></div>
+          <div class="act"><div class="dot"></div><b>Après</b><p>Résultat, nouvelles frontières</p></div>
+        </div>
+
+        <div class="feature-chips">
+          <span>territoire pulse avant bascule de couleur</span>
+          <span>flèche de troupe dessinée en direct</span>
+          <span>icônes d'unité en overshoot</span>
+          <span>légendes en kinetic typography</span>
+          <span>zoom motivé automatique (override manuel possible)</span>
+          <span>barres de progression façon score de conquête</span>
+        </div>
+
+        <div class="fog-demo"></div>
+
+        <p style="margin-top:1.2rem;"><strong>Contrôle utilisateur :</strong> vitesse de lecture ajustable, export d'une image figée à un point de la timeline OU d'une vidéo sur une plage donnée, granularité jour/mois/année réglée <em>manuellement</em> par l'utilisateur (pas de détection auto), en partant d'un template ou de zéro.</p>
+        <p><strong>Règles globales « organique » :</strong> easing overshoot par défaut, bordures tremblées, pulsations façon battement de cœur.</p>
+      </div>
+    </div>
+
+    <!-- Templates de fond de carte -->
+    <div class="spec-block tmpl">
+      <div class="spec-head">
+        <div class="icon-badge"><svg><use href="#iconMap"/></svg></div>
+        <h3>Les templates de fond de carte</h3>
+      </div>
+      <div class="spec-body">
+        <p>Catégorisés par ère et par type de contenu, avec une structure temporelle et des éléments déjà pré-placés — mais rien n'est verrouillé.</p>
+        <div class="tmpl-grid">
+          <div class="tmpl-tile t1"><span>Bataille ponctuelle</span></div>
+          <div class="tmpl-tile t2"><span>Campagne</span></div>
+          <div class="tmpl-tile t3"><span>Expansion sur la durée</span></div>
+          <div class="tmpl-tile t4"><span>Géopolitique actuelle</span></div>
+        </div>
+
+        <p style="margin-top:1rem;"><strong>Structure temporelle pré-remplie</strong>, façon mad-lib :</p>
+        <p class="madlib">Le <span class="blank">[territoire]</span> bascule de <span class="blank">[Faction A]</span> vers <span class="blank">[Faction B]</span> entre <span class="blank">[date de début]</span> et <span class="blank">[date de fin]</span>, avec une granularité <span class="blank">[jour / mois / année]</span>.</p>
+
+        <p style="margin-top:1rem;">Fond au choix : tracé historique (frontières d'époque) ou fond moderne neutre ; thème visuel parchemin organique / sombre / clair / satellite ; échelle et zoom de départ prédéfinis. Territoires vierges prêts à assigner à un Kit de Faction, flèches suggérées, labels placeholder.</p>
+
+        <div class="flex-note">Rien n'est verrouillé : ajout/suppression de territoires, changement de fond, ou import d'une carte externe perso pour remplacer le fond fourni — cohérent avec la tension vitesse/personnalisation.</div>
+      </div>
+    </div>
+
+    <!-- Boîte à outils -->
+    <div class="spec-block tools">
+      <div class="spec-head">
+        <div class="icon-badge"><svg><use href="#iconLayers"/></svg></div>
+        <h3>La boîte à outils de l'éditeur</h3>
+      </div>
+      <div class="spec-body">
+        <p>Canvas libre en mode édition (zoom/pan) vs mode présentation piloté par la caméra automatique, avec des calques pour organiser les éléments.</p>
+        <div class="toolbar">
+          <div class="tool-groups" style="width:100%;">
+            <div class="tool-group-label">Contenu</div>
+            <div style="display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;">
+              <div class="tool-btn"><svg><use href="#iconMap"/></svg>Territoire</div>
+              <div class="tool-btn"><svg><use href="#iconArrowRight"/></svg>Flèche</div>
+              <div class="tool-btn"><svg><use href="#iconText"/></svg>Texte / Légende</div>
+              <div class="tool-btn"><svg><use href="#iconPin"/></svg>Icône / Pion</div>
+              <div class="tool-btn"><svg><use href="#iconUpload"/></svg>Import</div>
+            </div>
+            <div class="tool-group-label">Style</div>
+            <div style="display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;">
+              <div class="tool-btn"><svg><use href="#iconFlag"/></svg>Kit de Faction</div>
+              <div class="tool-btn"><svg><use href="#iconLayers"/></svg>Fond / Template</div>
+            </div>
+            <div class="tool-group-label">Temporel</div>
+            <div style="display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;">
+              <div class="tool-btn"><svg><use href="#iconClock"/></svg>Timeline</div>
+              <div class="tool-btn"><svg><use href="#iconCamera"/></svg>Caméra</div>
+              <div class="tool-btn"><svg><use href="#iconEye"/></svg>Effets d'ambiance</div>
+            </div>
+            <div class="tool-group-label">Production</div>
+            <div style="display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;">
+              <div class="tool-btn"><svg><use href="#iconExport"/></svg>Export</div>
+              <div class="tool-btn"><svg><use href="#iconUndo"/></svg>Undo / Redo</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <svg class="tear"><use href="#tornEdge"/></svg>
+
+  <!-- ===================== SYNTHESIS / CLIMAX ===================== -->
+  <section class="panel" id="synthese">
+    <div class="synth-panel">
+      <div class="seal"><svg><use href="#iconCrown"/></svg></div>
+      <h2>Synthèse finale</h2>
+      <p class="synth-lead">Le produit est un système de préréglages réutilisables — <strong>Kit de Faction</strong> + <strong>Templates de fond de carte</strong> + <strong>simplicité Canva</strong> — qui rendent une carte animée pro accessible en quelques clics, sans compétences en design ni en motion.</p>
+
+      <div class="diff-angle">
+        <p><b>Angle de différenciation :</b> le style <strong>organique</strong> — bordures tremblées, easing overshoot — donne une personnalisation perçue même sur un template brut. C'est la réponse concrète à la tension vitesse/personnalisation. Positionnement de lancement : web-based, simple, ludique/RTS, face à un AnimateMyMap qui joue le contrôle technique exhaustif sans Kit de Faction ni identité organique/ludique.</p>
+        <p style="margin-top:.6rem;font-size:.9rem;"><em>Test de rupture prioritaire à valider avec de vrais utilisateurs : la profondeur de personnalisation des templates (cf. persona Terrabellum — « je pars si pas personnalisable »).</em></p>
+      </div>
+
+      <div class="moscow">
+        <div class="col must">
+          <h4>Must — v1</h4>
+          <ul>
+            <li>Canva-like : drag-drop, templates, simplicité</li>
+            <li>Kit de Faction, avec héritage des sous-factions</li>
+            <li>Bibliothèque de kits de factions historiques (par ère, sans viser l'exhaustif day-1)</li>
+            <li>Import de visuels propres</li>
+            <li>Export image + vidéo</li>
+            <li>Timeline scrubbable + micro-animations organiques par défaut</li>
+          </ul>
+        </div>
+        <div class="col should">
+          <h4>Should</h4>
+          <ul>
+            <li>Signature organique : bordures tremblées + overshoot</li>
+            <li>Zoom motivé caméra automatique</li>
+            <li>Scope géopolitique actualité</li>
+          </ul>
+        </div>
+        <div class="col could">
+          <h4>Could</h4>
+          <ul>
+            <li>Habillage UI façon RTS / ludique</li>
+            <li>Export 4K / multi-formats exhaustif</li>
+            <li>Bibliothèque communautaire de templates</li>
+          </ul>
+        </div>
+        <div class="col wont">
+          <h4>Won't (v1)</h4>
+          <ul>
+            <li>Rivaliser sur le contrôle technique fin façon AnimateMyMap (9 animations de frontière, flèches bézier, etc.)</li>
+          </ul>
+          <p style="font-size:.78rem;color:var(--parchment-2);opacity:.85;margin-top:.6rem;">Stratégie : la simplicité plutôt que l'exhaustivité.</p>
+        </div>
+      </div>
+
+      <p class="closing-note">Session de brainstorming clôturée le 24 septembre 2026 — carte d'idées complète, prête pour la planification produit.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <svg class="icon"><use href="#iconMap"/></svg>OPENMAP — carnet de brainstorming généré à partir de la session « brainstorm-carte-historique-en-ligne-2026-09-21 »
+</footer>
+
+<script>
+(function(){
+  try{
+    var links = Array.prototype.slice.call(document.querySelectorAll('.trail-stop'));
+    var sections = links.map(function(a){
+      var id = a.getAttribute('href').slice(1);
+      return document.getElementById(id);
+    });
+    if('IntersectionObserver' in window){
+      var obs = new IntersectionObserver(function(entries){
+        entries.forEach(function(entry){
+          var idx = sections.indexOf(entry.target);
+          if(idx === -1) return;
+          if(entry.isIntersecting){
+            links.forEach(function(l){ l.classList.remove('active'); });
+            links[idx].classList.add('active');
+          }
+        });
+      }, {rootMargin:'-40% 0px -50% 0px', threshold:0});
+      sections.forEach(function(s){ if(s) obs.observe(s); });
+    }
+  }catch(e){ /* progressive enhancement only */ }
+})();
+</script>
+
+</body>
+</html>
