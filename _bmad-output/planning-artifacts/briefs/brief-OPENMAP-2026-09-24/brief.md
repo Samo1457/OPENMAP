@@ -19,7 +19,7 @@ OPENMAP est un éditeur web pour créer des cartes historiques et géopolitiques
 
 ## Ce Qui Différencie OPENMAP
 
-Face à AnimateMyMap et aux autres outils d'animation de cartes, qui misent sur le contrôle technique exhaustif (9 animations de frontière, flèches bézier, 5 modes caméra...), OPENMAP mise sur l'inverse : la simplicité guidée façon Canva, un Kit de Faction réutilisable — avec héritage de sous-factions — qu'aucun concurrent identifié ne propose, et une signature visuelle organique qui donne une impression de personnalisation même sur un template généré en quelques clics.
+Face à AnimateMyMap et aux autres outils d'animation de cartes, qui misent sur le contrôle technique exhaustif (9 animations de frontière, réglages bézier fins pour les flèches...), OPENMAP mise sur l'inverse : la simplicité guidée façon Canva, un Kit de Faction réutilisable — avec héritage de sous-factions — qu'aucun concurrent identifié ne propose, et une signature visuelle organique qui donne une impression de personnalisation même sur un template généré en quelques clics. Ça n'empêche pas de reprendre ce qu'AnimateMyMap a déjà bien simplifié — ses modes de caméra prédéfinis (top-down, fly-to, orbit, sweep, bounce) en sont un bon exemple, et seront repris comme presets plutôt que réinventés.
 
 **Honnêteté sur la défensibilité** : le Kit de Faction et le style organique sont des choix de design réplicables par n'importe quel concurrent qui constate que ça marche — ce n'est pas là qu'est le vrai moat. Le chantier réellement défendable, c'est la **donnée** elle-même : un jeu de données historique et graphique (frontières précises par époque, drapeaux, blasons, kits de factions) correctement sourcé, vérifié et aux droits propres. C'est long à construire, difficile à répliquer rapidement une fois bien fait — et c'est aussi le plus gros risque d'exécution du projet (voir note sourcing de contenu).
 
@@ -36,3 +36,9 @@ Succès pour eux : produire une carte perçue comme "pro" en quelques minutes pl
 **Signal principal** : des créateurs de contenu adoptent OPENMAP et en parlent spontanément — mention dans une vidéo, partage organique, recommandation à un pair — sans sollicitation ni promotion payante de notre part. C'est la preuve que l'utilité dépasse la simple curiosité.
 
 **Monétisation volontairement non définie à ce stade.** Priorité assumée : prouver l'utilité et obtenir une adoption organique avant de se poser la question du modèle économique.
+
+## Périmètre (v1)
+
+**Dans le périmètre** : expérience façon Canva (drag-and-drop, templates, simplicité) ; Kit de Faction avec héritage de sous-factions ; bibliothèque de kits de factions et de fonds de carte historiques pré-faits, priorisée par grande ère (Antiquité, Moyen Âge, Temps modernes, Contemporain — pas d'exhaustivité dès le lancement) ; import de visuels/cartes personnels ; export image et vidéo ; timeline scrubbable avec micro-animations organiques par défaut ; modes de caméra prédéfinis simples repris d'AnimateMyMap (top-down, fly-to, orbit, sweep, bounce) — leurs bonnes idées déjà simplifiées sont à récupérer, pas à éviter.
+
+**Volontairement hors périmètre v1** : le contrôle technique *granulaire* et exhaustif à la AnimateMyMap — multiples animations de frontière fines, réglages bézier avancés, personnalisation poussée de chaque paramètre. La nuance : on pique leurs fonctionnalités déjà simplifiées (comme les modes de caméra), mais sans chercher à égaler leur profondeur de réglage — le pari reste la simplicité, pas l'exhaustivité. Repoussés après la v1 : habillage UI complet façon RTS, export 4K/formats exhaustifs, bibliothèque communautaire de templates, modèle de monétisation.
