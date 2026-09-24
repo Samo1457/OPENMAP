@@ -30,3 +30,9 @@ Face à AnimateMyMap et aux autres outils d'animation de cartes, qui misent sur 
 Succès pour eux : produire une carte perçue comme "pro" en quelques minutes plutôt qu'en plusieurs heures, sans sortir de leur flux de production vidéo habituel.
 
 **Utilisateurs secondaires** : profs/enseignants (support pédagogique en histoire/géopolitique) et passionnés d'histoire/wargame amateurs qui veulent visualiser une bataille ou une campagne sans compétences techniques.
+
+## Critères de Succès
+
+**Signal principal** : des créateurs de contenu adoptent OPENMAP et en parlent spontanément — mention dans une vidéo, partage organique, recommandation à un pair — sans sollicitation ni promotion payante de notre part. C'est la preuve que l'utilité dépasse la simple curiosité.
+
+**Monétisation volontairement non définie à ce stade.** Priorité assumée : prouver l'utilité et obtenir une adoption organique avant de se poser la question du modèle économique.
