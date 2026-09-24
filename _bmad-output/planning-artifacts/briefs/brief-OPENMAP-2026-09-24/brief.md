@@ -22,3 +22,11 @@ OPENMAP est un éditeur web pour créer des cartes historiques et géopolitiques
 Face à AnimateMyMap et aux autres outils d'animation de cartes, qui misent sur le contrôle technique exhaustif (9 animations de frontière, flèches bézier, 5 modes caméra...), OPENMAP mise sur l'inverse : la simplicité guidée façon Canva, un Kit de Faction réutilisable — avec héritage de sous-factions — qu'aucun concurrent identifié ne propose, et une signature visuelle organique qui donne une impression de personnalisation même sur un template généré en quelques clics.
 
 **Honnêteté sur la défensibilité** : le Kit de Faction et le style organique sont des choix de design réplicables par n'importe quel concurrent qui constate que ça marche — ce n'est pas là qu'est le vrai moat. Le chantier réellement défendable, c'est la **donnée** elle-même : un jeu de données historique et graphique (frontières précises par époque, drapeaux, blasons, kits de factions) correctement sourcé, vérifié et aux droits propres. C'est long à construire, difficile à répliquer rapidement une fois bien fait — et c'est aussi le plus gros risque d'exécution du projet (voir note sourcing de contenu).
+
+## Qui Ça Sert
+
+**Utilisateur primaire** : créateurs de contenu historique et géopolitique (YouTubeurs, vulgarisateurs, monteurs) qui publient régulièrement et ont besoin de cartes animées pour illustrer leurs vidéos, sans budget ni compétences motion design. Persona repère : Terrabellum — reste si les templates sont rapides à utiliser, part si la personnalisation est trop bridée.
+
+Succès pour eux : produire une carte perçue comme "pro" en quelques minutes plutôt qu'en plusieurs heures, sans sortir de leur flux de production vidéo habituel.
+
+**Utilisateurs secondaires** : profs/enseignants (support pédagogique en histoire/géopolitique) et passionnés d'histoire/wargame amateurs qui veulent visualiser une bataille ou une campagne sans compétences techniques.
