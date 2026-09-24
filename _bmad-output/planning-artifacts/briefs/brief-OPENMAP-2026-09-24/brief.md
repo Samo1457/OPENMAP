@@ -4,3 +4,11 @@ status: draft
 created: 2026-09-24
 updated: 2026-09-24
 ---
+
+## Le Problème
+
+Les créateurs de contenu historique et géopolitique qui veulent illustrer leurs vidéos avec des cartes animées — batailles, conquêtes, évolutions de frontières — n'ont aujourd'hui que deux options : bricoler eux-mêmes avec une suite pro (Photoshop, After Effects, Illustrator) sans avoir les compétences ni le temps design/motion, ou payer un motion designer, ce qui coûte cher et crée une dépendance à chaque nouvelle vidéo.
+
+**Hypothèse de travail (non encore validée par une recherche utilisateur formelle)** : la douleur centrale est double — le temps passé à produire une carte correcte, et le coût des outils/prestataires professionnels. Le job réel recherché n'est pas "faire une carte" mais "avoir l'air pro sans le budget ni les compétences design/motion".
+
+Ce qu'on sait avec plus de certitude : le marché existe déjà (AnimateMyMap et consorts en sont la preuve vivante), un écosystème de tutoriels YouTube ("comment créer telle carte de bataille" en Photoshop/After Effects) existe et suggère que la production manuelle est assez technique/pénible pour générer sa propre demande de contenu pédagogique, et un petit groupe informel de créateurs de contenu géopolitique a réagi favorablement au concept sans toutefois confirmer précisément cette douleur dans leurs propres mots. À valider avant ou pendant le build.
