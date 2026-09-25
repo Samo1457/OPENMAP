@@ -1,8 +1,8 @@
 ---
 title: OPENMAP
-status: draft
+status: final
 created: 2026-09-24
-updated: 2026-09-24
+updated: 2026-09-25
 ---
 
 ## Résumé Exécutif
