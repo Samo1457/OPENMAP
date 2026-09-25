@@ -27,7 +27,7 @@ OPENMAP est un éditeur web pour créer des cartes historiques et géopolitiques
 
 ## Ce Qui Différencie OPENMAP
 
-Face à AnimateMyMap et aux autres outils d'animation de cartes, qui misent sur le contrôle technique exhaustif (9 animations de frontière, réglages bézier fins pour les flèches...), OPENMAP mise sur l'inverse : la simplicité guidée façon Canva, un Kit de Faction réutilisable — avec héritage de sous-factions — qu'aucun concurrent identifié ne propose, et une signature visuelle organique qui donne une impression de personnalisation même sur un template généré en quelques clics. Ça n'empêche pas de reprendre ce qu'AnimateMyMap a déjà bien simplifié — ses modes de caméra prédéfinis (top-down, fly-to, orbit, sweep, bounce) en sont un bon exemple, et seront repris comme presets plutôt que réinventés.
+Face à AnimateMyMap et aux autres outils d'animation de cartes, qui misent sur le contrôle technique exhaustif (9 animations de frontière, réglages bézier fins pour les flèches...), OPENMAP mise sur l'inverse : la simplicité guidée façon Canva ; un Kit de Faction réutilisable — avec héritage de sous-factions — qu'aucun concurrent identifié ne propose ; et une signature visuelle organique qui donne une impression de personnalisation même sur un template généré en quelques clics. Ça n'empêche pas de reprendre ce qu'AnimateMyMap a déjà bien simplifié — ses modes de caméra prédéfinis (top-down, fly-to, orbit, sweep, bounce) en sont un bon exemple, et seront repris comme presets plutôt que réinventés.
 
 **Honnêteté sur la défensibilité** : le Kit de Faction et le style organique sont des choix de design réplicables par n'importe quel concurrent qui constate que ça marche — ce n'est pas là qu'est le vrai moat. Le chantier réellement défendable, c'est la **donnée** elle-même : un jeu de données historique et graphique (frontières précises par époque, drapeaux, blasons, kits de factions) correctement sourcé, vérifié et aux droits propres. C'est long à construire, difficile à répliquer rapidement une fois bien fait — et c'est aussi le plus gros risque d'exécution du projet (voir note sourcing de contenu).
 
@@ -37,7 +37,7 @@ Face à AnimateMyMap et aux autres outils d'animation de cartes, qui misent sur 
 
 Succès pour eux : produire une carte perçue comme "pro" en quelques minutes plutôt qu'en plusieurs heures, sans sortir de leur flux de production vidéo habituel.
 
-**Utilisateurs secondaires** : profs/enseignants (support pédagogique en histoire/géopolitique) et passionnés d'histoire/wargame amateurs qui veulent visualiser une bataille ou une campagne sans compétences techniques.
+**Utilisateurs secondaires** : profs/enseignants (support pédagogique en histoire/géopolitique) et amateurs passionnés d'histoire/wargame qui veulent visualiser une bataille ou une campagne sans compétences techniques.
 
 ## Critères de Succès
 
@@ -47,9 +47,24 @@ Succès pour eux : produire une carte perçue comme "pro" en quelques minutes pl
 
 ## Périmètre (v1)
 
-**Dans le périmètre** : expérience façon Canva (drag-and-drop, templates, simplicité) ; Kit de Faction avec héritage de sous-factions ; bibliothèque de kits de factions et de fonds de carte historiques pré-faits, priorisée par grande ère (Antiquité, Moyen Âge, Temps modernes, Contemporain — pas d'exhaustivité dès le lancement) ; import de visuels/cartes personnels ; export image et vidéo ; timeline scrubbable avec micro-animations organiques par défaut ; modes de caméra prédéfinis simples repris d'AnimateMyMap (top-down, fly-to, orbit, sweep, bounce) — leurs bonnes idées déjà simplifiées sont à récupérer, pas à éviter.
+**Dans le périmètre** :
 
-**Volontairement hors périmètre v1** : le contrôle technique *granulaire* et exhaustif à la AnimateMyMap — multiples animations de frontière fines, réglages bézier avancés, personnalisation poussée de chaque paramètre. La nuance : on pique leurs fonctionnalités déjà simplifiées (comme les modes de caméra), mais sans chercher à égaler leur profondeur de réglage — le pari reste la simplicité, pas l'exhaustivité. Repoussés après la v1 : habillage UI complet façon RTS, export 4K/formats exhaustifs, bibliothèque communautaire de templates, modèle de monétisation.
+- Expérience façon Canva (drag-and-drop, templates, simplicité)
+- Kit de Faction avec héritage de sous-factions
+- Bibliothèque de kits de factions et de fonds de carte historiques pré-faits, priorisée par grande ère (Antiquité, Moyen Âge, Temps modernes, Contemporain — pas d'exhaustivité dès le lancement)
+- Import de visuels/cartes personnels
+- Export image et vidéo
+- Timeline scrubbable avec micro-animations organiques par défaut
+- Modes de caméra prédéfinis simples repris d'AnimateMyMap (top-down, fly-to, orbit, sweep, bounce) — leurs bonnes idées déjà simplifiées sont à récupérer, pas à éviter
+
+**Volontairement hors périmètre v1** : le contrôle technique *granulaire* et exhaustif à la AnimateMyMap — multiples animations de frontière fines, réglages bézier avancés, personnalisation poussée de chaque paramètre. La nuance : on pique leurs fonctionnalités déjà simplifiées (comme les modes de caméra), mais sans chercher à égaler leur profondeur de réglage — le pari reste la simplicité, pas l'exhaustivité.
+
+Repoussés après la v1 :
+
+- Habillage UI complet façon RTS
+- Export 4K/formats exhaustifs
+- Bibliothèque communautaire de templates
+- Modèle de monétisation
 
 ## Vision
 
