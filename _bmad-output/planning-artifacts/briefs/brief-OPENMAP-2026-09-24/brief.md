@@ -5,6 +5,14 @@ created: 2026-09-24
 updated: 2026-09-24
 ---
 
+## Résumé Exécutif
+
+OPENMAP est un éditeur web pour créer des cartes historiques et géopolitiques animées — batailles, conquêtes, évolutions de frontières — aussi simple à utiliser que Canva. Il vise les créateurs de contenu historique/géopolitique (YouTubeurs, vulgarisateurs) qui aujourd'hui bricolent avec Photoshop/After Effects sans les compétences motion design, ou paient un prestataire, pour produire une carte qui a l'air pro.
+
+Le marché existe déjà (AnimateMyMap en tête) — pas d'océan bleu à trouver — mais un angle mort net : personne ne propose de Kit de Faction réutilisable (branding par camp, avec héritage de sous-factions), de signature d'animation organique, ni une expérience aussi guidée façon Canva. OPENMAP reprend par ailleurs ce que ces outils ont déjà bien simplifié (comme leurs modes de caméra), plutôt que de tout réinventer.
+
+Le vrai risque n'est ni technique ni de design — il est double : la profondeur de personnalisation des templates doit tenir la promesse de rapidité sans frustrer l'utilisateur (persona repère Terrabellum : reste si les templates sont vite utilisables, part si trop bridés), et la constitution d'une bibliothèque de données historiques (frontières par époque, drapeaux, blasons) fiable et aux droits propres — le véritable chantier défendable du projet. Le projet est en phase d'exploration solo, sans deadline ni modèle de monétisation arrêté : la priorité est de prouver l'utilité avant de chercher à monétiser.
+
 ## Le Problème
 
 Les créateurs de contenu historique et géopolitique qui veulent illustrer leurs vidéos avec des cartes animées — batailles, conquêtes, évolutions de frontières — n'ont aujourd'hui que deux options : bricoler eux-mêmes avec une suite pro (Photoshop, After Effects, Illustrator) sans avoir les compétences ni le temps design/motion, ou payer un motion designer, ce qui coûte cher et crée une dépendance à chaque nouvelle vidéo.
@@ -42,3 +50,7 @@ Succès pour eux : produire une carte perçue comme "pro" en quelques minutes pl
 **Dans le périmètre** : expérience façon Canva (drag-and-drop, templates, simplicité) ; Kit de Faction avec héritage de sous-factions ; bibliothèque de kits de factions et de fonds de carte historiques pré-faits, priorisée par grande ère (Antiquité, Moyen Âge, Temps modernes, Contemporain — pas d'exhaustivité dès le lancement) ; import de visuels/cartes personnels ; export image et vidéo ; timeline scrubbable avec micro-animations organiques par défaut ; modes de caméra prédéfinis simples repris d'AnimateMyMap (top-down, fly-to, orbit, sweep, bounce) — leurs bonnes idées déjà simplifiées sont à récupérer, pas à éviter.
 
 **Volontairement hors périmètre v1** : le contrôle technique *granulaire* et exhaustif à la AnimateMyMap — multiples animations de frontière fines, réglages bézier avancés, personnalisation poussée de chaque paramètre. La nuance : on pique leurs fonctionnalités déjà simplifiées (comme les modes de caméra), mais sans chercher à égaler leur profondeur de réglage — le pari reste la simplicité, pas l'exhaustivité. Repoussés après la v1 : habillage UI complet façon RTS, export 4K/formats exhaustifs, bibliothèque communautaire de templates, modèle de monétisation.
+
+## Vision
+
+OPENMAP reste centré sur les cartes historiques et géopolitiques — pas de dérive vers la cartographie généraliste. Deux extensions naturelles si le noyau fonctionne : un usage éducatif assumé (au-delà des enseignants en public secondaire actuel — support pédagogique reconnu en établissement), et potentiellement une couche ludique où l'utilisateur ne se contente plus de raconter une bataille passée mais peut la rejouer ou la simuler, dans l'esprit RTS qui inspire déjà le style visuel.
