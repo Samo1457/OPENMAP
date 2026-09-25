@@ -1,6 +1,6 @@
 # Addendum — OPENMAP
 
-Détail technique issu de la session de brainstorming, trop dense pour le brief mais utile comme base directe pour la PRD, l'architecture ou la conception UX. Source : `brainstorm-intent.md` et `.memlog.md` de la session de brainstorming (2026-09-21).
+Détail technique issu de la session de brainstorming, trop dense pour le brief mais utile comme base directe pour la PRD, l'architecture ou la conception UX. Source : `brainstorm-intent.md` et `.memlog.md` de cette session (2026-09-21).
 
 ## Spec : Kit de Faction
 
