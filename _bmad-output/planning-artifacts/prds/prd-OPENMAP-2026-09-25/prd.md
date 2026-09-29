@@ -3,6 +3,7 @@ title: OPENMAP — PRD
 status: final
 created: 2026-09-25
 updated: 2026-09-29
+architecture: architecture/architecture-OPENMAP-2026-09-29/ARCHITECTURE-SPINE.md
 ---
 
 # PRD : OPENMAP
@@ -14,7 +15,7 @@ Cette PRD définit ce qu'OPENMAP v1 doit permettre de faire, pour servir de base
 
 **Autorité.** En cas de divergence avec l'addendum du brief, la PRD prévaut. Un élément de l'addendum du brief absent de la PRD est hors v1, sauf mention contraire.
 
-**Lecture.** Le vocabulaire est fixé par le Glossaire (§3) et s'emploie tel quel partout. Les exigences fonctionnelles (FR) sont numérotées globalement et portent une priorité **[P0]**, **[P1]** ou **[P2]** (§10). Les hypothèses sont marquées `[HYPOTHÈSE]` et indexées en §14. Le détail technique (pistes de stack, jeux de données, fournisseur satellite, analyse des références) vit dans `addendum.md`.
+**Lecture.** Le vocabulaire est fixé par le Glossaire (§3) et s'emploie tel quel partout. Les exigences fonctionnelles (FR) sont numérotées globalement et portent une priorité **[P0]**, **[P1]** ou **[P2]** (§10). Les hypothèses sont marquées `[HYPOTHÈSE]` et indexées en §14. Le détail technique (pistes de stack, jeux de données, fournisseur satellite, analyse des références) vit dans `addendum.md` ; les choix techniques arrêtés vivent dans la spine d'architecture (`architecture/architecture-OPENMAP-2026-09-29/ARCHITECTURE-SPINE.md`), qui prévaut sur l'addendum pour la technique.
 
 ## 1. Vision
 
@@ -45,7 +46,7 @@ Publics : créateurs de contenu historique et géopolitique (primaire) ; enseign
 ### 2.3 Parcours utilisateur clés
 
 - **UJ-1. Terrabellum sort un Short sur le siège de Marioupol le soir même.**
-  Terrabellum, YouTubeur géopolitique, veut publier un Short vertical pendant que le sujet est chaud. Il ouvre OPENMAP sur son PC, sans compte. Dans l'assistant, il choisit le Template « Conflit contemporain — siège de ville », tape « Marioupol » comme Région, la Date de référence 2022 et les Factions Russie et Ukraine, dont les Kits officiels s'appliquent automatiquement. Il passe en Fond satellite, dessine la Poche ukrainienne à main levée, puis crée une Étape par semaine de mars à mai, en resserrant le tracé de la Poche à chaque fois. Il aligne des badges ronds à drapeau le long de la Ligne de front — ils suivront le front à chaque Étape —, ajoute un Compteur d'effectifs par camp et un Horodatage qui défile jour après jour. Il scrubbe la Timeline : la Poche se resserre en se déformant, avec la Signature organique. Il exporte en 9:16. **Climax :** en moins de 20 minutes depuis l'ouverture, il a un MP4 vertical prêt pour son montage. **Cas limite :** il trouve le tracé de la Poche trop grossier à la 3e Étape ; il corrige ses points à cette Étape, et la correction s'applique aux Étapes suivantes qui n'ont pas leur propre tracé, sans toucher aux Étapes 1 et 2.
+  Terrabellum, YouTubeur géopolitique, veut publier un Short vertical pendant que le sujet est chaud. Il ouvre OPENMAP sur son PC, sans compte. Dans l'assistant, il choisit le Template « Conflit contemporain — siège de ville », tape « Marioupol » comme Région, la Date de référence 2022 et les Factions Russie et Ukraine, dont les Kits officiels s'appliquent automatiquement. Il passe en Fond satellite (imagerie de 2016 : la ville y apparaît d'avant-guerre, ce qui lui convient comme fond), dessine la Poche ukrainienne à main levée, puis crée une Étape par semaine de mars à mai, en resserrant le tracé de la Poche à chaque fois. Il aligne des badges ronds à drapeau le long de la Ligne de front — ils suivront le front à chaque Étape —, ajoute un Compteur d'effectifs par camp et un Horodatage qui défile jour après jour. Il scrubbe la Timeline : la Poche se resserre en se déformant, avec la Signature organique. Il exporte en 9:16. **Climax :** en moins de 20 minutes depuis l'ouverture, il a un MP4 vertical prêt pour son montage. **Cas limite :** il trouve le tracé de la Poche trop grossier à la 3e Étape ; il corrige ses points à cette Étape, et la correction s'applique aux Étapes suivantes qui n'ont pas leur propre tracé, sans toucher aux Étapes 1 et 2.
 
 - **UJ-2. Terrabellum raconte l'expansion ottomane dans les Balkans.**
   Pour une vidéo longue en 16:9, il part du Template « Expansion d'empire » (Ère Temps modernes), Date de référence 1450. Il applique le Kit officiel « Empire ottoman » — une copie propre au Projet — puis crée une Sous-faction « Vassaux ottomans » qui hérite du style mais change de couleur. Étape après étape (1453, 1459, 1463…), il désigne l'Empire ottoman comme attaquant et peint au pinceau les Entités géographiques conquises ; là où les données n'ont pas le découpage voulu, il peint librement une surface qui s'ajoute au Territoire ottoman. La Ligne de front se redessine seule face aux Factions en conflit, mais pas entre l'Empire et ses vassaux. Il choisit le Preset caméra « fly-to » pour les Étapes clés. **Climax :** en changeant la teinte du Kit parent à la fin, tous les Territoires, Flèches et Jetons ottomans — vassaux compris — se mettent à jour sur toute la Timeline. **Cas limite :** il enregistre sa version du Kit parmi ses Kits personnels pour sa prochaine vidéo ; le Kit officiel de la Bibliothèque reste inchangé.
@@ -141,7 +142,8 @@ Tout élément issu d'un Template peut être modifié, déplacé ou supprimé.
 L'utilisateur peut choisir un Fond stylisé (parchemin par défaut, sombre, clair, relief) ou satellite, et en changer à tout moment.
 - Changer de Fond ne modifie ni ne supprime aucun élément du Projet.
 - La luminosité, la saturation et une teinte du Fond sont réglables, pour que des Territoires semi-transparents restent lisibles sur le satellite.
-- Satellite : piste Copernicus Sentinel-2 (voir addendum et Q2). S'il ne peut être servi, l'outil bascule sur le Fond sombre et le signale.
+- Satellite : mosaïque Sentinel-2 sans nuages d'EOX, millésime 2016 (licence CC BY 4.0), hébergée par OPENMAP. L'imagerie date de 2016 : les événements postérieurs (ex. destructions de 2022) n'y apparaissent pas. S'il ne peut être servi, l'outil bascule sur le Fond sombre et le signale.
+- Fonds stylisés : construits à partir de Natural Earth (domaine public) — côtes, fleuves, lacs, relief, sans routes modernes.
 
 #### FR-6 : Date de référence [P0]
 L'utilisateur fixe la Date de référence du Projet (dans l'assistant ou ensuite) ; la Carte affiche les Entités géographiques valides à cette date.
@@ -159,11 +161,12 @@ L'utilisateur peut rechercher un pays, une ville ou une Entité géographique pa
 #### FR-9 : Couches et libellés géographiques [P1]
 L'utilisateur peut afficher ou masquer villes, fleuves et noms de lieux, et renommer tout libellé dans son Projet. Réalise UJ-3.
 - Un Territoire peut afficher automatiquement le nom de sa Faction, placé dans sa surface et recentré quand cette surface change.
+- Les libellés de Carte s'affichent dans la langue des données sources (surtout l'anglais) et sont renommables dans le Projet ; ils ne changent pas avec la langue de l'interface. Les textes générés sur la Carte (dates de l'Horodatage, nombres des Compteurs, entrées automatiques de la Légende) suivent la **langue de la Carte**, réglage du Projet (français ou anglais, par défaut la langue de l'interface à la création). Traduction des noms de lieux : après la v1.
 
 #### FR-10 : Attribution des sources [P0]
-L'outil affiche la source et la licence des données utilisées par le Projet, et permet d'inclure le crédit dans l'export.
-- Chaque Fond et chaque jeu de frontières affiché a une attribution consultable.
-- L'option « crédit dans l'export » est activée par défaut quand la licence l'exige (ex. « Contains modified Copernicus Sentinel data [année] »).
+L'outil affiche la source et la licence des données utilisées par le Projet, et inclut le crédit dans l'export quand la licence l'exige.
+- Chaque Fond, chaque jeu de frontières et chaque élément de la Bibliothèque (Emblème, Icône, Template) affiché a une attribution consultable.
+- Quand la licence l'exige (ex. satellite : « Sentinel-2 cloudless by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2016) »), le crédit est **verrouillé** dans l'export : l'utilisateur choisit seulement son coin et sa discrétion (Discrète / Lisible), avec une courte explication. Les crédits facultatifs peuvent être masqués.
 
 #### FR-11 : Corriger les données dans un Projet [P1]
 L'utilisateur peut redessiner, découper ou fusionner une Entité géographique dans son Projet. Réalise UJ-2.
@@ -285,7 +288,7 @@ L'utilisateur peut ajouter titres, libellés et annotations, avec police, taille
 - Texte courbe le long d'un tracé (fleuves, régions) : [P2].
 
 #### FR-35 : Légende automatique [P1]
-L'outil génère une Légende à partir des Factions, motifs, Catégories de flèche, Zones d'annotation et types de Jetons présents ; l'utilisateur peut la masquer, la déplacer, renommer ses entrées et y ajouter des lignes. Réalise UJ-3.
+En P0, une Légende minimale non éditable (Factions présentes et leur couleur) est affichée pour satisfaire FR-2 ; la Légende complète et éditable ci-dessous arrive en P1. L'outil génère une Légende à partir des Factions, motifs, Catégories de flèche, Zones d'annotation et types de Jetons présents ; l'utilisateur peut la masquer, la déplacer, renommer ses entrées et y ajouter des lignes. Réalise UJ-3.
 - Ajouter une Faction au Projet l'ajoute à la Légende sans action manuelle.
 
 #### FR-36 : Compteurs [P1]
@@ -406,12 +409,13 @@ L'utilisateur peut basculer entre Mode édition (caméra libre) et Mode présent
 Au premier lancement, l'utilisateur accepte ou refuse l'envoi de statistiques d'usage anonymes ; il peut changer d'avis à tout moment.
 - Sans accord, aucune donnée d'usage n'est envoyée.
 - Avec accord, seuls des événements d'usage sont envoyés (création de Projet, export, usage de fonctions) ; jamais le contenu d'un Projet ni les médias importés.
+- Les statistiques vont à un serveur exploité par OPENMAP (outil auto-hébergé), jamais à un service tiers ; aucune requête de statistiques n'est émise avant l'accord, et un retrait efface l'identifiant anonyme du navigateur.
 
 ## 5. Données historiques et contenu
 
 C'est le chantier le plus risqué du projet ; il mérite ses propres règles.
 
-- **Licences** — Tant que la licence du code n'est pas tranchée (Q1), seules des données à licence permissive (domaine public, CC0, CC BY, MIT, Copernicus) entrent dans la Bibliothèque. Les données non commerciales (NC) sont exclues ; les données copyleft (GPL, ODbL, CC BY-SA) sont écartées jusqu'à décision. Pistes : Cliopatria (CC BY 4.0) pour l'historique, Natural Earth pour l'actuel, Copernicus Sentinel-2 pour le satellite — voir `addendum.md`.
+- **Licences** — Le code d'OPENMAP est fermé (Q1). Seules des données à licence permissive (domaine public, CC0, CC BY, MIT, conditions Copernicus) entrent dans la Bibliothèque et les Fonds. Les données non commerciales (NC) et copyleft (GPL, ODbL, CC BY-SA) sont exclues de la v1 : pas de tuiles OpenStreetMap, pas de mosaïques Copernicus sous CC BY-SA. Sources retenues : Cliopatria (CC BY 4.0) pour l'historique, Natural Earth (domaine public) pour les Fonds stylisés et l'actuel, EOX Sentinel-2 cloudless 2016 (CC BY 4.0) pour le satellite — voir `addendum.md`.
 - **Attribution** — Chaque élément de la Bibliothèque porte sa source et sa licence (FR-10).
 - **Drapeaux et blasons** — Aucun Emblème n'entre dans la Bibliothèque sans licence vérifiée. Les trois sites repérés pendant le brainstorming ne sont pas vérifiés et ne sont pas utilisables en l'état.
 - **Exactitude** — Les frontières historiques sont approximatives par nature ; l'outil n'affiche pas de fausse précision (date réelle des données, FR-6) et laisse l'utilisateur corriger (FR-11).
@@ -425,7 +429,7 @@ C'est le chantier le plus risqué du projet ; il mérite ses propres règles.
 - **NFR-3 Temps d'export** — Une vidéo de 60 s en 1080p/30 s'exporte en 3 minutes au plus sur la machine de référence. `[HYPOTHÈSE]`
 - **NFR-4 Navigateurs** — Chrome et Edge récents sur ordinateur sont pris en charge ; Firefox au mieux. Sur mobile ou tablette, un message explique que l'outil est conçu pour ordinateur. `[HYPOTHÈSE liée aux API d'encodage vidéo du navigateur]`
 - **NFR-5 Persistance** — Toute modification est persistée localement en 5 secondes au plus. `[HYPOTHÈSE sur le délai]`
-- **NFR-6 Confidentialité** — Aucun contenu de Projet ni média importé ne quitte la machine de l'utilisateur. Sont téléchargées : les tuiles de carte et les données de la Bibliothèque. Sont envoyées : les seules statistiques d'usage anonymes, si l'utilisateur les a acceptées (FR-58).
+- **NFR-6 Confidentialité** — Aucun contenu de Projet ni média importé ne quitte la machine de l'utilisateur. Sont téléchargées : les tuiles de carte et les données de la Bibliothèque, depuis des serveurs d'OPENMAP uniquement. Sont envoyées : les seules statistiques d'usage anonymes, si l'utilisateur les a acceptées (FR-58). Aucun service tiers (polices, cartes, suivi d'erreurs) n'est contacté pendant l'utilisation.
 - **NFR-7 Temps jusqu'à la première animation** — Via l'assistant, la Carte décrite en FR-2 est obtenue en moins de 2 minutes. `[HYPOTHÈSE]` (Les trois cibles de temps s'emboîtent : 2 min pour une première animation, NFR-7 ; 15 min pour un premier export, SM-2 ; 20 min pour un Short fini, UJ-1.)
 - **NFR-8 Écran** — Dès 1366×768, aucun panneau essentiel n'est masqué et aucun défilement horizontal n'est nécessaire. `[HYPOTHÈSE]`
 - **NFR-9 Divulgation progressive** — Par défaut, chaque panneau n'affiche que les réglages essentiels ; les réglages avancés restent accessibles derrière une action « plus d'options ». Répond à la tension vitesse/personnalisation (R1, SM-C1).
@@ -433,11 +437,11 @@ C'est le chantier le plus risqué du projet ; il mérite ses propres règles.
 ## 7. Esthétique et plateforme
 
 - **Esthétique** — La Signature organique et le Fond parchemin donnent le ton par défaut. L'esprit RTS vit sur la Carte dès la v1 : Jetons d'unité, conquête visible, puis Effets d'ambiance (FR-44, P2). Rendus visés : cartes d'alliances lisibles façon manuel (UJ-3), cartes de campagne vintage (UJ-4), timelapses satellite d'actualité (UJ-1). L'interface elle-même reste sobre en v1 ; son habillage façon RTS vient après.
-- **Plateforme** — Application web pour ordinateur uniquement (NFR-4). Pas d'application mobile ni de bureau.
+- **Plateforme** — Application web pour ordinateur uniquement (NFR-4). Pas d'application mobile ni de bureau. Interface en français et en anglais dès la v1 (Q4).
 
 ## 8. Monétisation
 
-Aucune en v1 : l'outil est gratuit et sans filigrane (`[HYPOTHÈSE]`), la priorité étant de prouver l'utilité et d'obtenir une adoption spontanée (§11). Le modèle économique sera défini après validation. Contrainte dès maintenant : ne rien construire (données, licences, fournisseurs) qui interdirait un usage commercial futur, et ne pas engager de coût récurrent sans plafond décidé. `[NOTE FOR PM : un produit gratuit qui sert des tuiles de carte a un coût d'hébergement qui croît avec l'usage — à chiffrer en architecture.]`
+Aucune en v1 : l'outil est gratuit et sans filigrane (`[HYPOTHÈSE]`), la priorité étant de prouver l'utilité et d'obtenir une adoption spontanée (§11). Le modèle économique sera défini après validation. Contrainte dès maintenant : ne rien construire (données, licences, fournisseurs) qui interdirait un usage commercial futur, et ne pas engager de coût récurrent sans plafond décidé. **Plafond d'hébergement :** 20 €/mois au-delà du serveur déjà payé par le porteur du projet (coût actuel : 0 € de plus) ; relevable en cas de succès, par décision explicite. Chiffrage et topologie : spine d'architecture (AD-18).
 
 ## 9. Non-objectifs
 
@@ -455,7 +459,7 @@ Aucune en v1 : l'outil est gratuit et sans filigrane (`[HYPOTHÈSE]`), la priori
 Trois niveaux, pour un développeur seul. La **tranche P0** est la version de validation à montrer aux créateurs avant d'aller plus loin (§12, R1).
 
 ### 10.1 P0 — tranche de validation
-Couvre UJ-1 et UJ-2 de bout en bout dans une forme simple : assistant et Templates (4.1), Fonds stylisés et satellite, Date de référence, recherche, attribution (FR-5, 6, 8, 10), Kits de Faction avec Sous-factions et Bibliothèque (FR-12 à 15), Territoires, conquête au pinceau, peinture libre, Relations et Ligne de front, motifs (FR-18 à 23, 25), Flèches et Jetons (FR-28, 30), textes (FR-34), transitions, Étapes, lecture, Signature organique, persistance (FR-39 à 42, 45), Presets caméra et cadrage manuel (FR-46, 47), import d'images (FR-48), export vidéo (FR-50), gestion des Projets, sauvegarde, Fichier projet, annulation, modes, télémétrie (FR-52 à 55, 57, 58).
+Couvre UJ-1 et UJ-2 de bout en bout dans une forme simple : assistant et Templates (4.1), Fonds stylisés et satellite, Date de référence, recherche, attribution (FR-5, 6, 8, 10), Kits de Faction avec Sous-factions et Bibliothèque (FR-12 à 15), Territoires, conquête au pinceau, peinture libre, Relations et Ligne de front, motifs (FR-18 à 23, 25), Flèches et Jetons (FR-28, 30), textes (FR-34), transitions, Étapes, lecture, Signature organique, persistance (FR-39 à 42, 45), Presets caméra et cadrage manuel (FR-46, 47), import d'images (FR-48), export vidéo (FR-50), Légende minimale non éditable (voir FR-35), gestion des Projets, sauvegarde, Fichier projet, annulation, modes, télémétrie (FR-52 à 55, 57, 58).
 
 ### 10.2 P1 — lancement public
 Subdivisions (FR-7), couches et libellés (FR-9), correction des données (FR-11), Kits personnels (FR-16), remplissage par drapeau (FR-17), Poches (FR-24), Séries de Jetons (FR-31), Icônes d'événement (FR-32), Légende (FR-35), Compteurs (FR-36), Horodatage continu (FR-37), Actes (FR-43), carte personnelle en fond (FR-49), export image (FR-51), Calques (FR-56).
@@ -501,7 +505,7 @@ SM-1 se mesure par veille manuelle ; SM-2 à SM-7 par la télémétrie anonyme, 
 - **R1 — Tension vitesse / personnalisation.** Si les Templates sont trop bridés, les créateurs partent (« je pars si je ne peux rien personnaliser ») ; s'ils sont trop ouverts, la promesse de rapidité tombe. Mitigation : Templates entièrement éditables (FR-4), divulgation progressive (NFR-9), SM-6 et SM-C1.
 - **R2 — Différenciation face au gratuit.** La conquête province par province existe déjà gratuitement (War Tool d'AnimateMyMap) et un clone open source existe (OpenAnimateMyMaps). Si les Kits, la Signature organique et les Templates ne suffisent pas à faire changer d'outil, le produit n'a pas de raison d'être.
 - **R3 — Données historiques.** Couverture inégale selon les Ères, peu de subdivisions avant l'Ère contemporaine, licences à vérifier une par une (§5).
-- **R4 — Satellite.** Copernicus est libre y compris en usage commercial, mais produire des tuiles sans nuages et les servir a un coût technique et d'hébergement (Q2).
+- **R4 — Satellite.** Le fond retenu (EOX 2016, CC BY) est daté : il ne montre pas les événements récents, ce qui peut décevoir sur l'actualité (UJ-1). Sa récupération pour hébergement reste à confirmer (téléchargement officiel ou conditions du service) ; à défaut, la tranche P0 sort sans satellite, avec le Fond sombre. Une mosaïque récente produite depuis les images Sentinel-2 brutes est une piste post-v1.
 - **R5 — Perte de données locales.** Le stockage du navigateur peut être purgé ; sans compte, tous les Projets disparaîtraient. Mitigation : FR-53, FR-54.
 - **R6 — Charge de travail solo.** 58 FR et la production de contenu (§5) pour une seule personne. Mitigation : priorités P0/P1/P2.
 
@@ -511,10 +515,10 @@ SM-1 se mesure par veille manuelle ; SM-2 à SM-7 par la télémétrie anonyme, 
 
 Chaque question indique la phase qu'elle bloque.
 
-1. **Licence du code** — OPENMAP sera-t-il open source ? Ouvre ou ferme l'accès aux données copyleft et à la réutilisation de code d'OpenAnimateMyMaps (MIT). *Bloque : architecture (choix des données).*
-2. **Satellite via Copernicus** — Mosaïque Sentinel-2 sans nuages à produire soi-même via le Copernicus Data Space Ecosystem et ses API, ou service de tuiles existant ? Quel coût d'hébergement, quel plafond mensuel ? Repli : Fond sombre. *Bloque : architecture.*
-3. **Outil de télémétrie** — Quel service, respectueux de la vie privée et sans compte, pour FR-58 ? *Bloque : architecture.*
-4. **Langues** — Deux questions distinctes : la langue de l'interface (français, anglais, les deux au lancement ?) et la langue des libellés de Carte (les jeux de données sont surtout en anglais ; faut-il des libellés traduits ?). *Bloque : UX et pipeline de données.*
+1. ~~**Licence du code**~~ — **Tranché (architecture, 2026-09-29) :** code fermé pour l'instant, ouverture possible après la validation P0 ; uniquement des briques et données permissives, pour garder les deux voies ouvertes.
+2. ~~**Satellite**~~ — **Tranché (architecture) :** EOX Sentinel-2 cloudless 2016 (CC BY 4.0), auto-hébergé ; plafond d'hébergement 20 €/mois (§8). Reste ouvert : la méthode de récupération de la mosaïque. *Bloque : la story satellite, pas les epics.*
+3. ~~**Outil de télémétrie**~~ — **Tranché (architecture) :** Umami auto-hébergé sur le serveur d'OPENMAP, événements seulement (FR-58).
+4. ~~**Langues**~~ — **Tranché :** interface en français et en anglais (UX) ; libellés de Carte dans la langue des données, renommables, avec une langue de la Carte par Projet pour les textes générés (FR-9, architecture). Traduction des noms de lieux : après la v1.
 5. **Volume et production de contenu** — Combien de Templates, Kits et Emblèmes au lancement, et en combien de temps (§5) ? *Bloque : date de lancement.*
 6. **Audio dans l'export** — Faut-il pouvoir ajouter une musique de fond pour les créateurs qui publient sans monter ? *Bloque : rien en v1 (v2 au plus tôt).*
 7. **Monétisation future** — Gratuité totale, freemium, filigrane ? À décider après SM-1. *Bloque : rien en v1.*
@@ -531,6 +535,7 @@ Chaque question indique la phase qu'elle bloque.
 - §4.10 FR-50 — Export plafonné à 1080p ; pas de piste audio.
 - §4.10 FR-50 — Pas de filigrane.
 - §5 — Seuil de 2 Templates par Ère, objectif de 5 Templates et 10 Kits par Ère.
+- §4.2 FR-5 — Satellite EOX 2016 jugé acceptable malgré son ancienneté.
 - §6 NFR-2 — Machine de référence et projet type.
 - §6 NFR-3 — 3 minutes pour exporter 60 s en 1080p/30.
 - §6 NFR-4 — Chrome et Edge pris en charge, Firefox au mieux.

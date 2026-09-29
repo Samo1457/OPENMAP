@@ -4,7 +4,7 @@ Matière utile aux étapes suivantes (architecture, UX, epics) mais qui n'a pas 
 
 ## Pistes techniques (à valider en architecture)
 
-Rien ici n'est une décision ; ce sont des pistes relevées pendant la découverte.
+Rien ici n'est une décision ; ce sont des pistes relevées pendant la découverte. **Mise à jour 2026-09-29 :** les choix techniques sont arrêtés dans la spine d'architecture (`architecture/architecture-OPENMAP-2026-09-29/ARCHITECTURE-SPINE.md`), qui prévaut : MapLibre + deck.gl, export WebCodecs + Mediabunny, stockage IndexedDB (et non OPFS), hébergement Cloudflare Pages + serveur VPS, télémétrie Umami auto-hébergée.
 
 - **Rendu cartographique** — MapLibre GL JS (open source, BSD) est la base utilisée par OpenAnimateMyMaps et convient à un rendu vectoriel animé dans le navigateur.
 - **Export vidéo dans le navigateur** — WebCodecs + un multiplexeur MP4 (ex. Mediabunny) permettent d'encoder sans serveur, jusqu'en 4K/60 selon OpenAnimateMyMaps. WebCodecs explique l'hypothèse NFR-4 (Chrome/Edge).
@@ -30,7 +30,9 @@ Pour les drapeaux : Wikimedia Commons (souvent domaine public, à vérifier fich
 
 ## Fonds satellite : piste Copernicus
 
-Décision utilisateur : explorer Copernicus et ses API pour le satellite, en P0.
+**Décision finale (architecture, 2026-09-29) :** EOX Sentinel-2 cloudless 2016, licence CC BY 4.0, auto-hébergé. Les mosaïques trimestrielles sans nuages de Copernicus sont sous CC BY-SA 4.0 (copyleft, exclu en v1) ; les millésimes EOX 2018 et suivants sont non commerciaux (exclus). La section ci-dessous reste comme historique de l'exploration.
+
+Décision utilisateur initiale : explorer Copernicus et ses API pour le satellite, en P0.
 
 - **Licence** — Les données Copernicus Sentinel sont libres, gratuites et ouvertes, y compris pour un usage commercial. Diffuser des données adaptées impose la mention « Contains modified Copernicus Sentinel data [année] » (FR-10).
 - **Accès** — Le Copernicus Data Space Ecosystem donne accès aux données Sentinel-2 (résolution ~10 m) et à des API de traitement. Des services tiers proposent aussi des tuiles de fond Sentinel-2 prêtes à l'emploi (ex. SentinelMap, 50 000 tuiles/mois gratuites) : conditions commerciales à vérifier.
