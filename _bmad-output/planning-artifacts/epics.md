@@ -1,0 +1,564 @@
+---
+stepsCompleted: [step-01-validate-prerequisites]
+inputDocuments:
+  - prds/prd-OPENMAP-2026-09-25/prd.md
+  - prds/prd-OPENMAP-2026-09-25/addendum.md
+  - architecture/architecture-OPENMAP-2026-09-29/ARCHITECTURE-SPINE.md
+  - ux-designs/ux-OPENMAP-2026-09-29/DESIGN.md
+  - ux-designs/ux-OPENMAP-2026-09-29/EXPERIENCE.md
+  - briefs/brief-OPENMAP-2026-09-24/addendum.md
+language: en
+---
+
+# OPENMAP - Epic Breakdown
+
+## Overview
+
+This document provides the complete epic and story breakdown for OPENMAP, decomposing the requirements from the PRD, the UX design contract (DESIGN.md + EXPERIENCE.md) and the architecture spine into implementable stories. Precedence: PRD for scope, architecture spine for technique (AD ids), UX for behaviour and look. Vocabulary follows the spine's English glossary (Étape = Step, Carte = Map…).
+
+## Requirements Inventory
+
+### Functional Requirements
+
+**Step state model (§4.0)**
+
+- FR-0 [P0]: Step state model rules common to all animated features `[HYP: default model, to confirm in UX]`: (a) Forward inheritance — a new Step starts from the previous Step's state; each element property (Territory ownership, DrawnZone points, UnitToken position, Counter value, ...) takes the value set at the most recent Step that defines one, at or before the current Step; (b) Edit scope — changing a property at Step N fixes its value at N, later Steps without their own value inherit it, earlier Steps are unchanged; user may alternatively apply a change "to all Steps"; (c) Existence — an element exists from the Step where it is created and persists afterwards unless limited to a Step range (FR-45); (d) Ownership — a GeoEntity belongs to exactly one Territory per Step; a DrawnZone laid over a GeoEntity wins where they overlap.
+
+**4.1 Onboarding and Templates**
+
+- FR-1 [P0]: User can create a Project from a Template or a blank Map, with no account; the Project is created and opened in the editor without sign-up/login, and appears in the Project list (FR-52).
+- FR-2 [P0]: User can follow a start wizard: Template -> reference date -> Region -> Factions to feature. Max 5 screens; each screen skippable (Template values kept). On exit the Map has >= 2 Steps with >= 1 Territory change, Kits applied and the Legend visible, so playing the Timeline yields an animation with no further action. Each chosen Faction gets a copy of its Library Kit if one exists, otherwise a default Kit whose color is distinct from the Project's other Factions.
+- FR-3 [P0]: User can filter Templates by Era, by type (one-off battle, campaign, long-term expansion, current geopolitics) and by text search; each Template shows a thumbnail (or animated preview), its Region and its reference date.
+- FR-4 [P0]: Every Template-sourced element can be edited, moved or deleted; no element of a Template-based Project is read-only, including suggested Arrows and pre-filled Steps.
+
+**4.2 Basemaps and geography**
+
+- FR-5 [P0]: User can choose a stylized Basemap (parchment default, dark, light, relief) or satellite, and switch at any time. Switching modifies/deletes no Project element. Basemap brightness, saturation and a tint are adjustable (so semi-transparent Territories stay readable on satellite). Satellite = EOX Sentinel-2 cloudless mosaic, 2016 vintage (CC BY 4.0), hosted by OPENMAP; imagery predates later events (e.g. 2022 destruction). If satellite cannot be served, tool falls back to the dark Basemap and tells the user. Stylized Basemaps built from Natural Earth (public domain): coasts, rivers, lakes, relief, no modern roads.
+- FR-6 [P0]: User sets the Project reference date (in wizard or later); the Map shows GeoEntities valid at that date. Accepts BCE dates, year precision. If data has no exact state at that date, the nearest valid state is used and the actual data date is displayed. Changing the reference date mid-Project requires confirmation; Territories built on GeoEntities that no longer exist at the new date are converted to DrawnZones.
+- FR-7 [P1]: User can select subdivisions (provinces) where data contains them `[HYP: in v1 mostly Contemporary Era; elsewhere conquest via political entities, free paint FR-21 or split FR-11]`. When no subdivision exists for the Region + reference date, the tool says so and offers free paint or splitting.
+- FR-8 [P0]: User can search a country, city or GeoEntity by name; the edit camera centers on it.
+- FR-9 [P1]: User can show/hide cities, rivers and place names, and rename any label within the Project. A Territory can auto-display its Faction name, placed inside its area and re-centered when the area changes. Map labels display in the source-data language (mostly English), renamable per Project, and do not change with UI language. Generated map texts (DateDisplay dates, Counter numbers, automatic Legend entries) follow the Project's "map language" setting (French or English; defaults to UI language at creation). Place-name translation: post-v1.
+- FR-10 [P0]: Tool shows the source and license of data used by the Project and includes the credit in exports where the license requires it. Every displayed Basemap, border dataset and Library item (Emblem, EventIcon, Template) has a viewable attribution. License-required credits (e.g. satellite: "Sentinel-2 cloudless by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2016)") are locked in the export: user only picks corner and prominence (Discreet / Readable), with a short explanation. Optional credits can be hidden.
+- FR-11 [P1]: User can redraw, split or merge a GeoEntity within the Project. The correction applies only to the Project, never to the Library; a corrected GeoEntity is flagged as such in the editor.
+
+**4.3 FactionKits**
+
+- FR-12 [P0]: User can create/edit a FactionKit: name, Era, colors (fill, outline, selection), Emblem and its reduced variant, font, border style (thickness, wobble intensity), Arrow style (thickness, head shape), UnitToken shape, Organic Signature settings (FR-42). Every field change applies immediately to all of the Faction's elements on all Steps of the Project.
+- FR-13 [P0]: User can assign a Faction to a Territory, Arrow or UnitToken in one click; the element takes the Kit's style. Applying a Library Kit or a Personal Kit creates a copy in the Project. A later Library update never modifies any existing Project.
+- FR-14 [P0]: User can create a SubFaction whose Kit inherits from a parent Kit of the Project. Non-overridden fields follow the parent when it changes; overridden fields keep their value. Editor shows which fields are inherited vs overridden and allows reverting to the inherited value. By default a SubFaction and its parent are allied (FR-22).
+- FR-15 [P0]: User can search official Kits by name, Era or world region and apply them. Library Kits are never modified by the user; only the Project copy is edited.
+- FR-16 [P1]: User can save a Project Kit to Personal Kits, apply Personal Kits in other Projects, and export/import them as a file. Editing a Personal Kit does not change Projects where it was already applied; pushing the update into a Project is an explicit action from that Project.
+- FR-17 [P1]: User can fill a Territory with its Faction's Emblem (flag fill) with adjustable opacity. A conquered GeoEntity takes its new Faction's fill, flag included, during the transition.
+
+**4.4 Territories, Relations and FrontLines**
+
+- FR-18 [P0]: User can form a Territory by selecting one or more GeoEntities.
+- FR-19 [P0]: User can draw a DrawnZone freehand or point by point, and edit its points at any Step. Between two Steps where its points differ, the DrawnZone morphs continuously during the transition.
+- FR-20 [P0]: At a Step, user can designate an attacking Faction then brush-paint the GeoEntities it takes. Painted GeoEntities change Faction at that Step; the transition animates per FR-39. The number of selected GeoEntities is shown before validation.
+- FR-21 [P0]: In conquest mode, user can free-paint an area independent of GeoEntities; it is added to the attacking Faction's Territory as a DrawnZone.
+- FR-22 [P0]: User can set the Relation between two Factions: in conflict, allied, or unrelated. Defaults: two non-neutral Factions with no parent/child link are in conflict; a SubFaction and its parent are allied; a neutral Territory is never in conflict. A Template can set other Relations (e.g. "Alliances": no Factions in conflict).
+- FR-23 [P0]: Tool displays a FrontLine between Territories of two Factions in conflict, with adjustable style. Recomputed automatically on every Territory change, with no manual drawing. User can hide it for the whole Project or for a Faction pair.
+- FR-24 [P1]: User can mark a Territory as a Pocket (distinct style). Its area evolves between Steps per FR-19; the Pocket disappears when the user deletes it at a Step (it shrinks away during the transition) or when its area becomes zero.
+- FR-25 [P0]: User can fill a Territory solid, semi-transparent, hatched, or with the Emblem (FR-17). A neutral Territory has a default style distinct from any Faction.
+- FR-26 [P2]: User can draw an AnnotationZone (free color, no Faction) and give it a Legend entry.
+- FR-27 [P2]: User can keep a past Step's FrontLine visible in later Steps as a FrontTrace labeled with its date.
+
+**4.5 Arrows, UnitTokens and EventIcons**
+
+- FR-28 [P0]: User can draw a curved Arrow by points; it draws itself along its path during the Step transition. By default the Arrow takes its Faction's style; thickness is adjustable, including very wide for breakthroughs.
+- FR-29 [P2]: User can create ArrowCategories (name, color, style) independent of Factions and assign them to Arrows; each used ArrowCategory appears in the Legend.
+- FR-30 [P0]: User can place UnitTokens with an optional label, and move and rotate them between Steps. Shapes: simplified NATO-type symbol, two-tone square, round flag badge, mini-flag. A Token moved/rotated between two Steps slides and pivots during the transition. Label can be boxed (e.g. "7 C.", "Gal Bradley").
+- FR-31 [P1]: User can create a TokenSeries attached to a FrontLine or a Territory outline, on a chosen side, with adjustable spacing and number of rows. When the FrontLine/outline changes at a Step, the series redistributes along the new path during the transition. [P2 sub-item] Row count can be linked to a Counter (more strength, more rows).
+- FR-32 [P1]: User can place Library EventIcons (explosion, plane, parachute, smoke, battle, siege) or an imported image (e.g. commander portrait). Each icon has appear/disappear animations (default: appear with slight overshoot, disappear with fade). A plane can follow a path during a transition.
+- FR-33 [P2]: User can circle a group of elements with a highlight ellipse or outline, and place numbered step markers.
+
+**4.6 Texts, Legend, Counters and DateDisplay**
+
+- FR-34 [P0]: User can add titles, labels and annotations with free font, size, outline, frame and position. By default a text appears with a kinetic typography animation (per character or per word) timed to its Step transition. [P2 sub-item] Curved text along a path (rivers, regions).
+- FR-35 [P1] (with P0 minimal part): P0 = a minimal non-editable Legend (Factions present and their colors), required by FR-2. P1 = tool auto-generates a Legend from Factions, fill patterns, ArrowCategories, AnnotationZones and UnitToken types present; user can hide it, move it, rename entries and add lines. Adding a Faction to the Project adds it to the Legend with no manual action.
+- FR-36 [P1]: User can place a Counter with a per-Step value, free orientation and a Faction; the value animates between Steps. A Counter can be anchored to a Territory, staying at the center of its area as it changes.
+- FR-37 [P1]: User can show a DateDisplay that scrolls continuously between two step dates at the chosen granularity (day, month or year). Formats: YYYY-MM-DD, DD month YYYY, year only, or a free per-Step label (e.g. "Summer 1944") which replaces scrolling. BCE dates render in the chosen format (e.g. "52 BC" / "52 av. J.-C.").
+- FR-38 [P2]: User can display a graphic scale bar (km/miles) and a compass rose.
+
+**4.7 Timeline and animation**
+
+- FR-39 [P0]: User can choose, per Step, the Territory transition: propagation, fade or sweep; default propagation. Propagation starts from the adjacent FrontLine; with no adjacent FrontLine (landing, island, new zone) it starts from a user-placeable point, else from the area's center.
+- FR-40 [P0]: User can add, duplicate, reorder and delete Steps; each Step has a step date, a transition duration and a hold duration. A new Step starts from the previous Step's state (FR-0). Deleting a Step does not wipe values inherited by later Steps: they take the value from the preceding Step.
+- FR-41 [P0]: User can play, pause, seek to any instant and set playback speed. Seeking to an instant shows exactly the frame that will be exported at that instant (NFR-1).
+- FR-42 [P0]: Organic Signature applies by default to all animations, with three levels (off, light, strong) set at Project level and overridable per FactionKit `[HYP on bounds, calibrate in UX]`. Overshoot: at "light", motions and appearances overshoot final position by 5-15% of amplitude before settling; no animation is linear. Wobble: Territory borders deviate from their path by at most 0.3% of image width (~6 px at 1080p). Pulse: a Territory changing Faction pulses for 250-400 ms before switching. Determinism: the same Project produces exactly the same animation on every playback and on export. At "off": no overshoot, wobble or pulse.
+- FR-43 [P1]: User can group Steps into named Acts; Templates propose "before / during / after" by default.
+- FR-44 [P2]: User can enable RTS-style AmbientEffects: fog of war covering the Map and progressively lifting over revealed areas from Step to Step; conquest progress bar showing the share of territory controlled by each Faction.
+- FR-45 [P0]: User can limit an element to a Step range; by default it persists to the end of the Timeline.
+
+**4.8 Camera**
+
+- FR-46 [P0]: User can choose a CameraPreset per Step; default auto-framing. Presets: Top-down (fixed camera, frame unchanged); Fly-to (continuous pan+zoom from previous frame to new frame); Orbit (slow rotation around frame center); Sweep (lateral sweep along the Region); Bounce (zoom out then zoom in to new frame, like a jump); Auto-framing (frame contains elements changing at this Step — Territories, Arrows, Tokens — with 10% margin; if nothing changes, keep previous frame). Camera move spans the Step's transition duration. [P2 sub-item] Optional motion blur on fast transitions.
+- FR-47 [P0]: User can manually set camera position, zoom and rotation for a Step, replacing the Preset.
+
+**4.9 Visual import**
+
+- FR-48 [P0]: User can import images (PNG, JPG, SVG) via file picker or drag-and-drop, as positionable elements, as an Emblem, or as an EventIcon.
+- FR-49 [P1]: User can import a map image and align it manually (position, scale, rotation, opacity), over or instead of the Basemap `[HYP: manual alignment only in v1, no automatic georeferencing]`.
+
+**4.10 Export**
+
+- FR-50 [P0]: User can export the Timeline, or a Step range, as MP4 in the Project's OutputFormat, 1080p at 30 or 60 fps `[HYP: 1080p max in v1, 4K later; no audio track]`. Export shows progress and is cancellable. No watermark `[HYP]`. OutputFormat is changed at Project level (16:9, 9:16, 1:1): texts, Legend and DateDisplay stay anchored to the same frame edge, and camera framings are recomputed to contain the same elements.
+- FR-51 [P1]: User can export PNG or JPG of the Map state at any Timeline instant, with a transparent-background option for PNG.
+
+**4.11 Projects, organization and telemetry**
+
+- FR-52 [P0]: User finds their Projects on opening OPENMAP and can rename, duplicate or delete them.
+- FR-53 [P0]: Project is saved locally continuously with no user action, within the NFR-5 delay. After tab close or crash, reopening restores the Project in its last saved state. Tool requests persistent browser storage; if refused, or if available space nears its limit, it warns and invites exporting a Project File.
+- FR-54 [P0]: User can export a Project as a Project File (Kits and imported media included) and import it on another machine; a reimported Project File restores an identical Project, animation included.
+- FR-55 [P0]: User can undo and redo actions over multiple levels.
+- FR-56 [P1]: User can hide, lock and reorder Layers.
+- FR-57 [P0]: User can toggle between Edit mode (free camera) and Presentation mode (Timeline camera, rendering identical to export).
+- FR-58 [P0]: On first launch the user accepts or refuses anonymous usage statistics and can change their mind at any time. Without consent, no usage data is sent and no stats request is emitted. With consent, only usage events are sent (Project creation, export, feature usage) — never Project content or imported media. Stats go to a server operated by OPENMAP (self-hosted Umami), never a third-party service. Withdrawing consent erases the anonymous identifier from the browser.
+
+### NonFunctional Requirements
+
+- NFR-1 Fidelity: Export reproduces Presentation mode exactly — same elements, positions, durations, same Organic Signature (FR-42 determinism).
+- NFR-2 Smoothness: Preview runs at >= 30 fps on the reference machine for a typical project (200 Territories and 50 UnitTokens visible). Reference machine: 4-core CPU, 16 GB RAM, 2022 integrated GPU (Intel Iris Xe class). `[HYP]`
+- NFR-3 Export time: A 60 s 1080p/30 video exports in <= 3 minutes on the reference machine. `[HYP]`
+- NFR-4 Browsers: Recent desktop Chrome and Edge supported; Firefox best-effort. On mobile/tablet, a message explains the tool is designed for desktop. `[HYP, tied to browser video-encoding APIs]`
+- NFR-5 Persistence: Any change is persisted locally within <= 5 seconds. `[HYP]`
+- NFR-6 Privacy: No Project content or imported media leaves the user's machine. Downloads only: map tiles and Library data, from OPENMAP servers only. Uploads only: anonymous usage stats if consented (FR-58). No third-party service (fonts, maps, error tracking) is contacted during use.
+- NFR-7 Time to first animation: Via the wizard, the FR-2 Map is obtained in < 2 minutes `[HYP]`. Nested time targets: 2 min first animation (NFR-7), 15 min first export (SM-2), 20 min finished Short (UJ-1).
+- NFR-8 Screen: From 1366x768 upward, no essential panel is hidden and no horizontal scrolling is required. `[HYP]`
+- NFR-9 Progressive disclosure: By default each panel shows only essential settings; advanced settings sit behind a "more options" action (addresses R1, SM-C1).
+- NFR-C1 Licensing (§5): Code is closed-source for now (Q1). Only permissively licensed data (public domain, CC0, CC BY, MIT, Copernicus terms) enters the Library and Basemaps. NC and copyleft (GPL, ODbL, CC BY-SA) data are excluded from v1: no OpenStreetMap tiles, no CC BY-SA Copernicus mosaics. Retained sources: Cliopatria (CC BY 4.0) for historical borders, Natural Earth (public domain) for stylized Basemaps and current borders, EOX Sentinel-2 cloudless 2016 (CC BY 4.0) for satellite. Only permissive building blocks, to keep both open/closed paths possible.
+- NFR-C2 Attribution: Every Library item carries its source and license (FR-10); license-required credits are locked into exports.
+- NFR-C3 Emblem licensing: No Emblem (flag/coat of arms) enters the Library without a verified license; the three brainstorm-identified flag sites are unverified and unusable as-is.
+- NFR-C4 No false precision: Historical borders are approximate; the tool displays the actual data date (FR-6) and lets the user correct data per Project (FR-11).
+- NFR-C5 Neutrality: For disputed territories (current events included), the Library follows its source without taking sides; users remain free to depict the situation as they wish in their Project.
+- NFR-C6 Content production: Official Templates and Kits are produced with the OPENMAP editor itself. Launch minimum: 2 Templates per Era plus the Kits of their Factions; target ~5 Templates and 10 Kits per Era `[HYP]`. Likely the largest v1 workload for a solo developer — estimate before fixing a launch date (Q5).
+- NFR-C7 No watermark / free v1 (§8): v1 is free and watermark-free `[HYP]`; no monetization in v1.
+- NFR-C8 Monetization constraint & cost cap (§8): Build nothing (data, licenses, providers) that would forbid future commercial use; no uncapped recurring cost. Hosting cap: 20 EUR/month beyond the server already paid by the project owner (current extra cost: 0 EUR); raisable only by explicit decision on success (topology: architecture AD-18).
+- NFR-C9 No backend accounts (§4.11, §9): No accounts, cloud save, collaboration or online sharing in v1; everything lives in the browser, the Project File is the backup/transfer mechanism.
+- NFR-C10 Platform & i18n (§7): Desktop web app only (no mobile/desktop app). UI in French and English from v1. Default aesthetic: Organic Signature + parchment Basemap; UI chrome stays sober in v1 (RTS UI skin is v2).
+- NFR-C11 Validation plan (§12): Once the P0 slice is ready, have 3-5 geopolitical content creators use it on a real topic of their choice, observing blockers and customizations. Go criterion: >= 2 state they would use it for a real video instead of their current method; otherwise revisit differentiation (R2) before starting P1 `[HYP on threshold]`.
+- NFR-C12 Success metrics (§11) — SM-1 measured by manual monitoring; SM-2..SM-8 measured by anonymous telemetry (FR-58) over consenting users only; "user" = a browser `[HYP on all numeric targets]`. Telemetry events must therefore support computing:
+  - SM-1 Spontaneous adoption: >= 10 distinct creators publishing OPENMAP-made content and mentioning it unsolicited within 6 months of public launch (manual).
+  - SM-2 Time to first export: median first-open -> first-export < 15 min (validates FR-2, FR-50).
+  - SM-3 Completion rate: >= 40% of created Projects reach at least one export.
+  - SM-4 Return: >= 25% of users export at least twice on different days within 30 days.
+  - SM-5 Kit reuse: >= 20% of exported Projects use a Personal Kit already used in another Project (validates FR-16).
+  - SM-6 Template customization: >= 60% of Template-based exports where the user modified >= 1 Kit or added >= 1 Step (validates R1).
+  - SM-7 Organic Signature kept: >= 70% of exports with Organic Signature active (validates FR-42).
+  - SM-8 Data signal: share of Projects using data correction (FR-11); tracked, no target.
+  - Counter-metrics (do not optimize): SM-C1 settings exposed by default (contain, NFR-9); SM-C2 raw visits/Projects created (vanity); SM-C3 average session length.
+- NFR-C13 Satellite fallback (R4): If retrieval/hosting of the EOX 2016 mosaic is not confirmed, the P0 slice ships without satellite, using the dark Basemap.
+
+### Additional Requirements
+
+From the architecture spine (`architecture/architecture-OPENMAP-2026-09-29/ARCHITECTURE-SPINE.md`). Stories cite the AD ids.
+
+**Starter / project setup (Epic 1, Story 1)**
+- ARCH-1: Scaffold with the official Vite `react-ts` template, then add shadcn/ui (Tailwind 4) and the layer directories `src/core`, `src/render`, `src/export`, `src/persistence`, `src/library`, `src/telemetry`, `src/ui`, `src/i18n`, plus `pipeline/`, `ops/`, `schemas/`, `tests/e2e/`. Versions per the spine Stack table (TypeScript 6.0, Vite 8.3, React 19.3, MapLibre 6.11 (≥ 6.9.1), deck.gl 9.4 with `@deck.gl/maplibre`, etc.).
+- ARCH-2: CI on GitHub Actions: typecheck, oxlint with the AD-1/AD-2 bans, dependency-cruiser layer rules, licence check (AD-17 allowlist + `licence-overrides.json`), JSON Schema snapshot check (AD-9), Vitest, Playwright, and the production tile-URL check (AD-18). Cloudflare Pages deploys `main` only after CI passes; branch previews enabled.
+
+**Core model and engine**
+- ARCH-3 (AD-1, AD-21): pure `evaluate(project, t, ctx) → Scene` and `locate(project, t)`. A Step owns its incoming transition, then its hold. Nothing animates outside the evaluator; MapLibre `fadeDuration: 0`; camera applied with `jumpTo`.
+- ARCH-4 (AD-2): seeded PRNG; element seed = hash(project.seed, element.id, salt); ambient randomness and clocks banned in `src/core`.
+- ARCH-5 (AD-3): all edits through pure Commands with inverses; one gesture = one undo entry; monotonic `revision`; in-memory undo stack; UI state kept in Zustand, outside the document.
+- ARCH-6 (AD-4): sparse `{default, track}` properties with forward inheritance; existence ranges; `repairRanges` on Step delete/reorder.
+- ARCH-7 (AD-5, AD-22): derived data (coverage partition, Territories, Front Lines, Legend, anchors, auto-framing) computed in `src/core/derive`, memoized by input identity, never stored. Territory = (factionId, stepId); members map with owner tracks; DrawnZone beats GeoEntity; `z` orders DrawnZones.
+- ARCH-8 (AD-11): FactionKit copies with provenance; SubFaction `overrides` resolved at evaluation; Relation overrides keyed by the sorted Faction pair.
+- ARCH-9 (AD-12, AD-13, AD-14, AD-25): nanoid ids; GeoEntity key `dataset@version:entityId`; pinned Library/tileset versions; `HistoricalDate` (astronomical years); WGS84 lon/lat; frame-anchored overlays; `project.mapLocale` for generated Map text.
+
+**Rendering and export**
+- ARCH-10 (AD-6, AD-24): MapLibre draws the Basemap only; deck.gl `MapLibreOverlay` draws every Project element and label; Layers and `z` bands live in the document; the edit-affordance overlay is excluded from capture. P0 spike: interleaved vs overlaid mode.
+- ARCH-11 (AD-23): fixed output frames 1920×1080 / 1080×1920 / 1080×1080; reference px = 1080 short side; framing stored as bounds + bearing + pitch; Presentation mode letterboxes the exact frame.
+- ARCH-12 (AD-26): `render.ready(scene)` barrier covering tiles, glyphs, fonts, media and geodata; used by export, thumbnails and Presentation start; failures reported per Step.
+- ARCH-13 (AD-7, AD-19): export via Mediabunny `CanvasSource` (avc) to MP4; `VideoEncoder.isConfigSupported` pre-check; 20 s pause; Blob kept for "Download again"; startup feature tests; desktop-only gate.
+
+**Persistence and files**
+- ARCH-14 (AD-8, AD-15): a single Dexie database (Projects, media by SHA-256 with licence records, Library cache, preferences, consent). Debounced save (1 s, ≤ 5 s); flush on Ctrl+S and `pagehide`; `lockEpoch` fencing; tombstone delete; save-status observable; `storage.persist()`. Web Locks single writer with BroadcastChannel takeover, reload and undo reset.
+- ARCH-15 (AD-9, AD-10, AD-28): Zod schemas with `schemaVersion` and forward-only migrations with fixtures; newer schema opens read-only. `.openmap` ZIP Project File (manifest, project.json, media). Templates = Project File + `template.json`; instantiation remaps ids and generates a new seed.
+
+**Data, hosting and operations**
+- ARCH-16 (AD-18, AD-27): data origin `data.<domain>` on the Hostinger VPS behind the Cloudflare proxy. `pmtiles serve` with versioned tilesets `/<name>-v<n>/{z}/{x}/{y}.<mvt|webp>` + TileJSON; `/library/v<n>/` immutable; Cache Rule; CORS allowlist. `src/library` is the only client and caches used resources in Dexie.
+- ARCH-17 (AD-17): data pipeline (`pipeline/`) building stylized Basemaps from Natural Earth, GeoEntities from Cliopatria (whole polygons, pinned simplification), satellite from EOX 2016 (acquisition method to confirm; fallback: no satellite in P0). Licence metadata on every asset; the credit line is built from the sources drawn and locked when required.
+- ARCH-18 (AD-16): Umami 3.4 self-hosted (PostgreSQL, Docker), replay/heatmaps/web vitals off. App posts typed events to `/api/send` through the data origin, only after consent; `installId` created at consent and deleted on revoke. The event catalogue must cover SM-2..SM-8 flags.
+- ARCH-19 (Structural Seed → Operations): `ops/publish.sh` as the only publish path; VPS hardening (SSH keys, firewall, automatic updates); Hostinger snapshot before each publish plus a weekly off-VPS backup; free uptime check; secrets only in VPS env files.
+- ARCH-20 (AD-29, AD-16): Library assets copied into the media store; SVG sanitization; Content-Security-Policy; no runtime third parties (self-hosted fonts and glyphs).
+- ARCH-21 (AD-18): app origin `app.<domain>` fixed before public launch (domain and trademark check pending); hosting spend capped at 20 EUR/month beyond the VPS.
+
+#### Brief addendum notes (secondary; PRD prevails)
+
+- FactionKit colors include a hover/selection state; Kit metadata distinguishes official (Library) vs personal, with search tags for name / period / region (supports FR-12, FR-15, FR-16).
+- SubFaction inheritance example for AC: parent "Allies" defines base style; children "France"/"UK"/"USA" override color/Emblem; changing the parent propagates except explicitly customized fields (FR-14).
+- Default element animations: Territory pulses "heartbeat-like" before switching color (never a hard pop/disappear); Arrow draws live like a pen stroke; UnitTokens appear with slight overshoot; captions use kinetic typography timed to the narrative (FR-28, FR-30, FR-34, FR-42).
+- DateDisplay time granularity (day/month/year) is set manually by the user — no automatic detection, whether from a Template or from scratch (FR-37).
+- Templates carry a predefined starting scale/zoom, pre-positioned key dates, a pre-filled 3-act structure ("mad-lib" style), blank Territories ready to assign to a Kit, suggested Arrows and placeholder labels — all editable, never locked (FR-2, FR-4, FR-43).
+- Template library categorization = Era + content type (one-off battle / military campaign / long-term expansion / current geopolitics) + search tags (FR-3).
+- Nothing in a Template is locked: adding/removing Territories, changing Basemap, or fully replacing it with an imported personal map are all allowed (FR-4, FR-5, FR-49).
+- Edit mode is a free canvas with Figma-like zoom/pan; Presentation mode is driven by the automatic camera (FR-57).
+- Layers organize Territories / Arrows / texts / icons separately (FR-56).
+- Export supports a selectable Timeline range for video and a frozen image at any Timeline point; SVG export and multi-resolution (4K) listed in the brief are out of v1 per PRD (FR-50, FR-51).
+
+### UX Design Requirements
+
+#### A. Design tokens — colour
+
+UX-DR1: Implement the chrome colour token set as CSS custom properties with light values (base keys) and dark values (`-dark` keys) for: background, surface, surface-raised, border, border-input, text-primary, text-secondary, text-muted, accent, accent-hover, on-accent, selection, focus-ring, success, warning, danger, text-disabled, progress-track, progress-fill, track-arrows, track-tokens, track-text, track-ink, playhead, act-rule — exact hex values from DESIGN.md frontmatter. AC: switching theme swaps every token to its `-dark` value; a component key suffixed `-dark` (e.g. `tool-rail-item-active.foreground-dark`) overrides the generic resolution rule.
+
+UX-DR2: Implement mono-mode tokens that never change with theme: `scrim` (#11161C), `canvas-ink` (#18222D), `canvas-halo` (#F7F3EA), `canvas-mask` (#11161C), and all `map-*` tokens. AC: automated test toggles light/dark and asserts these computed values are identical.
+
+UX-DR3: Implement Basemap-resolved `map-*` tokens: base set = Parchment Basemap (map-sea, map-land-neutral, map-coast, map-label, map-label-halo, map-sea-label, map-front, map-arrow), plus `-sombre` (Dark), `-clair` (Light), `-relief` (Relief) variants and `map-shade-relief`, `map-tint`. Resolution is driven by the ACTIVE BASEMAP, never by UI theme. Satellite uses the `-sombre` label/halo/front/arrow values over imagery. AC: for each of the 5 Basemaps, the renderer resolves the correct palette; UI theme change has zero effect. [ASSUMPTION: Dark/Light/Relief palettes, relief shading and satellite `-sombre` values must be validated on a Basemap board before the FR-5 story.]
+
+UX-DR4: Relief Basemap applies `map-shade-relief` (#5B5446) in multiply blend at 35 % over land. AC: visual test on relief tiles.
+
+UX-DR5: Map shadcn theme variables to OPENMAP tokens: primary<-accent, primary-foreground<-on-accent, background<-background, card<-surface, popover<-surface-raised, foreground<-text-primary, muted-foreground<-text-muted, border<-border, input<-border-input, ring<-focus-ring, destructive<-danger, shadcn `accent` (hover bg)<-selection. AC: no shadcn default colour, radius, Geist font or shadow remains in any rendered component (lint/visual audit).
+
+UX-DR6: Border rule: `border` is decorative only and never carries information alone; all input boundaries (text inputs, selects, checkboxes, sliders, segmented controls, colour fields, faction-picker chips) use `border-input` (>= 3:1 on all backgrounds, both modes); secondary buttons keep `border`. AC: contrast check of every input boundary >= 3:1.
+
+UX-DR7: Forbidden pair: `text-muted` on `selection` background. On hovered/selected rows, captions/summaries switch to `text-secondary`. AC: hover/selected row tests assert text-secondary.
+
+UX-DR8: Disabled state token/pattern `control-disabled`: opacity 0.55, text equivalent `text-disabled`, cursor not-allowed, control keeps its layout slot. Disabled is never used to signal an imposed setting (use locked pattern instead). AC: visual + DOM test.
+
+UX-DR9: Progress tokens `progress-track`/`progress-fill` (light #D8D1C1/#1D4163, dark #324050/#8EB6D8), fill >= 3:1 against track. Used by the progress-bar component.
+
+UX-DR10: Scrim: `dialog-scrim` = `scrim` at 62 % opacity, identical in both modes, behind modal dialogs (Export, confirmations, consent); Wizard (full-frame) has no scrim.
+
+UX-DR11: Status colours `success`/`warning`/`danger` are always accompanied by an icon and a text label; colour is never the sole signal. AC: every status instance has icon + text.
+
+UX-DR12: Accent usage restricted to chrome: Export button, play button, active tool, current Step, playhead, action links, selected clip, selected segment indicator. Accent never used as a Faction colour, never appears on the Map.
+
+UX-DR13: Timeline track colours: track-arrows / track-tokens / track-text clip backgrounds with `track-ink` text, left edge in track-ink at 45 %; playhead and act-rule tokens per mode.
+
+UX-DR14: Faction colours are user content (FactionKit / Library), not tokens: they never change with theme and are never reused in chrome except in `faction-swatch` (always with neutral ring + name).
+
+UX-DR15: FactionKit colour guardrail: compute CIEDE2000 between each Kit colour (fill/stroke) and both `accent` and `accent-dark`; if < 10 against either, show a non-blocking warning under the colour field (caption, warning triangle icon, warning colour, copy from Voice & Tone), recomputed on every change, never as a toast; 10–20 triggers nothing. [ASSUMPTION: threshold < 10.]
+
+#### B. Design tokens — typography, spacing, shape, elevation
+
+UX-DR16: Self-host OFL fonts Libre Baskerville (400, 600) and Source Sans 3 (400, 500, 600) bundled with the app (no Google Fonts / system dependency); fallbacks: serif -> Baskerville, Baskerville Old Face, Georgia, Times New Roman; sans -> Segoe UI, Frutiger, Helvetica Neue, Arial. AC: network panel shows fonts served from app origin; rendering identical across PCs. [ASSUMPTION: Source Sans 3 provisional.]
+
+UX-DR17: Implement UI type scale tokens: title-xl 28/600 serif, title-lg 20/600 serif, title-md 16/600 serif, date-display 22/600 serif, date-compact 15/600 serif, body 14/400, body-strong 14/600, label 13/500, caption 12/400, label-caps 11/600 uppercase +0.04em, label-caps-tight 11/600 uppercase 0em, timecode 12/500, timecode-strong 13/600 (line-heights/letter-spacing per frontmatter). Only one bold weight (600) per voice.
+
+UX-DR18: Tabular figures: `font-variant-numeric: tabular-nums lining-nums` on timecode, timecode-strong and map-counter (and hex values). Decimal comma in FR (`00:08,4`, `1,5 s`).
+
+UX-DR19: Small caps rule: `label-caps` via text-transform uppercase + 0.04em for tool rail labels, panel section titles and Acts. Rail labels have 72 px; if a label overflows with 0.04em it switches to `label-caps-tight` (same size), never truncates or wraps (FR "BIBLIOTHÈQUE" is the only FR case); a translation that still overflows must be shortened. AC: automated width check per locale. [ASSUMPTION: panel section titles in sans label-caps.]
+
+UX-DR20: Serif never in buttons, inputs, tooltips or toasts; serif only for titles, dates and Map labels.
+
+UX-DR21: Map typography tokens in export px for a 1080 px short side: map-label-faction 56/600 +0.16em, map-label-place 40, map-label-city 34, map-label-sea 40 +0.08em, map-cartouche-year 62/600, map-cartouche-kicker 18 +0.3em, map-text 44/600, map-token-label 22/600, map-counter 44/600 sans, map-legend-title 26/600, map-legend-entry 22, map-credit-discreet 18/400 sans, map-credit-legible 24/500 sans. On screen, everything drawn on the Map scales by (on-screen frame short side / 1080); chrome never scales. AC: 562x316 frame -> factor ~0.29 -> 56 px label shows at ~16 px.
+
+UX-DR22: Spacing scale tokens (4 px base: 4, 8, 12, 16, 20, 24, 32) and all named layout tokens from frontmatter (top-bar-height 48, rail-width 76, rail-item-height 56, panel-width 300 / compact 260, panel-row-min-height 34, drawer-width 320, tool-options-bar-height 36, timeline heights 200/180/44, header 40, ruler 20, act row 24, thumbnail 72, lane 26, clip 20, peek 18, scrollbar 6, progress 6, hit-area-min 24, icon sizes 20/16, stroke 1.5, control heights 32/28, panel-padding-x 18, focus ring 2/2, swatch 24, basemap tile 56, wizard header 56 / step 64 / aside 400, export dialog 560 / label 148, dialog-sm 440, home max 1200, project card min 240, presentation bar 640x48, map credit margin 24, token size 56, legend padding 24).
+
+UX-DR23: Radius tokens: none 0 (Step thumbnails, project cards, faction swatches, clips, Basemap tiles, skeletons, Map), sm 2 px (buttons, inputs, rail items, play button, segments, faction chips, tooltips), md 4 px (toasts, popovers, dialogs, drawer right side only, presentation bar) [ASSUMPTION], full only for slider thumbs, status dots, brush ring — never pills on buttons/badges/inputs.
+
+UX-DR24: Elevation: flat surfaces, hierarchy by tone background < surface < surface-raised + border rules. Short shadow (0 6px 16px -10px rgba(0,0,0,.45)) only on toasts; long shadow (0 12px 28px -18px rgba(0,0,0,.35)) only on library drawer, popovers/menus/selects/context menu, dialogs. Tooltip has no shadow (inverted bg). No shadows on cards/buttons/thumbnails, no glow, no gradients, no glassmorphism/blur.
+
+UX-DR25: Iconography: Lucide restyled to 1.5 px stroke, 20 px in rail, 16 px in controls, plus custom-drawn icons for Territory, Conquest and UnitToken tools. No emojis anywhere. [ASSUMPTION]
+
+UX-DR26: Hit areas: every interactive target has >= 24x24 px active area regardless of visual size (clip 20 px grabbable over its 26 px lane; 12 px playhead handle -> 24x24; checkbox clickable across whole row incl. label; canvas-handle 24 px). Clip and transition edges keep an 8 px grab band full row height (WCAG 2.5.8 equivalent exception, since durations are editable in panel).
+
+UX-DR27: Focus ring token: box-shadow `0 0 0 2px surface, 0 0 0 4px focus-ring` shown only on `:focus-visible`; on the Map the focused element uses `canvas-selection` outline, never accent.
+
+#### C. Theming
+
+UX-DR28: Light and dark themes; on first launch follow system preference; user may choose System / Light / Dark in Settings; change applies instantly. Theme affects chrome only. [ASSUMPTION: system default.]
+
+#### D. Chrome components (Editor)
+
+UX-DR29: Buttons: `button-primary` (accent bg, on-accent fg, accent-hover, radius sm, 32 px, body-strong), `button-secondary` (surface-raised, text-primary, 1px border), `button-ghost` (transparent, text-secondary, selection hover) for icon actions and "Collapse". Exactly one button-primary per screen. Buttons carry a verb (+ object).
+
+UX-DR30: Top bar (`top-bar`, 48 px, surface, bottom border): logotype, breadcrumb "Projects / {Project name}" (name in title-md), save status (caption + success icon), Output Format menu (16:9 · 9:16 · 1:1), undo/redo, place search, "Presentation" (secondary), "Export" (primary), overflow menu (Project File, Settings). On Home: same bar without Project breadcrumb. [ASSUMPTION: 48 px height.]
+
+UX-DR31: Tool rail (`tool-rail` 76 px, `tool-rail-item` 72x56): items Select · Territory · Conquest · Arrow · Token · Text · Import, then Library · Layers toggles. Icon above small-caps label; hover selection bg; active = selection bg, accent label (light) / text-primary-dark (dark), 3 px accent bar left edge. Exactly one active tool; Library and Layers are drawer toggles (active while drawer open), not tools. Tooltip shows full name + shortcut ("Unit token · J"). Buttons expose `aria-pressed` and `aria-keyshortcuts`.
+
+UX-DR32: Tool options bar (`tool-options-bar`, 36 px, background colour, no rule): left = current Step reminder "Step 1463 · Conquest of Bosnia" (date in title-md), then active-tool options (compact faction picker, segments, slider); hosts contextual links ("Apply to all Steps", "Validate conquest"); right = read-only Output Format label (caption, text-muted). Never placed over the Map.
+
+UX-DR33: Properties panel (`properties-panel`, 300 px, 260 px under 1280 px width, surface, left border, padding-x 18, rows >= 34 px): title title-lg with Emblem/icon, caption overline (e.g. "Project copy"), label-caps section headings separated by rules; always visible; live application with no "Apply" button; content by selection type (UX-DR35–UX-DR48). Read-only mode: values stay text-primary but lose input border and caret.
+
+UX-DR34: "More options" row (`more-options-row`): at bottom of each section/panel, body-strong label + summary of hidden content (e.g. "Border, Arrow, Token") + chevron, top border; expands in place as accordion; expanded state remembered per panel type for the session [ASSUMPTION]; every new setting defaults behind it (SM-C1).
+
+UX-DR35: Panel — nothing selected = Project settings: Name, Output Format, Reference Date (+ nearest-data chip), Region, Basemap (basemap-picker), Factions & Relations. More options: Front Line (style, global hide), Project Organic Signature, Legend (P1), Layers & labels (P1), Sources & licences. Changing Reference Date requires a confirmation dialog: "Territories built on Entities that no longer exist in {date} will become Drawn Zones." (FR-6)
+
+UX-DR36: Panel — Geographic Entity (one or many): Name, Faction (faction-picker), Fill pattern. More options: "Correct shape" (redraw, split, merge; P1, FR-11) then "Corrected in this Project" mention; rename label (P1, FR-9). Multiple selection titled e.g. "5 Entities".
+
+UX-DR37: Panel — Territory (double-click on surface): Faction (reassigns whole Territory), Pattern (Solid · Semi-transparent · Hatching · Emblem (P1)), count of Entities and Zones. More options: opacity, displayed name (P1), propagation origin point at this Step (FR-39).
+
+UX-DR38: Panel — Drawn Zone: Faction, Pattern, "Pocket" (P1, FR-24). More options: opacity.
+
+UX-DR39: Panel — Front Line: Style (Dash-dot · Solid · Dashed), thickness, "Hide for {A} · {B}". More options: colour (default map-front), "Keep trace" (P2, reserved slot).
+
+UX-DR40: Panel — Arrow: Faction, thickness, "Visible from … to …". More options: head shape, stroke (Solid · Dashed), draw duration, Arrow category (P2, reserved).
+
+UX-DR41: Panel — UnitToken: Faction, shape, label and label frame, rotation, "Visible from … to …". More options: size, appearance animation.
+
+UX-DR42: Panel — Token Series (P1): Faction, shape, followed path, side, spacing, rows (1–3). More options: link to Counter (P2, reserved).
+
+UX-DR43: Panel — Text: text, font, size, colour (color-field), frame (None · Rule · Band), animation (Character · Word · Fade · None), "Visible from … to …". More options: halo, alignment, letter-spacing, anchor edge.
+
+UX-DR44: Panel — Counter (P1): value at this Step, Faction, prefix/suffix ("12 000 men"), "Visible from … to …". More options: anchor to Territory, orientation, number format.
+
+UX-DR45: Panel — DateDisplay (P1): granularity (Day · Month · Year), format Select (YYYY-MM-DD, DD month YYYY, year only, free label), free label for this Step. More options: style (cartouche or text), anchor corner.
+
+UX-DR46: Panel — Legend (P1): entries (rename, hide, reorder), "Add a line". More options: title, anchor corner.
+
+UX-DR47: Panel — Image: Use as (Element · Emblem · Event Icon), opacity, scale, rotation, "Visible from … to …". More options: "Use as background" (P1, FR-49) with manual corner/rotation handle calibration and segmented "Above Basemap · Instead of Basemap".
+
+UX-DR48: Panel — Step (thumbnail selected): Step Date, transition (Propagation · Fade · Sweep) and origin point, transition and hold durations, Camera section (UX-DR56), Act (P1). More options: ambient effects (P2, reserved). Multi-selection panel: "5 elements" with only common fields; differing values display "Multiple".
+
+UX-DR49: Inherited / overridden field pattern (`field-inherited`, `field-overridden`): inherited value in text-secondary with caption "Inherited from {parent/Step}"; overridden value in text-primary with 2 px text-primary left bar + "Reset" link (accent). Editing an inherited field overrides it; "Reset" removes own value. Used for Sub-factions (parent Kit) and Step inheritance ("Defined at this Step" / "Inherited from 1459"). Sub-faction panel header shows "1 field overridden" + link to parent. No keyframe diamond vocabulary. [ASSUMPTION]
+
+UX-DR50: Sub-faction row (`subfaction-row`): 16 px faction swatch, name (body), summary caption (text-muted; text-secondary when hovered/selected, e.g. "Inherits · colour overridden"), 16 px chevron; opens the Sub-faction panel.
+
+UX-DR51: FactionKit editor (panel when a Faction is selected): header with Emblem, name, origin ("Project copy · from the Library"), "Applies to the whole Timeline". Sections: Colours (fill, stroke, selection; color-field + guardrail), Emblem & font, Organic Signature (segmented Off · Light · Strong · Project default), Sub-factions (rows + "Add a Sub-faction"). More options: Border, Arrow, Token, flag fill (P1). Kit menu: "Save to Personal Kits", "Update from Personal Kits" (P1, FR-16). Every change applies immediately everywhere (FR-12), not subject to Steps.
+
+UX-DR52: Input field, checkbox, slider base components: input-field (surface-raised, border-input, radius sm, 32 px, body, placeholder text-muted); checkbox 16 px border-input, checked accent/on-accent; slider (2 px border-input track, text-secondary range, 12 px round text-primary thumb) always paired with a 56 px numeric input with unit (timecode). Slider keyboard: ←/→ one step, Shift ten steps, Home/End bounds; double-click thumb = default; one drag = one undo step; step 1 export px or 1 %.
+
+UX-DR53: Segmented control (`segmented-control`) for every exclusive choice of 2–4 options (never round radio buttons; > 4 options -> Select): surface-raised, border-input outer, border dividers, radius sm, 32 px, label type, text-secondary; selected = selection bg, text-primary 600, inset 2 px accent bottom rule. ARIA `radiogroup`, single tab stop, ←/→ move selection. [ASSUMPTION: bottom rule for 3:1.]
+
+UX-DR54: Colour field (`color-field`): 24 px square swatch (radius 0) + hex in timecode within input-field; hex entry with optional `#`, 3 or 6 digits; invalid -> keep previous value + message "Enter a colour in #RRGGBB format."; swatch click opens popover with saturation/value area, hue slider, eyedropper (hidden if browser lacks EyeDropper API) and "Project colours" swatch list (label-caps heading); live application; one drag = one undo step. Used in Kit, Text, Basemap Tint.
+
+UX-DR55: Faction picker (`faction-picker`): wrapping row of 28 px chips (surface-raised, border-input, radius sm, 14 px faction-swatch + label), one per Project Faction, plus "Neutral" (hatched map-land-neutral swatch) and "+ Faction" (opens Library drawer on Kits). Click applies immediately to the whole selection. Selected = selection bg + accent bottom rule. Mixed selection: no chip selected, caption "Multiple Factions". ARIA radiogroup, one tab stop, arrows then Space. Compact variant in options bar: active Faction + menu.
+
+UX-DR56: Step Camera (FR-46, FR-47) in Step panel: Select Preset (Auto framing (default) · Top view · Fly-to · Orbit · Sweep · Bounce); "Use current view" copies edit camera (centre, zoom, rotation) into Step frame and Preset shows "Manual framing"; Zoom (%) and Rotation (−180° to 180°) fields; "View framing" moves edit camera to frame; "Back to Preset" clears manual framing. [ASSUMPTION]
+
+UX-DR57: Relations (Project settings → Factions & Relations): one row per Faction pair ("Russia · Ukraine") with segmented "At war · Allied · Unrelated" and checkbox "Show Front Line" (FR-22, FR-23). Beyond 6 pairs only pairs differing from defaults visible; others behind "All pairs (n)". [ASSUMPTION]
+
+UX-DR58: Basemap picker (`basemap-picker`): 3-column grid of 56 px preview tiles (Parchment, Dark, Light, Relief, Satellite), radius 0, caption name below; selected = inset 2 px accent outline; click switches Basemap immediately without touching elements, undoable. Below: Brightness (−50 %..+50 %, default 0; satellite −10 %), Saturation (−100 %..+50 %, default 0; satellite −35 %), Tint (colour default map-tint + intensity 0–60 %, default 0) sliders, plus "Reset Basemap settings" (resets to active Basemap defaults; changing Basemap keeps modified settings). Settings affect Basemap only, never Territories/elements. Satellite unavailable: tile in control-disabled with caption "Unavailable" + "Retry" link. [ASSUMPTION: ranges/defaults/retention.]
+
+UX-DR59: Nearest-data chip (`nearest-data-chip`): surface-raised, border, info icon 16 px text-secondary, caption text "Nearest available data: 1454"; shown in options bar and Project settings when Reference Date is not exact (FR-6).
+
+UX-DR60: Library drawer (`library-drawer`, 320 px, surface, right border, radius 0 4 4 0, long shadow): opens against the rail, full height below top bar, overlaying the left of the scene AND the left of the Timeline without reframing the Map or shifting the Timeline (mockup state c). Active tool stays active. Tabs: Templates · Kits · Emblems · Event Icons; search + Select filters (Era, world region, type); grid of square sharp-corner thumbnails; Kits tab segmented "Library · Personal Kits" (P1); clicking a Kit offers "Apply to {selected Faction}" or "Add as new Faction" (creates a Project copy, FR-13); Emblems/Event Icons: drag onto Map or click to place at frame centre; Templates: "New Project from this Template" opens prefilled Wizard. Close via Escape, rail button or close icon. Opened via rail or `B`.
+
+UX-DR61: Layers panel (P1, FR-56): in the drawer slot, opened via rail or `L`; list by nature (Territories, Arrows, Tokens, texts, media) with eye (hide), lock (lock) and drag to reorder. Locked layer elements are unselectable (not-allowed cursor); first click per session toasts "The Arrows layer is locked. · Unlock".
+
+UX-DR62: Place search (top bar, `/`): input with suggestions (country, city, Geographic Entity); Enter centres edit camera on place without changing Presets (FR-8); Entity suggestion also offers "Select". No-results copy (UX-DR146).
+
+UX-DR63: Output Format menu (top bar + Project settings): 16:9 · 9:16 · 1:1; change recomputes framings (FR-50) with toast "Framings recalculated for 9:16 · Undo". Resolution 1080p for short side.
+
+UX-DR64: Tooltip (text-primary bg, background fg, radius sm, caption, no shadow) and popover (surface-raised, border, radius md, long shadow) restyled; used by DropdownMenu, Select, ContextMenu.
+
+UX-DR65: Toast component (`toast`, Sonner restyled): surface-raised, border, radius md, short shadow; circled status icon, body-strong title, caption sub-line, optional action ("Undo"). Behaviour rules in UX-DR115.
+
+UX-DR66: Banners (`banner-warning`, `banner-info`): full width under top bar (Home and Editor), surface-raised, 3 px left border (warning / accent), icon (warning colour / info text-secondary), body text, max one action (compact button-secondary 28 px), dismiss cross (dismissable per session, except read-only banner). Warning: storage, offline, browser, window-size; info: read-only.
+
+UX-DR67: Dialog (`dialog`): surface-raised, border, radius md, title-lg, long shadow, dialog-scrim; actions right-aligned with primary rightmost. Only one modal level; sole exception = a confirmation above Settings or Export.
+
+UX-DR68: Skeleton (`skeleton`): solid blocks in `border` colour, radius 0, matching exact shape of expected content (thumbnail, project card, row); opacity pulse 100 → 60 % over 1.2 s; static under reduced motion.
+
+UX-DR69: Progress bar (`progress-bar`): 6 px, radius 0, progress-track/progress-fill, percent in timecode-strong; ARIA `progressbar`.
+
+UX-DR70: Context menu on Map/selection (right-click, Menu key, Shift+F10): includes "Assign to" → Factions + "Neutral"; on thumbnails: Duplicate, Insert after, Delete.
+
+#### E. Timeline
+
+UX-DR71: Timeline container (`timeline`): between rail and panel, surface, top border; default height 200 px (mockup state d), min 180 px, collapsed 44 px (header only), resize handle centred on top edge up to 50 % of window height; height and collapsed state persisted locally [ASSUMPTION]. Fixed zone (header 40 + ruler 20 + Acts 24 + Steps 72 = 156 px); tracks scroll beneath with a 6 px scrollbar running only under the Steps row; default budget shows Arrows lane 26 + 18 px peek of Tokens lane = 200 px. With no Act, Act row disappears and its 24 px go to tracks.
+
+UX-DR72: Timeline header: "Timeline" (title-md), play/pause (`timeline-play-button`, accent), previous/next Step, timecode "00:08,4 / 00:20,5" (timecode-strong / timecode), speed (0.5× · 1× · 2×), horizontal zoom, "Collapse" (ghost). Collapsed state keeps play, timecode, prev/next and an expand button.
+
+UX-DR73: Timeline ruler (`timeline-ruler`, 20 px): graduated in seconds, border ticks, timecode labels in text-muted; click or drag places playhead.
+
+UX-DR74: Playhead (`playhead`): 1.5 px line + 12 px pentagon handle in playhead colour, 24x24 hit area; ARIA `slider` with aria-valuetext "00:08,4, Step 1463, Conquest of Bosnia". Scrub shows exact export frame (FR-41).
+
+UX-DR75: Act row (P1, `act-bracket`): named blocks above thumbnails with 1 px act-rule bracket, label-caps text-secondary labels; rename by double-click; select thumbnails then "Group into Act"; row hidden when no Act.
+
+UX-DR76: Step thumbnails (`etape-thumbnail`): 72 px, radius 0, inset 1 px border, Map preview + surface-raised chip with date and title (caption, may ellipsize); width proportional to hold duration; current Step = inset 2 px accent outline. Date fallback order: date-display ("1463") → date-compact ("16 March", "6 June 1944") → date-compact without year when same as previous Step ("12 June") [ASSUMPTION]; dates never ellipsize; full date in tooltip, accessible name and Step panel. Click = playhead to start of hold + Step panel; double-click title = rename; drag = reorder (FR-40); context menu Duplicate / Insert after / Delete. Thumbnails recolour live when Kits change. Accessible list item "Step 3 of 5, 1463, Conquest of Bosnia, transition 2 s, hold 2.5 s".
+
+UX-DR77: Per-Step own-value markers: when an element is selected, Steps where it has an own value show a small ink tick under their thumbnail. [ASSUMPTION]
+
+UX-DR78: Transition blocks (`transition-hatch`): 135° hatch (border/surface), width proportional to duration, label "1,5 s" in timecode; dragging edge sets duration (same as panel field). [ASSUMPTION]
+
+UX-DR79: Tracks (`track-lane` 26 px, clips 20 px): lanes Arrows / Tokens / Text with label column (label, text-secondary); one clip per element, coloured per track; Event Icons and images on Tokens track [ASSUMPTION]; selected clip = inset 1.5 px accent outline; clip click selects on Map and vice versa; dragging clip end limits visibility range (FR-45); clip spans from creation Step to Timeline end. Territories and Legend have no clip. Token Series = single clip "Series · 14 Tokens".
+
+UX-DR80: Automatic overlap sub-rows: when two clips on one track overlap, the track gains an automatic 26 px sub-row within the scrolling zone (never affecting the 156 px fixed zone), removed when the overlap ends; users never create or reorder lanes.
+
+UX-DR81: "+ Step" at end of thumbnails and Ctrl+D duplicate: new Step starts from previous Step state and becomes current; proposed date = previous + same interval [ASSUMPTION]. Delete Step: no dialog, toast "Step 1463 deleted · Undo"; following Steps inherit from previous (FR-40).
+
+UX-DR82: Thumbnail list keyboard: ←/→ move between thumbnails and make that Step current; Ctrl+Shift+←/→ reorders. [ASSUMPTION]
+
+#### F. Step model in UI
+
+UX-DR83: Current Step: every Map edit applies to the Step bearing `etape-thumbnail-current`; options bar always shows it.
+
+UX-DR84: Editing mid-transition: Map shows interpolated read-only frame; on first edit gesture, playhead snaps to start of arrival Step hold with toast "Placed on Step 1463 to edit". [ASSUMPTION] [NOTE FOR UX]
+
+UX-DR85: Default scope = this Step and following. After a change, link "Apply to all Steps" appears under the modified field while element stays selected (and in the options bar for on-Map edits like moving a Token or redrawing a Zone). Action sets value on the element's first-existing Step and clears own values of later Steps; single Ctrl+Z undo; toast "Applied to 5 Steps · Undo". [ASSUMPTION] [NOTE FOR UX: discoverability — link vs scope selector, test with 3–5 creators.]
+
+UX-DR86: Existence: element visibility editable via clip end or "Visible from … to …" field.
+
+UX-DR87: Membership: assigning an Entity to a Faction (Territory tool, faction-picker, Conquest) removes it from its previous Territory at current Step; a Drawn Zone wins over Entities it covers.
+
+UX-DR88: Reference Date vs Step Date labels always distinct; Reference Date in Project settings (confirm on change), Step Date in Step panel and thumbnail.
+
+#### G. Map tools
+
+UX-DR89: Select tool (`V`): click priority elements (Arrow, Token, Text, image…) before surfaces, else Entity/Drawn Zone under cursor; double-click surface = whole Territory of its Faction; click empty = Project settings; Shift+click add/remove; rectangle in empty area = marquee; Ctrl+A = all elements of active Layer [ASSUMPTION]; right-click = context menu; arrows move selection 1 export px (Shift 10) when Map focused.
+
+UX-DR90: Territory tool (`T`, FR-18/19): options = compact active Faction (last used), segmented Entities · Drawn Zone; in Zone mode "Freehand · Points". Entities mode: hover canvas-hover; click assigns Entity to active Faction immediately (no validation); Alt+click makes neutral. Drawn Zone mode: Trace gesture; closed Zone joins active Faction Territory. Zone editing via Select tool: drag points, double-click contour adds point, Delete removes chosen point. No clip.
+
+UX-DR91: Conquest tool (`C`, FR-20/21): options = attacking Faction (last used, else first non-neutral), segmented Entities · Free paint, brush size ([ and ]). Drag paints pending selection (`canvas-pending` hatch) with live count "12 Entities selected"; Alt+drag removes; "Validate conquest" (Enter) applies to current Step; Escape abandons; nothing auto-plays after validation. Free paint adds a Drawn Zone. When Region has no subdivisions (P1, FR-7), options bar shows "No subdivisions for this Region at this date. Paint freely or split an Entity." and proposes Free paint. Live-region announces count and validation.
+
+UX-DR92: Arrow tool (`F`, FR-28): options = Faction (default active; none -> map-arrow), thickness slider ([ ]). Point trace; smoothed curve through points; double-click or Enter finishes (>= 2 points); Backspace removes last point; Escape cancels; tool stays active. Arrow draws origin→head during entry transition of its Step (first Step: during first second of hold [ASSUMPTION]); points editable per Step; clip on Arrows track.
+
+UX-DR93: Token tool (`J`, FR-30): options = Faction, shape segmented icons (Simplified NATO · Two-tone square · Round flag badge · Mini-flag; default Kit shape), segmented Token · Series (Series P1). Click places Token centred; focus moves to panel Label field (Enter validates, Escape leaves empty); tool stays active; drag moves; rotation handle above token (Shift = 15° steps) or Rotation field; during transition token glides/rotates; clip on Tokens track.
+
+UX-DR94: Token Series mode (P1, FR-31): options Faction, shape, "Flip side"; hovering Front Line or Territory contour shows canvas-hover on path; click attaches series on clicked side; Escape cancels; series redistributes during transitions when path changes.
+
+UX-DR95: Text tool (`X`, FR-34): options = segmented Text · Counter · DateDisplay (last two P1), font, size, frame. Click places text and opens on-Map input; drag = fixed-width box; Escape or click elsewhere ends; empty text is deleted; double-click (Select tool) re-edits. Default animation "Character by character" synced to Step entry transition; anchored to nearest frame edge, stays in place on Output Format change (FR-50). Clip on Text track.
+
+UX-DR96: Counter mode (P1, FR-36): click places Counter, focus to panel Value field; value per Step rolls during transition; anchored to a Territory follows its surface centre. DateDisplay mode (P1, FR-37): click places DateDisplay; only one per Project — if exists, tool selects it [ASSUMPTION]; date-cartouche style; rolls from previous Step Date to next at chosen granularity during transition, fixed during hold; a free Step label replaces rolling.
+
+UX-DR97: Legend (P1, FR-35): no tool; toggled via Project settings "Show Legend"; drag to move, snaps and anchors to frame corners; double-click entry renames in place; visible over whole Timeline, no clip; new Factions/patterns/token types auto-added. P0: minimal non-editable Faction Legend shown at Wizard exit [ASSUMPTION — flagged to PM: FR-2 P0 vs FR-35 P1].
+
+UX-DR98: Import tool (`I`, FR-48): click opens file picker (PNG, JPG, SVG, multiple); drag-and-drop onto Map works with any tool; image placed at drop point or frame centre at max 40 % of frame short side; tool returns to Select with image selected [ASSUMPTION]; clip on Tokens track. Unsupported format toast "Unsupported format. Use PNG, JPG or SVG."
+
+UX-DR99: Assign Entity to Faction outside Conquest — three equivalent paths (FR-13/18) [ASSUMPTION]: (1) Select + panel faction-picker (Shift+click/marquee for many; "Neutral" removes from any Territory); (2) context menu "Assign to"; (3) Territory tool Entities mode. Keyboard path: `/` search → "Select" → Alt+5 panel → faction-picker. Single Ctrl+Z; toast + polite announcement "5 Entities assigned to NATO · Undo".
+
+UX-DR100: Canvas overlays (identical on all Basemaps, never accent): `canvas-selection` (4.5 px halo + 1.6 px dashed ink), `canvas-hover` (3 px halo + 1 px ink), `canvas-pending` (45° ink hatch + 3 px halo), `canvas-handle` (ink fill, 1.5 px halo stroke, 24 px hit), `canvas-brush-cursor` (4.5 px halo + 1.6 px dashed ink ring). In-progress trace: solid canvas-selection stroke + canvas-handle points. Also used for drawn Zone points and propagation origin point.
+
+#### H. Map rendering rules
+
+UX-DR101: Map never follows UI theme: Map, Basemaps, Factions and labels pixel-identical in light and dark UI. AC: screenshot diff of Map canvas across themes = 0.
+
+UX-DR102: UI accent never on Map (selection, hover, handles, brush, pending, frame, presentation bar) — only ink + halo.
+
+UX-DR103: Export frame: centred on Map at Output Format ratio with >= 24 px margin; outside the frame the Map is dimmed by `canvas-mask` at 55 % (`export-frame-mask`); no border, rule, graduated edge, engraved frame or ornament; format label lives only in options bar. Edit camera is free and Map continues beyond frame. [ASSUMPTION: mask tint/opacity.]
+
+UX-DR104: WYSIWYG: inside the frame, at any Timeline instant, the Map shows exactly the exported image (FR-41, NFR-1); editing overlays disappear in Presentation Mode and export.
+
+UX-DR105: Chrome never covers the frame: toasts bottom-right of scene, options bar above Map, zoom bottom-left; only Library drawer and fading presentation controls may overlay the Map.
+
+UX-DR106: Tile loading: tiles arrive progressively over a solid `map-land-neutral` of the ACTIVE Basemap (`-sombre` for satellite); editing never blocked; playback continues with available tiles.
+
+UX-DR107: Map element styles: Arrow (`map-arrow-style`: Kit colour else map-arrow, default 14 px, 4–120 px, 3 px map-label-halo, head per Kit); UnitToken (`unit-token`: 56 px, 4 shapes per Kit, map-token-label below, bare with halo or 2 px framed on halo); Text (`map-text` with halo, frames none / rule / halo band); Counter (`map-counter` tabular, 6 px Faction-colour left bar, label in map-legend-entry); DateDisplay `date-cartouche` (halo fill, double 1.4 px ink rule, spaced-caps kicker, year) [ASSUMPTION default]; Legend (`map-legend`: halo box, 1.4 px ink rule, title "Legend", 28 px swatches, 24 px padding/margin); Front Line default dash-dot map-front with halo; sea labels without halo in map-sea-label; neutral Territory = map-land-neutral. [ASSUMPTION: default sizes.]
+
+UX-DR108: Map credit (`map-credit`): in a frame corner at 24 px margin; "Discreet" = map-credit-discreet with halo; "Legible" = map-credit-legible on halo band. [ASSUMPTION: sizes/band.]
+
+UX-DR109: Edit camera: wheel zoom around cursor, trackpad pinch, Space-hold+drag or middle button pan, Shift+wheel rotate, Shift+1 recentre on export frame (Ctrl+0 left to browser); edit camera never modifies Presets or manual framing.
+
+#### I. Interaction rules
+
+UX-DR110: Keyboard shortcuts (single-letter keys follow typed character, AZERTY and QWERTY) [ASSUMPTION list]: V Select, T Territory, C Conquest, F Arrow, J Token, X Text, I Import, B Library, L Layers, Space (short) play/pause, ←/→ prev/next Step (context 4), Shift+←/→ one frame, Home/End Timeline start/end, Ctrl+D duplicate (element or Step), Delete remove selection, Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y undo/redo, Ctrl+S confirm save (toast), Ctrl+E Export, P Presentation, / place search, [ / ] brush size or thickness, ? shortcut help, Alt+1..Alt+6 zone jump, Escape per order. Implement a "?" shortcuts help overlay.
+
+UX-DR111: Keyboard context priority (most specific wins) [ASSUMPTION]: (1) focused text field receives all keys, single-letter shortcuts/Space/arrows inactive, Escape leaves field; (2) focused composite control (menu, Select, segmented, faction-picker, slider, thumbnail list, Layers list) follows its ARIA pattern; (3) Map focused with selection: arrows nudge 1 export px (Shift 10); (4) elsewhere: ←/→ Step, Shift+←/→ frame, Home/End. Space: short press = play/pause, hold during Map drag = pan without toggling playback; on focused button = native activate.
+
+UX-DR112: Escape order — one action per press: close open menu/popover → close dialog (never during export render) → cancel in-progress trace or pending selection → close drawer → clear selection → return to Select tool. In Presentation Mode, Escape returns to Editor at reached instant.
+
+UX-DR113: Zone jump Alt+1..Alt+6 (digit row, no Shift, AZERTY and QWERTY): top bar, rail, options bar, Map, panel, Timeline; each zone a named ARIA region; F6 not used (browser address bar). [ASSUMPTION: verify collisions on Chrome/Edge Windows.]
+
+UX-DR114: Undo/redo (FR-55): multi-level across Map, Timeline, Kits and Project settings; excludes export, Settings and Project File import; history not persisted across reload [ASSUMPTION]; every creation is one Ctrl+Z; one slider/colour drag = one step; "Apply to all Steps" = one step.
+
+UX-DR115: Toast rules: bottom-right of scene, never above export frame; one visible at a time, others queued; info 4 s, with action ("Undo") 8 s, error until dismissed [ASSUMPTION]; no toast on autosave — "Project saved" only after Ctrl+S or first save of new Project [ASSUMPTION]; destructive actions (delete Step, delete Project) use undo toast instead of confirm dialog. Announced politely (info) / assertively (error).
+
+UX-DR116: Prohibited patterns: exposed keyframes/Bézier curves, stacked modals, destructive action without Undo, hover as the only access to a function, auto-play on Project open, After Effects-style density.
+
+UX-DR117: Drag gestures: move element at current Step, drop images on Map, drop Project File on Home, reorder Steps and Layers, drag clip and transition edges. Trace gesture shared by Drawn Zone and Arrow (click point, drag freehand, double-click/Enter finish, Backspace remove last, Escape cancel).
+
+#### J. Screens
+
+UX-DR118: Home (`home-layout`): background colour, centred column max 1200 px, 32 px side margins; common top bar (no breadcrumb); optional banner between top bar and header; header "Projects" (title-xl) with right-aligned "Import a Project File" (secondary) and "New Project" (primary, only primary); grid of project cards auto columns min 240 px, 24 px gap (4 columns at 1366). Drop a Project File anywhere to import (FR-52, FR-54).
+
+UX-DR119: Project card (`project-card`): surface, border, radius 0, full-width 16:9 thumbnail of first Step, name body-strong single line ellipsis, meta caption text-muted "Modified 2 h ago · 9:16"; menu button (ghost) top-right of thumbnail visible on hover and focus; hover = surface-raised bg + border-input; no shadow; sorted most recent first; click or Enter opens Editor; menu (button, right-click, Shift+F10): Rename (in place), Duplicate, Export Project File, Delete (toast "Project deleted · Undo", permanent deletion when toast closes); open-elsewhere meta "Open in another tab". [ASSUMPTION]
+
+UX-DR120: Home empty state (`home-empty`): centred in grid, title-lg "No Projects yet.", body text-secondary, "New Project" (primary) + "Import a Project File" (secondary); whole area is a drop target with dashed border-input outline during drag; no illustration.
+
+UX-DR121: Telemetry consent dialog (`consent-dialog`, FR-58) on first launch: 440 px, on scrim, no close cross, no Escape; title "Anonymous usage statistics", body copy from Voice & Tone; two button-secondary of identical width and style, "Decline" left, "Accept" right, nothing preselected, initial focus on title; caption link "What is sent". Nothing sent before answer; changeable in Settings → Privacy.
+
+UX-DR122: Wizard (`assistant`) shell: full-frame dialog without scrim from Home "New Project"; 56 px header, numbered step indicator 64 px (current in accent with bottom rule), "1 / 4", Back, Skip, Next, "Create Map" on last; "Skip" keeps Template values (FR-2); 400 px aside "In this Project" in surface; title-xl screen titles. Reference render: `mockups/assistant.html`.
+
+UX-DR123: Wizard screen 1/4 — Template: "Blank Map" first, then filterable Template grid with animated thumbnail on hover (static under reduced motion); no-result state with "Clear filters"; "Blank Map" still goes through screens 2–4, all skippable. [ASSUMPTION]
+
+UX-DR124: Wizard screen 2/4 — Reference Date: year input, "BC" toggle, nearest-data chip "Nearest available data: …" when not exact; invalid date messages (UX-DR147).
+
+UX-DR125: Wizard screen 3/4 — Region: Region search with preview framing it; no-result copy.
+
+UX-DR126: Wizard screen 4/4 — Factions: suggested Factions with their Kit auto-applied; Faction without official Kit gets a distinct default colour; "In this Project" column; "Create Map" → "Creating Map…" with progress bar and step ("Loading Entities for 1450"), screen frozen; Editor opens when Map ready (NFR-7); failure "Unable to create the Map." + "Retry", choices kept. Render: `mockups/assistant.html`.
+
+UX-DR127: Editor layout: 3x3 grid (top bar / rail + scene + panel / Timeline between rail and panel); scene = options bar + Map. At 1366x768 (viewport 1366x648): scene 990x400, visible Map 990x364, 16:9 export frame 562x316. Reference: `mockups/editeur.html` states a (dark), b (light), c (drawer), d (retained 200 px Timeline). Note states a–c and Export-backdrop use rejected 280 px Timeline.
+
+UX-DR128: Editor opening state: Editor shows immediately with skeletons in panel and thumbnails, Map in solid active-Basemap background, "Opening…" in top bar; tools enable once Project data loads; media and tiles follow non-blocking. Reopen after close/crash opens last saved state, no recovery dialog (FR-53, NFR-5).
+
+UX-DR129: Presentation Mode (`P` / "Presentation", FR-57): fullscreen (Fullscreen API), playback from playhead with Timeline camera, render identical to export. Controls (`presentation-controls`): floating bar 640x48 centred 24 px from bottom, scrim at 72 %, canvas-halo icons/timecode, no accent, radius md; play/pause, timecode-strong, thin progress (canvas-halo fill on halo 30 %), "Exit presentation"; focus ring focus-ring-dark. Controls fade 2 s after last mouse move, return on move or Tab; never in export. Space play/pause; Escape back to Editor at reached instant. End: stop on last frame, controls shown, "Replay" (no loop) [ASSUMPTION]. Startup: black screen + progress-bar "Loading Map…" until first seconds of tiles ready (max 10 s); fullscreen refused → presentation in window + toast "Fullscreen refused by the browser. The presentation stays in the window." [ASSUMPTION]
+
+UX-DR130: Export modal (`export-dialog`, 560 px, label column 148 px, label text-secondary) — settings: tabs Video / Image (Image P1). Video: range (Whole Timeline · Steps from … to …), 30 or 60 fps, reminder of Output Format and 1080p resolution (changed outside modal). Image (P1): instant (current playhead default), PNG or JPG, "Transparent background" (PNG only). Opened via top bar "Export" or Ctrl+E; checks video encoder on open. Render: `mockups/export.html`.
+
+UX-DR131: Locked credit control (`export-credit-locked`): when a source licence requires it (e.g. satellite), a locked row (background bg, border, radius sm, 32 px) with credit text and 16 px padlock, NO checkbox, caption explanation "Required: the satellite basemap licence asks for this credit. You choose its position and how discreet it is."; below: Select "Position" (four corners, default bottom-left) and segmented "Discreet / Legible" (default Discreet). Exposes "Required credit, locked" to AT. Without a licence requirement: optional credit checkbox unchecked by default with same settings. [ASSUMPTION]
+
+UX-DR132: Export rendering state: "Export" starts render inside modal; settings become control-disabled; footer shows "Rendering…", percent, progress-bar, remaining time + current Step caption ("About 25 s remaining · Step 7 of 10"), "Cancel" (secondary). Editor blocked; Escape/close disabled — only Cancel interrupts; closing tab triggers native beforeunload alert. Each frame waits for its tiles ("Loading tiles…").
+
+UX-DR133: Export done state (`export-done`): inside modal, never just a toast; box with 3 px success left border + icon, title "Export complete", filename `{project}-{format}-{date}.mp4` (e.g. `siege-de-marioupol-9x16-2026-09-29.mp4`), details caption (duration, resolution, fps, size, range, credit reminder); browser auto-saves to downloads; actions "Export again" (secondary, back to kept settings) and "Download again" (primary, right; re-downloads kept file without re-render) [ASSUMPTION: file kept in memory until modal closes]. Focus moves to "Download again"; polite announcement. Never "Open folder"/"Show download".
+
+UX-DR134: Settings dialog (tabbed, from top bar menu on Home and Editor) [ASSUMPTION: dialog not page]: Appearance (segmented System · Light · Dark), Language (Français · English, no reload), Privacy (telemetry toggle + what is/isn't sent, FR-58), Personal Kits (P1: list, rename, delete, import/export file), Storage (space used, persistent storage status, reminder to export Project Files). Changes immediate; not covered by undo.
+
+UX-DR135: "Designed for computer" page on mobile/tablet (coarse pointer and width < 1024 px): no editor; "OPENMAP is designed for a computer. Open this link on your PC with Chrome or Edge." + "Copy link" [ASSUMPTION: blocking].
+
+#### K. State patterns
+
+UX-DR136: Loading states: Home project list skeleton cards while reading local storage; Library/Wizard data skeleton thumbnails; failure "Unable to load the Library." + "Retry".
+
+UX-DR137: Save status in top bar: "Saving…" → "Saved"; write failure → "Not saved" in danger with icon + banner "Export a Project File so you lose nothing."
+
+UX-DR138: Storage banners: persistent storage denied / almost full → banner-warning "Storage almost full. Export a project file to keep your work safe." + action "Export Project File" on Home and Editor; reappears each session while condition persists (FR-53).
+
+UX-DR139: Read-only tab (edit lock per Project) [ASSUMPTION — architecture must implement lock, e.g. Web Locks/BroadcastChannel]: second tab opening same Project shows it read-only with non-dismissable banner-info "This project is open in another tab. You are viewing it read-only." + "Take over here", announced on open; editing tools, panel fields, edit menus disabled; playback, scrub, Presentation and export remain available. "Take over here" takes lock after the other tab's last save; other tab switches to read-only with "This project is now being edited in another tab." + "Take over here". If holder tab closes, banner says so and keeps "Take over here" (no auto takeover). Home card shows "Open in another tab".
+
+UX-DR140: Satellite unavailable: automatic fallback to Dark Basemap, warning toast "Satellite basemap unavailable. Using the dark basemap.", satellite tile "Unavailable" + "Retry"; no Project element touched (FR-5).
+
+UX-DR141: Offline: global banner "Offline. Your changes are saved on this device; basemaps and Library items not yet loaded will not display." Editing continues. [ASSUMPTION]
+
+UX-DR142: Export unavailable (no video encoder): banner-warning at top of Export modal "This browser cannot encode video. Open OPENMAP in Chrome or Edge.", "Export" control-disabled, settings viewable; Image tab usable if shipped (P1).
+
+UX-DR143: Tiles missing at export: after 20 s without a new tile [ASSUMPTION], render pauses with warning "Some map tiles could not be loaded (steps 3 to 5). If you continue, these areas will keep the Basemap's plain background." + "Continue" / "Cancel" (back to settings, nothing saved); offline → same warning at launch.
+
+UX-DR144: Export cancelled: back to settings with "Export cancelled. Nothing was saved." Export failed: danger message "The export failed." + readable cause (memory, browser encoder) + "Retry" + advice "Try 30 fps or a shorter range". [ASSUMPTION]
+
+UX-DR145: Import errors: Project File import toast with progress "Importing siege-de-marioupol… 45 %" + "Cancel", Project then appears first in list; invalid file → dialog "This file is not a readable OPENMAP Project File." with no existing Project modified. Invalid Kit file (P1, Settings) → error toast "This file is not a readable OPENMAP Kit." with no Personal Kit modified. Unsupported image → toast (UX-DR98).
+
+UX-DR146: Empty states: empty Timeline (blank Project) = single Step + "Add a Step to animate the Map." + "+ Step" in thumbnail row; no Faction (Project settings, Territory and Conquest tools) = "Add a Faction to colour Territories." + "Add a Faction" (opens Library on Kits); no results in place/Region search "No place found for "Marioupl". Check the spelling or try a current name."; Library/Templates "No results for these filters." + "Clear filters"; Wizard "Skip" remains possible.
+
+UX-DR147: Invalid date (Wizard 2/4, Project settings, Step panel): message under field in danger with icon, previous value kept: "Year 0 does not exist. Enter 1 BC or 1." / "Enter a year, for example 1463 or 52 BC." Out-of-data date is not an error → nearest-data chip.
+
+UX-DR148: Unsupported browser (Firefox): Home banner "OPENMAP is designed for Chrome and Edge. Video export may not work here." [ASSUMPTION]; small window (< 1366 px): banner "OPENMAP is designed for a screen of at least 1366 × 768." [ASSUMPTION]
+
+UX-DR149: Corrected Entity (P1): "Corrected in this Project" mention in panel (FR-11).
+
+#### L. Voice & tone / microcopy
+
+UX-DR150: i18n FR/EN for all UI strings, language switch without reload; glossary terms verbatim and capitalised in both languages, never synonyms ("scene", "keyframe", "faction theme" forbidden); "Kits personnels"/"Personal Kits" never "My Kits". [ASSUMPTION: EN glossary equivalents to validate.]
+
+UX-DR151: French rules: formal "vous", imperative for instructions, short complete sentences, French typography (« » quotes, non-breaking space before : ; ? !, decimal comma). English: same structure, direct tone, sentence case. BC dates "52 av. J.-C." / "52 BC".
+
+UX-DR152: Status messages state where the user's data stands, never bare "Error"; no exclamation marks, no emoji, no encouragement; buttons = verb (+ object); never promise what the browser cannot do. Implement the FR/EN copy table (save, conquest, count, assignment, Kit, guardrail, storage, other tab, satellite, tiles, export cancelled/done, required credit, deletion, approximate data, telemetry) verbatim as string resources.
+
+#### M. Accessibility
+
+UX-DR153: WCAG 2.2 AA for all chrome; all body text >= 4.5:1 in both modes; focus-ring, playhead, act-rule, border-input >= 3:1; text-muted is floor, never lightened; text-disabled exempt. Automated contrast test over token pairs.
+
+UX-DR154: Full keyboard access; tab order follows visual order top bar → rail → options bar → Map → panel → Timeline; each zone a named ARIA region reachable by Alt+1..6; focus visible via focus-ring on :focus-visible only.
+
+UX-DR155: Pointer alternatives: every draw/paint result has a keyboard path (place search + faction-picker for assignment; arrow nudge for moves; panel fields for durations, ranges, values). [ASSUMPTION]
+
+UX-DR156: Screen reader semantics: rail tools = buttons named by visible label with aria-pressed and aria-keyshortcuts; Map = named region "Map, Step 1463"; polite aria-live region announcing selection ("Territory Ottoman Empire selected, 12 Entities"), assignments, conquest count and validation; playhead slider with aria-valuetext; thumbnails as a list with full description; faction swatches always named; toasts announced polite (info) / assertive (error); export progress as progressbar; "Export complete" announced politely with focus to "Download again"; locked credit exposes "Required credit, locked"; read-only banner announced on open; faction-picker/segmented as radiogroups.
+
+UX-DR157: Reduced motion (`prefers-reduced-motion`): chrome (drawer, toasts, accordions, skeletons, panel changes) → short fade or instant; Organic Signature never applied to UI; Map in Editor still shows Organic Signature as set (NFR-1) but never auto-starts; Template animated thumbnails static; Organic Signature panel shows note "The Map animation is your content; set it to Off to remove overshoot, jitter and pulsing."; export never affected by system preference.
+
+UX-DR158: No information by colour alone: tracks labelled, states with icon + text, Factions with names.
+
+#### N. Layout & platform
+
+UX-DR159: 1366x768 budget (Chrome maximised, Windows taskbar, viewport 1366x648): full experience, no essential panel hidden, no horizontal scroll (NFR-8); Timeline default 200 px showing header, ruler, Acts, Steps row and one track; export frame 562x316 at 16:9 (79 % more frame area than rejected 280 px Timeline).
+
+UX-DR160: Below 1366 px width: Map shrinks first; below 1280 px panel goes to 260 px and drawer overlaps more of scene; banner signals minimum size. Low height: Timeline collapses to 44 px header with expand button. [ASSUMPTION]
+
+UX-DR161: Timeline resize and collapse: top-edge handle from 180 px to 50 % window height; "Collapse" to 44 px; state and height remembered locally. [ASSUMPTION]
+
+UX-DR162: Fullscreen reserved to Presentation Mode; only one tab edits a given Project.
+
+#### O. Brand guardrails (Do / Don't)
+
+UX-DR163: Enforce Do/Don't as review checklist: single accent; flat surfaces; sharp corners (0–2 px, 4 px floating); 1.5 px icons; restyled shadcn; shadows only on toasts/popovers/drawer/dialogs; serif only for titles/dates/Map labels; Map identical across themes; canvas ink+halo only; export limit by dimming only; Faction colours as content with ΔE guardrail; states with icon+label; medium density with "More options"; segmented controls not radios; inputs with border-input; 24 px hit areas; locked required credit with padlock + explanation; consent with equal-weight buttons; embedded OFL fonts. Don'ts: gradients (esp. purple/indigo), glassmorphism, pills, emojis, default shadcn look, glow/neon, serif in buttons/inputs, re-tinting Map by theme, accent on Map, engraved/graduated frame, Faction colour in chrome, colour-only info, After Effects density, round radios, required credit as greyed checkbox, "Accept" as primary vs "Decline" as link, relying on installed fonts. RTS styling of chrome deferred to v2.
+
+### FR Coverage Map
+
+{{requirements_coverage_map}}
+
+## Epic List
+
+{{epics_list}}
