@@ -1,0 +1,928 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OPENMAP directions 1</title>
+<style>
+/* =====================================================================
+   OPENMAP — Directions visuelles, série 1 (board de comparaison)
+   Toutes les valeurs hexadécimales par direction et par mode.
+
+   01 ATELIER DU CARTOGRAPHE
+     Clair : bg #EFE9DD · surface #F9F6EF · surface-2 #F3EDE1 · scène #E9E2D3
+             filet #E3DACA · filet fort #CFC3AD · encre #2A2520 · atténué #6F6556
+             accent sanguine #9E3B26 (texte sur accent #FFF8EF)
+             carte : mer #D3DCD5 · neutre #E9DFC9 · côte #8C7C62 · ottoman #B4533A
+             vassaux #D9A08C · Hongrie #4F7391 · Venise #C99A3E · flèche #7A2716
+     Sombre: bg #171513 · surface #201D1A · surface-2 #282420 · scène #141210
+             filet #34302A · filet fort #4B443A · texte #ECE4D5 · atténué #A69A86
+             accent #D8744E (texte sur accent #1B1511)
+             carte : mer #1D2523 · neutre #39342C · côte #6E6454 · ottoman #B9573E
+             vassaux #D69A84 · Hongrie #4C6E88 · Venise #B08A3E · flèche #EFC2A9 · front #F0E6D2
+
+   02 SALLE D'ÉTAT-MAJOR
+     Sombre: bg #0C1013 · surface #11171B · surface-2 #161E23 · scène #0A0E10
+             filet #212B31 · filet fort #34424B · texte #D3DCE1 · atténué #80909A
+             accent ambre #E3A63B · ok #5FB08A
+             carte : mer #0E1A20 · neutre #1F272C · côte #3E4E57 · graticule #1A2A33
+             ottoman #B8483B · vassaux #D98B7F · Hongrie #3F6E99 · Venise #B98F3E
+             flèche #E8715C · front #E9EEF1
+     Clair : bg #E5E9EB · surface #F7F9FA · surface-2 #EEF2F4 · scène #DDE3E6
+             filet #D3DADE · filet fort #AEB9C0 · texte #11171B · atténué #56646D
+             accent ambre #A96A0F · ok #2F8A5E
+             carte : mer #D9E3E8 · neutre #EFF1EF · côte #8B99A1 · graticule #C4D1D8
+             ottoman #C0503F · vassaux #E2A396 · Hongrie #4F7FAE · Venise #D3A650 · flèche #9E2F22
+
+   03 BANC DE MONTAGE
+     Sombre: bg #0E0F11 · surface #17181B · surface-2 #202226 · surface-3 #2A2C31
+             scène #0B0C0D · filet #26282D · filet fort #393C43 · texte #F0F1F3
+             atténué #9197A1 · accent cyan #2FD3E6 (texte sur accent #03262B) · sélection #0F3036
+             carte : mer #1A2830 · neutre #2B2E33 · côte #4A4F57 · ottoman #D0533F
+             vassaux #E89A89 · Hongrie #4E82C4 · Venise #D8A83E · flèche #FF8A6B
+     Clair : bg #E9EAED · surface #FFFFFF · surface-2 #F2F3F5 · surface-3 #E6E8EB
+             scène #DCDEE2 · filet #E1E3E7 · filet fort #C9CCD2 · texte #15161A
+             atténué #5E636D · accent cyan #0796A9 · sélection #DDF3F6 / #066F7D
+             carte : mer #CFE0EA · neutre #EDECE8 · côte #99A0A8 · ottoman #D0533F
+             vassaux #EBA595 · Hongrie #4E82C4 · Venise #E0B044 · flèche #B23A22
+
+   04 ÉDITORIAL
+     Clair : bg/surface #FFFFFF · surface-2 #F5F4F0 · scène #F0EEE9 · filet #E6E3DC
+             règle/texte #0A0A0A · atténué #5C5A55 · accent jaune #FFD23F (état actif)
+             carte : mer #E4E7E6 · neutre #FBFAF7 · côte #0A0A0A · ottoman #1F7A4D
+             vassaux #9FCBAF · Hongrie #2F5DA8 · Venise #B8343F
+     Sombre: bg/surface #0B0B0A · surface-2 #171715 · scène #141413 · filet #262624
+             règle/texte #F4F2EC · atténué #A3A098 · accent jaune #FFD23F
+             carte : mer #1A1B1B · neutre #2A2A28 · ottoman #2E9A63 · vassaux #8FCBA8
+             Hongrie #4B7DD1 · Venise #D24B57
+
+   Chrome navigateur (neutre, hors direction) :
+     sombre #1E1F21 / barre #2B2C2F · clair #E2E2DF / barre #F6F6F4
+   Board : fond #E4E1DA · texte #1C1B19
+   ===================================================================== */
+
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:#E4E1DA}
+body{background:#E4E1DA;color:#1C1B19;font:15px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+.board{width:1180px;margin:0 auto;padding:64px 40px 120px}
+.kick{font:600 11px/1 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.14em;text-transform:uppercase;color:#6B675F}
+.board>h1{font:600 40px/1.1 ui-sans-serif,system-ui,sans-serif;letter-spacing:-.025em;margin:14px 0 14px}
+.lead{max-width:760px;color:#44413B;font-size:16px}
+.lead b{color:#1C1B19}
+.idx{display:grid;grid-template-columns:repeat(4,1fr);margin-top:36px;border-top:1px solid #1C1B19}
+.idx a{display:block;padding:14px 18px 4px 0;color:inherit;text-decoration:none;border-right:1px solid #CBC6BC;margin-right:18px}
+.idx a:last-child{border-right:0}
+.idx b{display:block;font-size:15px}
+.idx span{font-size:13px;color:#5E5A52}
+.idx em{font:600 11px ui-monospace,Menlo,monospace;font-style:normal;color:#8A857B}
+.dir{margin-top:104px;padding-top:26px;border-top:1px solid #1C1B19}
+.dir-h{display:grid;grid-template-columns:64px 330px 1fr;gap:28px;margin-bottom:30px;align-items:start}
+.dir-h .no{font:600 13px ui-monospace,Menlo,monospace;color:#8A857B;padding-top:8px}
+.dir-h h2{font-size:28px;line-height:1.15;letter-spacing:-.02em;font-weight:650}
+.dir-h .tag{font-size:14px;color:#5E5A52;margin-top:6px}
+.dir-h p{font-size:14.5px;color:#34312C;max-width:640px}
+.dir-h p+p{margin-top:8px}
+.dir-h p b{font-weight:600}
+.cap{display:flex;gap:10px;align-items:baseline;font:600 11px/1 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.1em;text-transform:uppercase;color:#6B675F;margin:0 0 10px}
+.cap span{color:#9A958A;letter-spacing:.04em;text-transform:none;font-weight:400;font-family:ui-sans-serif,system-ui,sans-serif;font-size:12.5px}
+.row2{display:flex;gap:28px;margin-top:34px;align-items:flex-start}
+.legend{flex:1;min-width:0;font-size:12.5px;color:#34312C}
+.legend h4{font:600 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.12em;text-transform:uppercase;color:#6B675F;margin:0 0 8px;padding-top:12px;border-top:1px solid #CBC6BC}
+.legend h4:first-child{margin-top:0}
+.legend section+section{margin-top:18px}
+.chips{display:grid;grid-template-columns:1fr;gap:5px}
+.chip{display:flex;align-items:center;gap:7px;min-width:0}
+.chip i{width:16px;height:16px;flex:none;box-shadow:inset 0 0 0 1px rgba(0,0,0,.14)}
+.chip code{font:11px ui-monospace,Menlo,Consolas,monospace;color:#1C1B19}
+.chip small{font-size:11px;color:#7A756B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stack{font:11px/1.45 ui-monospace,Menlo,Consolas,monospace;color:#34312C;word-break:break-word}
+.stack b{font-family:ui-sans-serif,system-ui,sans-serif;font-weight:600;font-size:12px;display:block;margin-top:6px}
+.legend ul{list-style:none}
+.legend li{padding-left:12px;position:relative;margin-top:3px}
+.legend li:before{content:"";position:absolute;left:0;top:.65em;width:5px;height:1px;background:#6B675F}
+.foot{margin-top:96px;padding-top:18px;border-top:1px solid #CBC6BC;font-size:13px;color:#5E5A52;max-width:760px}
+
+/* ---------- frame scaling ---------- */
+.scaler{width:calc(1280px * var(--s));height:calc(760px * var(--s));flex:none}
+.scaler>.win{transform:scale(var(--s));transform-origin:0 0}
+
+/* ---------- shared editor skeleton (all tokens come from direction vars) ---------- */
+.win{position:relative;width:1280px;height:760px;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--f-ui);font-size:13px;line-height:1.35;border-radius:10px;font-variant-numeric:tabular-nums;box-shadow:0 0 0 1px rgba(0,0,0,.18),0 30px 60px -30px rgba(24,20,14,.55)}
+.win.dark{--chrome:#1E1F21;--chrome-line:#000;--chrome-url:#2B2C2F;--chrome-text:#8E9095;--chrome-dot:#3E4044}
+.win.light{--chrome:#E2E2DF;--chrome-line:#CFCFCB;--chrome-url:#F6F6F4;--chrome-text:#6A6A66;--chrome-dot:#BDBDB8}
+.chrome{height:34px;flex:none;display:flex;align-items:center;gap:7px;padding:0 14px;background:var(--chrome);border-bottom:1px solid var(--chrome-line)}
+.chrome i{width:10px;height:10px;border-radius:50%;background:var(--chrome-dot)}
+.chrome .url{margin:0 auto;transform:translateX(-24px);width:420px;height:22px;border-radius:6px;background:var(--chrome-url);color:var(--chrome-text);font:12px/22px ui-sans-serif,system-ui,sans-serif;text-align:center}
+.app{flex:1;min-height:0;display:grid;grid-template-columns:var(--rail-w) minmax(0,1fr) var(--panel-w);grid-template-rows:var(--top-h) minmax(0,1fr) var(--tl-h);grid-template-areas:var(--areas)}
+.top{grid-area:top}.rail{grid-area:rail}.stage{grid-area:stage}.panel{grid-area:panel}.tl{grid-area:tl}.status{grid-area:status}
+.sp{flex:1}
+.ico{width:18px;height:18px;flex:none;stroke-width:var(--iw)}
+.ico.sm{width:16px;height:16px}.ico.xs{width:13px;height:13px}
+
+.top{display:flex;align-items:center;gap:12px;padding:0 14px 0 16px;background:var(--surface);border-bottom:1px solid var(--line);min-width:0;white-space:nowrap}
+.brand{display:flex;align-items:center;gap:8px;height:100%;padding-right:14px}
+.mk{width:22px;height:22px;flex:none}
+.proj{display:flex;align-items:center;gap:8px}
+.crumb{color:var(--muted)}.sep{color:var(--faint)}
+.pname{font-weight:600}
+.saved{display:inline-flex;align-items:center;gap:4px;color:var(--muted);font-size:11.5px;margin-left:4px}
+.dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--ok)}
+.fmt{display:flex;align-items:center;gap:8px;margin-left:8px;padding-left:14px;border-left:1px solid var(--line);height:28px}
+.fmt .lbl{color:var(--muted);font-size:12px}
+.fmt .val{display:inline-flex;align-items:center;gap:5px;font-weight:600;height:28px;padding:0 8px;border:1px solid var(--line-strong);border-radius:var(--r-ctl)}
+.hist{display:flex;gap:2px;color:var(--muted)}
+.hist span{width:30px;height:30px;display:grid;place-items:center;border-radius:var(--r-ctl)}
+.hist .dis{opacity:.38}
+.seg{display:inline-flex;align-items:stretch;height:30px;padding:2px;gap:2px;border:1px solid var(--line-strong);border-radius:var(--r-ctl);background:var(--surface)}
+.seg span{display:flex;align-items:center;justify-content:center;min-width:28px;padding:0 7px;border-radius:var(--r-in);color:var(--muted);font-size:12px;font-weight:600}
+.seg span.on{background:var(--seg-on);color:var(--seg-on-ink)}
+.btn{display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 14px;border-radius:var(--r-ctl);font-weight:600;border:1px solid var(--line-strong);background:var(--surface);color:var(--text)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+
+.rail{background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:stretch;padding:10px 8px;gap:2px;min-height:0}
+.tool{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;height:56px;border-radius:var(--r-ctl);color:var(--muted);font-size:10.5px;font-weight:500}
+.tool .ico{width:20px;height:20px}
+.tool.on{background:var(--sel);color:var(--sel-ink)}
+.tool.hov{background:var(--hover);color:var(--text)}
+.tool .k,.n,.rail-h{display:none}
+.tip{position:absolute;left:calc(100% + 12px);top:50%;transform:translateY(-50%);z-index:6;display:flex;align-items:center;gap:8px;white-space:nowrap;background:var(--tip-bg);color:var(--tip-ink);padding:6px 9px;border-radius:var(--r-ctl);font-size:12px;font-weight:500;box-shadow:0 6px 16px -8px rgba(0,0,0,.45)}
+.tip kbd{font:600 10px/1 var(--f-mono);padding:3px 5px;border-radius:3px;border:1px solid currentColor;opacity:.7}
+
+.stage{position:relative;display:flex;align-items:center;justify-content:center;background:var(--stage);overflow:hidden;min-width:0}
+.mapframe{position:relative;flex:none}
+.map{display:block}
+.zoom{position:absolute;right:14px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;align-items:center;gap:2px;width:36px;padding:4px 0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-ctl);color:var(--muted);font-size:10.5px}
+.zoom span{width:28px;height:26px;display:grid;place-items:center}
+.zoom b{font-weight:600;color:var(--text);padding:2px 0}
+.zoom i{width:18px;height:1px;background:var(--line);margin:2px 0}
+.toast{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);z-index:5;display:flex;align-items:center;gap:10px;padding:10px 16px 10px 12px;background:var(--text);color:var(--surface);border-radius:var(--r-ctl);box-shadow:0 10px 24px -12px rgba(0,0,0,.6);white-space:nowrap}
+.toast b{display:block;font-weight:600;font-size:12.5px}
+.toast small{display:block;font-size:11px;opacity:.72}
+
+.panel{background:var(--surface);border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.ph{padding:16px 18px 14px;border-bottom:1px solid var(--line)}
+.ov{font-size:11px;color:var(--muted);font-weight:600;margin-bottom:8px}
+.kt{display:flex;align-items:center;gap:10px}
+.emb{width:36px;height:24px;flex:none;box-shadow:0 0 0 1px var(--line-strong)}
+.emb.lg{width:42px;height:28px}
+.kn{font-size:16px;font-weight:650}
+.km{font-size:11.5px;color:var(--muted)}
+.more{margin-left:auto;color:var(--muted);display:grid;place-items:center;width:28px;height:28px}
+.sec{padding:14px 18px;border-bottom:1px solid var(--line)}
+.sh{font-size:11.5px;font-weight:600;color:var(--muted);margin-bottom:8px}
+.row{display:flex;align-items:center;gap:10px;min-height:34px}
+.sw{width:24px;height:24px;border-radius:var(--r-sw);flex:none;box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
+.sw.ring{background:var(--surface);box-shadow:inset 0 0 0 5px var(--c),inset 0 0 0 6px rgba(128,128,128,.35)}
+.rl{flex:1;display:flex;flex-direction:column;font-size:12.5px;min-width:0}
+.rl small{font-size:11px;color:var(--muted)}
+.hex{font:11.5px var(--f-mono);color:var(--muted)}
+.lnk{color:var(--accent-text);font-weight:600;font-size:12px}
+.lnk-i{color:var(--muted)}
+.sel{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 10px;border:1px solid var(--line-strong);border-radius:var(--r-ctl);font-size:12.5px}
+.seg.wide{display:flex;width:100%;height:32px}
+.seg.wide span{flex:1}
+.hint{font-size:11.5px;color:var(--muted);margin-top:8px}
+.add{display:flex;align-items:center;gap:6px;margin-top:6px;color:var(--muted);font-size:12px}
+.disc{display:flex;align-items:center;gap:8px;padding:14px 18px;font-weight:600;font-size:12.5px}
+.disc span{white-space:nowrap}
+.disc small{white-space:nowrap;margin-left:auto;color:var(--faint);font-weight:400;font-size:11.5px}
+
+.tl{background:var(--surface);border-top:1px solid var(--line);display:flex;flex-direction:column;min-height:0;min-width:0}
+.tp{display:flex;align-items:center;gap:6px;height:44px;padding:0 16px;flex:none}
+.tt{font-weight:600;margin-right:10px}
+.pb{width:32px;height:32px;display:grid;place-items:center;border-radius:var(--r-ctl);background:var(--text);color:var(--surface)}
+.pb .ico{width:16px;height:16px}
+.nav{width:28px;height:28px;display:grid;place-items:center;color:var(--muted)}
+.tc{margin-left:8px;color:var(--muted);font-size:12px}
+.tc b{color:var(--text);font-weight:600}
+.spd{display:inline-flex;align-items:center;gap:3px;height:26px;padding:0 8px;border:1px solid var(--line-strong);border-radius:var(--r-ctl);font-size:12px}
+.tz{display:inline-flex;align-items:center;gap:6px;color:var(--muted);margin-left:12px}
+.tz i{display:block;width:70px;height:3px;background:var(--line-strong);border-radius:2px;position:relative}
+.tz i b{position:absolute;left:40%;top:-4px;width:11px;height:11px;border-radius:50%;background:var(--text)}
+.tlb{flex:1;display:flex;gap:10px;padding:0 16px 14px;min-height:0}
+.grid5{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
+.acts{display:grid;grid-template-columns:repeat(5,1fr);column-gap:8px}
+.steps{flex:1;display:grid;grid-template-columns:repeat(5,1fr);gap:8px;min-height:0}
+.step{position:relative;border:1px solid var(--line);border-radius:var(--r-card);padding:9px 12px;display:flex;flex-direction:column;background:var(--surface-2);min-width:0}
+.step .sd{font-weight:700;font-size:16px}
+.step .st{font-size:12px;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.step .sm{margin-top:auto;display:flex;gap:10px;font-size:11px;color:var(--muted);white-space:nowrap}
+.ph-line{position:absolute;top:-30px;bottom:-6px;width:2px;margin-left:-1px;background:var(--play);z-index:4}
+.ph-line i{position:absolute;top:0;left:50%;width:12px;height:13px;transform:translateX(-50%);background:var(--play);clip-path:polygon(0 0,100% 0,100% 55%,50% 100%,0 55%)}
+.addst{flex:none;width:84px;border:1px dashed var(--line-strong);border-radius:var(--r-card);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--muted);font-size:12px;font-weight:600}
+
+.trk{position:relative;flex:1;display:flex;flex-direction:column;gap:4px;min-width:0}
+.ruler{position:relative;height:18px;flex:none;border-bottom:1px solid var(--line);background:repeating-linear-gradient(90deg,var(--line-strong) 0 1px,transparent 1px calc(100% / 20.5)) left bottom/100% 5px no-repeat}
+.ruler span{position:absolute;top:1px;transform:translateX(4px);font-size:10px;color:var(--muted)}
+.actb{position:relative;height:18px;flex:none}
+.actb .act{position:absolute;top:0;height:100%;line-height:18px;font-size:10.5px;padding-left:7px;white-space:nowrap}
+.clips{display:flex;gap:3px;flex:none;height:var(--clip-h)}
+.clip{position:relative;min-width:0;border-radius:var(--r-card);background:var(--surface-2);border:1px solid var(--line);overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;padding:6px 8px}
+.clip .tr{position:absolute;left:0;top:0;bottom:0}
+.clip .cl{position:relative;display:flex;gap:6px;align-items:baseline;white-space:nowrap;min-width:0}
+.clip .st{overflow:hidden;text-overflow:ellipsis}
+.clip .sm{position:relative;font-size:10.5px;color:var(--muted);white-space:nowrap}
+.trk .ph-line{top:0;bottom:0}
+.lane{position:relative;height:22px;flex:none}
+.lb{position:absolute;top:2px;bottom:2px;padding:0 8px;font-size:11px;line-height:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* map primitives */
+.map text{paint-order:stroke;stroke-linejoin:round}
+.front-h{fill:none;stroke:var(--m-front-halo);stroke-width:6;stroke-linejoin:round;stroke-linecap:round;opacity:.9}
+.front{fill:none;stroke:var(--m-front);stroke-width:2.4;stroke-linejoin:round;stroke-linecap:round}
+.arw{fill:none;stroke:var(--m-arrow);stroke-width:5;stroke-linecap:round}
+.ahd{fill:var(--m-arrow)}
+.cd{fill:var(--m-label);stroke:var(--m-halo);stroke-width:1.5}
+
+/* =================================================================
+   01 ATELIER DU CARTOGRAPHE
+   ================================================================= */
+.d1{--f-ui:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI Variable Text","Segoe UI",Roboto,sans-serif;--f-title:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",ui-serif,Georgia,serif;--f-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --rail-w:76px;--panel-w:300px;--top-h:56px;--tl-h:176px;--areas:"top top top" "rail stage panel" "rail tl panel";
+  --r-ctl:7px;--r-in:5px;--r-card:8px;--r-sw:6px;--iw:1.5;--m-bw:.9}
+.d1.light{--bg:#EFE9DD;--surface:#F9F6EF;--surface-2:#F3EDE1;--stage:#E9E2D3;--line:#E3DACA;--line-strong:#CFC3AD;--text:#2A2520;--muted:#6F6556;--faint:#A0957F;--accent:#9E3B26;--accent-ink:#FFF8EF;--accent-text:#9E3B26;--sel:#2A2520;--sel-ink:#F9F6EF;--hover:#EAE2D2;--seg-on:#2A2520;--seg-on-ink:#F9F6EF;--tip-bg:#2A2520;--tip-ink:#F9F6EF;--play:#9E3B26;
+  --m-sea:#D3DCD5;--m-neu:#E9DFC9;--m-coast:#8C7C62;--m-ott:#B4533A;--m-vas:#D9A08C;--m-hun:#4F7391;--m-ven:#C99A3E;--m-front:#2A2520;--m-front-halo:#F4EEE2;--m-arrow:#7A2716;--m-label:#3A322A;--m-halo:#F2ECDF;--m-prop:#3A322A;--m-sea-label:#6C7E77}
+.d1.dark{--bg:#171513;--surface:#201D1A;--surface-2:#282420;--stage:#141210;--line:#34302A;--line-strong:#4B443A;--text:#ECE4D5;--muted:#A69A86;--faint:#766C5C;--accent:#D8744E;--accent-ink:#1B1511;--accent-text:#E48C68;--sel:#ECE4D5;--sel-ink:#201D1A;--hover:#2C2824;--seg-on:#ECE4D5;--seg-on-ink:#201D1A;--tip-bg:#ECE4D5;--tip-ink:#201D1A;--play:#D8744E;
+  --m-sea:#1D2523;--m-neu:#39342C;--m-coast:#6E6454;--m-ott:#B9573E;--m-vas:#D69A84;--m-hun:#4C6E88;--m-ven:#B08A3E;--m-front:#F0E6D2;--m-front-halo:#1D2523;--m-arrow:#EFC2A9;--m-label:#E8DECB;--m-halo:#221F1B;--m-prop:#F0E6D2;--m-sea-label:#7E8C86}
+.d1 .wm{font-family:var(--f-title);font-size:20px;font-weight:600;letter-spacing:-.01em}
+.d1 .pname{font-family:var(--f-title);font-size:16.5px;font-weight:600}
+.d1 .kn{font-family:var(--f-title);font-size:21px;font-weight:600;letter-spacing:-.01em}
+.d1 .sh{font-family:var(--f-title);font-style:italic;font-size:14.5px;font-weight:400;color:var(--text)}
+.d1 .ov{text-transform:none;font-size:11.5px}
+.d1 .btn.ghost{background:transparent}
+.d1 .tool{height:60px;font-size:11px}
+.d1 .tool.on{background:var(--sel);color:var(--sel-ink)}
+.d1 .tool.on:after{content:"";position:absolute;right:-9px;top:14px;bottom:14px;width:2px;border-radius:2px;background:var(--accent)}
+.d1 .mapframe{outline:1px solid var(--line-strong);outline-offset:5px}
+.d1 .pb{border-radius:50%}
+.d1 .tt{font-family:var(--f-title);font-size:15px;font-weight:600}
+.d1 .step .sd{font-family:var(--f-title);font-size:23px;font-weight:600;line-height:1.05;letter-spacing:-.01em}
+.d1 .step .st{margin-top:3px}
+.d1 .step.cur{background:var(--surface);border-color:var(--text);box-shadow:inset 0 3px 0 var(--accent)}
+.d1 .acts .act{position:relative;font-family:var(--f-title);font-style:italic;font-size:13.5px;color:var(--muted);border-bottom:1px solid var(--line-strong);padding:0 0 1px 2px}
+.d1 .acts .act:before,.d1 .acts .act:after{content:"";position:absolute;bottom:-1px;width:1px;height:6px;background:var(--line-strong)}
+.d1 .acts .act:before{left:0}.d1 .acts .act:after{right:0}
+.d1 .toast{border-radius:8px;padding-left:10px}
+.d1 .toast .ico{width:22px;height:22px;padding:3px;border-radius:50%;background:var(--accent);color:var(--accent-ink);stroke-width:2.4}
+.d1 .lf{font-family:var(--f-title);font-size:12.5px;letter-spacing:.2em;text-transform:uppercase;font-weight:600;fill:var(--m-label);stroke:var(--m-halo);stroke-width:3px}
+.d1 .lv{font-family:var(--f-title);font-style:italic;font-size:12.5px;fill:var(--m-label);stroke:var(--m-halo);stroke-width:3px}
+.d1 .ls{font-family:var(--f-title);font-style:italic;font-size:14px;letter-spacing:.08em;fill:var(--m-sea-label)}
+.d1 .lc{font-family:var(--f-title);font-size:11.5px;fill:var(--m-label);stroke:var(--m-halo);stroke-width:3px}
+.d1 .front{stroke-width:2;stroke-dasharray:8 3 1.5 3}
+.d1 .front-h{stroke-width:5}
+.d1 .arw{stroke-width:4.5}
+.d1 .tk-b{fill:var(--m-halo);stroke-width:2.5}
+.d1 .tk-l{font-family:var(--f-title);font-style:italic;font-size:11.5px;fill:var(--m-label);stroke:var(--m-halo);stroke-width:3px}
+.d1 .ts .c1{fill:var(--m-halo);stroke:var(--m-label);stroke-width:1.4}
+.d1 .ts .c2{fill:none;stroke:var(--m-label);stroke-width:.6}
+.d1 .ts .t-s{font-family:var(--f-title);font-size:8px;letter-spacing:.3em;fill:var(--m-coast)}
+.d1 .ts .t-y{font-family:var(--f-title);font-size:31px;font-weight:600;fill:var(--m-label)}
+.d1 .rose circle{fill:none;stroke:var(--m-coast);stroke-width:.8}
+.d1 .rose path{fill:var(--m-halo);stroke:var(--m-label);stroke-width:.8}
+.d1 .rose .rn{fill:var(--m-label)}
+.d1 .rose text{font-family:var(--f-title);font-size:10px;fill:var(--m-label)}
+
+/* =================================================================
+   02 SALLE D'ÉTAT-MAJOR
+   ================================================================= */
+.d2{--f-ui:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;--f-mono:ui-monospace,"SF Mono","Cascadia Mono","JetBrains Mono",Menlo,Consolas,monospace;
+  --rail-w:52px;--panel-w:292px;--top-h:44px;--tl-h:172px;--areas:"top top top" "rail stage panel" "tl tl tl" "status status status";
+  --r-ctl:2px;--r-in:1px;--r-card:1px;--r-sw:0;--iw:1.5;--m-bw:.8;--clip-h:74px}
+.d2 .app{grid-template-rows:var(--top-h) minmax(0,1fr) var(--tl-h) 24px}
+.d2.dark{--bg:#0C1013;--surface:#11171B;--surface-2:#161E23;--stage:#0A0E10;--line:#212B31;--line-strong:#34424B;--text:#D3DCE1;--muted:#80909A;--faint:#56646D;--accent:#E3A63B;--accent-ink:#0C1013;--accent-text:#E3A63B;--sel:#1E2A31;--sel-ink:#F1F5F7;--hover:#182127;--seg-on:#2A3740;--seg-on-ink:#F1F5F7;--tip-bg:#E9EEF1;--tip-ink:#0C1013;--play:#E3A63B;--ok:#5FB08A;
+  --m-sea:#0E1A20;--m-neu:#1F272C;--m-coast:#3E4E57;--m-ott:#B8483B;--m-vas:#D98B7F;--m-hun:#3F6E99;--m-ven:#B98F3E;--m-front:#E9EEF1;--m-front-halo:#0E1A20;--m-arrow:#E8715C;--m-label:#B9C5CC;--m-halo:#0E1A20;--m-prop:#E9EEF1;--m-grid:#1A2A33;--m-sea-label:#4E6773}
+.d2.light{--bg:#E5E9EB;--surface:#F7F9FA;--surface-2:#EEF2F4;--stage:#DDE3E6;--line:#D3DADE;--line-strong:#AEB9C0;--text:#11171B;--muted:#56646D;--faint:#8D9AA2;--accent:#A96A0F;--accent-ink:#FFFFFF;--accent-text:#8F5A0C;--sel:#11171B;--sel-ink:#F7F9FA;--hover:#E3E8EB;--seg-on:#11171B;--seg-on-ink:#F7F9FA;--tip-bg:#11171B;--tip-ink:#F7F9FA;--play:#A96A0F;--ok:#2F8A5E;
+  --m-sea:#D9E3E8;--m-neu:#EFF1EF;--m-coast:#8B99A1;--m-ott:#C0503F;--m-vas:#E2A396;--m-hun:#4F7FAE;--m-ven:#D3A650;--m-front:#11171B;--m-front-halo:#F7F9FA;--m-arrow:#9E2F22;--m-label:#2A363D;--m-halo:#F4F6F5;--m-prop:#11171B;--m-grid:#C4D1D8;--m-sea-label:#7F97A4}
+.d2 .win,.d2{font-size:12.5px}
+.d2 .brand{border-right:1px solid var(--line)}
+.d2 .wm{font:600 12px/1 var(--f-mono);letter-spacing:.2em}
+.d2 .mk{width:18px;height:18px}
+.d2 .crumb,.d2 .sep{font:10.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase}
+.d2 .pname{font-size:13px}
+.d2 .saved{font:10.5px var(--f-mono);letter-spacing:.06em;gap:6px}
+.d2 .fmt .lbl{font:10.5px var(--f-mono);text-transform:uppercase;letter-spacing:.08em}
+.d2 .fmt .val{font-family:var(--f-mono);height:26px}
+.d2 .btn{height:28px;padding:0 12px;font-size:12px}
+.d2 .seg{height:28px}
+.d2 .hist span{width:28px;height:28px}
+.d2 .rail{padding:8px 6px}
+.d2 .tool{height:40px}
+.d2 .tool .tl-lab{display:none}
+.d2 .tool.on{background:var(--sel);color:var(--sel-ink);box-shadow:inset 2px 0 0 var(--accent)}
+.d2 .tool .k{display:block;position:absolute;right:3px;bottom:2px;font:8.5px/1 var(--f-mono);color:var(--faint)}
+.d2 .tip{display:grid;grid-template-columns:auto auto;gap:3px 10px;white-space:normal;width:210px;padding:8px 10px;border-radius:2px}
+.d2 .tip kbd{justify-self:end}
+.d2 .tip small{grid-column:1/3;font-size:11px;opacity:.7}
+.d2 .ov,.d2 .sh{font:600 10px var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.d2 .ph,.d2 .sec,.d2 .disc{padding-left:14px;padding-right:14px}
+.d2 .sec{padding-top:9px;padding-bottom:9px}
+.d2 .ph{padding-top:10px;padding-bottom:10px}
+.d2 .ov{margin-bottom:6px}
+.d2 .disc{padding-top:10px;padding-bottom:10px}
+.d2 .kn{font-size:15px}
+.d2 .row{min-height:30px}
+.d2 .sw{width:20px;height:20px}
+.d2 .hex{color:var(--text)}
+.d2 .sel{height:28px}
+.d2 .hint{display:none}
+.d2 .disc small{font-size:11px}
+.d2 .mapframe{outline:1px solid var(--line-strong)}
+.d2 .mapframe:after{content:"";position:absolute;inset:-8px;pointer-events:none;
+  background:linear-gradient(var(--muted),var(--muted)) left top/12px 1px no-repeat,linear-gradient(var(--muted),var(--muted)) left top/1px 12px no-repeat,
+  linear-gradient(var(--muted),var(--muted)) right top/12px 1px no-repeat,linear-gradient(var(--muted),var(--muted)) right top/1px 12px no-repeat,
+  linear-gradient(var(--muted),var(--muted)) left bottom/12px 1px no-repeat,linear-gradient(var(--muted),var(--muted)) left bottom/1px 12px no-repeat,
+  linear-gradient(var(--muted),var(--muted)) right bottom/12px 1px no-repeat,linear-gradient(var(--muted),var(--muted)) right bottom/1px 12px no-repeat}
+.d2 .zoom{border-radius:2px;font-family:var(--f-mono);font-size:9.5px}
+.d2 .grat path{fill:none;stroke:var(--m-grid);stroke-width:.8}
+.d2 .lf{font:600 11px var(--f-ui);letter-spacing:.24em;text-transform:uppercase;fill:var(--m-label);stroke:var(--m-halo);stroke-width:3px}
+.d2 .lv{font:11px var(--f-ui);letter-spacing:.06em;fill:var(--m-label);stroke:var(--m-halo);stroke-width:3px}
+.d2 .ls{font:italic 11px var(--f-ui);letter-spacing:.14em;fill:var(--m-sea-label)}
+.d2 .lc{font:10px var(--f-mono);fill:var(--m-label);stroke:var(--m-halo);stroke-width:3px}
+.d2 .front{stroke-width:2;stroke-dasharray:10 4}
+.d2 .front-h{stroke-width:5}
+.d2 .arw{stroke-width:3.5}
+.d2 .tk-b{stroke:var(--m-halo);stroke-width:1.5}
+.d2 .tk-x{stroke:#fff;stroke-width:1.1;opacity:.85}
+.d2 .tk-l{font:600 9.5px var(--f-mono);letter-spacing:.06em;fill:var(--m-label);stroke:var(--m-halo);stroke-width:3px}
+.d2 .brk{fill:none;stroke:var(--accent);stroke-width:1.6}
+.d2 .ts .t-bg{fill:var(--m-halo);opacity:.9}
+.d2 .ts .t-bar{stroke:var(--accent);stroke-width:3}
+.d2 .ts .t-s{font:9px var(--f-mono);letter-spacing:.08em;fill:var(--m-label);stroke:none}
+.d2 .ts .t-y{font:600 25px var(--f-mono);fill:var(--m-front);stroke:none}
+.d2 .scale path{stroke:var(--m-label);stroke-width:1.2;fill:none}
+.d2 .scale text{font:9px var(--f-mono);fill:var(--m-label);stroke:var(--m-halo);stroke-width:3px}
+.d2 .tp{height:36px;padding:0 12px;border-bottom:1px solid var(--line)}
+.d2 .tt{font:600 10px var(--f-mono);letter-spacing:.14em;color:var(--muted)}
+.d2 .pb{width:28px;height:26px}
+.d2 .tc,.d2 .spd{font-family:var(--f-mono);font-size:11px}
+.d2 .spd{height:24px}
+.d2 .tz i b{border-radius:1px;width:6px;left:42%}
+.d2 .tlb{padding:6px 12px 10px}
+.d2 .ruler span{font-family:var(--f-mono);font-size:9.5px}
+.d2 .actb .act{font:600 9.5px/18px var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);border-left:1px solid var(--line-strong);background:var(--surface-2)}
+.d2 .clip{padding:7px 9px}
+.d2 .clip .sd{font:600 15px var(--f-mono)}
+.d2 .clip .st{font-size:11.5px;color:var(--muted)}
+.d2 .clip .sm{font:10px var(--f-mono)}
+.d2 .clip .tr{background:repeating-linear-gradient(135deg,var(--line-strong) 0 1px,transparent 1px 5px);opacity:.55;border-right:1px solid var(--line-strong)}
+.d2 .clip.cur{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.d2 .ph-line{width:1px;margin-left:0}
+.d2 .ph-line i{width:9px;height:9px;clip-path:polygon(0 0,100% 0,50% 100%)}
+.d2 .addst{align-self:flex-start;margin-top:44px;height:var(--clip-h);width:64px;border-radius:1px;font-family:var(--f-mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em}
+.d2 .status{display:flex;align-items:center;gap:22px;padding:0 12px;font:10px/1 var(--f-mono);letter-spacing:.06em;color:var(--muted);background:var(--surface);border-top:1px solid var(--line);white-space:nowrap}
+.d2 .status .ok{display:flex;align-items:center;gap:6px;color:var(--text)}
+.d2 .toast{left:auto;right:64px;bottom:16px;transform:none;background:var(--surface);color:var(--text);border:1px solid var(--line-strong);border-radius:2px;box-shadow:inset 3px 0 0 var(--ok),0 10px 24px -14px rgba(0,0,0,.5)}
+.d2 .toast .ico{color:var(--ok)}
+.d2 .toast small{font:10px var(--f-mono);letter-spacing:.04em;opacity:.8}
+
+/* =================================================================
+   03 BANC DE MONTAGE
+   ================================================================= */
+.d3{--f-ui:"SF Pro Text",system-ui,-apple-system,"Segoe UI Variable Text","Segoe UI",Roboto,"Helvetica Neue",sans-serif;--f-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --rail-w:0px;--panel-w:288px;--top-h:52px;--tl-h:284px;--areas:"top top" "stage panel" "tl panel";
+  --r-ctl:8px;--r-in:6px;--r-card:6px;--r-sw:6px;--iw:1.8;--m-bw:.7;--clip-h:60px}
+.d3 .app{grid-template-columns:minmax(0,1fr) var(--panel-w)}
+.d3.dark{--bg:#0E0F11;--surface:#17181B;--surface-2:#202226;--surface-3:#2A2C31;--stage:#0B0C0D;--line:#26282D;--line-strong:#393C43;--text:#F0F1F3;--muted:#9197A1;--faint:#60656E;--accent:#2FD3E6;--accent-ink:#03262B;--accent-text:#2FD3E6;--sel:#0F3036;--sel-ink:#2FD3E6;--hover:#222429;--seg-on:#2E3036;--seg-on-ink:#FFFFFF;--tip-bg:#F0F1F3;--tip-ink:#0E0F11;--play:#2FD3E6;--lane-bg:#131417;--lb-bg:#2A2C31;
+  --m-sea:#1A2830;--m-neu:#2B2E33;--m-coast:#4A4F57;--m-ott:#D0533F;--m-vas:#E89A89;--m-hun:#4E82C4;--m-ven:#D8A83E;--m-front:#FFFFFF;--m-front-halo:#1A2830;--m-arrow:#FF8A6B;--m-label:#E6E8EB;--m-halo:#1A1D21;--m-prop:#FFFFFF;--m-sea-label:#5D7482}
+.d3.light{--bg:#E9EAED;--surface:#FFFFFF;--surface-2:#F2F3F5;--surface-3:#E6E8EB;--stage:#DCDEE2;--line:#E1E3E7;--line-strong:#C9CCD2;--text:#15161A;--muted:#5E636D;--faint:#9A9FA8;--accent:#0796A9;--accent-ink:#FFFFFF;--accent-text:#077F8F;--sel:#DDF3F6;--sel-ink:#066F7D;--hover:#EEF0F2;--seg-on:#15161A;--seg-on-ink:#FFFFFF;--tip-bg:#15161A;--tip-ink:#FFFFFF;--play:#0796A9;--lane-bg:#F2F3F5;--lb-bg:#E2E5E9;
+  --m-sea:#CFE0EA;--m-neu:#EDECE8;--m-coast:#99A0A8;--m-ott:#D0533F;--m-vas:#EBA595;--m-hun:#4E82C4;--m-ven:#E0B044;--m-front:#15161A;--m-front-halo:#FFFFFF;--m-arrow:#B23A22;--m-label:#23252A;--m-halo:#FFFFFF;--m-prop:#15161A;--m-sea-label:#7E98A8}
+.d3 .brand{padding-right:6px}
+.d3 .mk{color:var(--accent);width:24px;height:24px}
+.d3 .wm{font-weight:800;font-size:17px;letter-spacing:-.035em}
+.d3 .pname{font-weight:650}
+.d3 .crumb,.d3 .sep{display:none}
+.d3 .fmt{border-left:0;padding-left:4px}
+.d3 .fmt .val,.d3 .seg,.d3 .btn.ghost,.d3 .spd{background:var(--surface-2);border-color:transparent}
+.d3 .btn{height:34px;font-weight:650;padding:0 15px}
+.d3 .seg{height:32px}
+.d3 .rail.h{flex-direction:row;padding:3px;gap:2px;border:0;border-radius:10px;background:var(--surface)}
+.d3 .rail.h .sp{display:none}
+.d3 .tool{width:62px;height:46px;gap:3px;border-radius:8px;font-weight:600;font-size:10.5px}
+.d3 .tool .ico{width:20px;height:20px}
+.d3 .tool.mini{margin-left:6px;box-shadow:-5px 0 0 -4px var(--line-strong)}
+.d3 .stage{align-items:flex-start;padding-top:66px}
+.d3 .stage-h{position:absolute;top:10px;left:14px;right:14px;display:flex;align-items:center;gap:10px;font-size:11.5px;color:var(--muted);font-weight:600}
+.d3 .fmtb{position:absolute;left:14px;bottom:12px;padding:5px 9px;background:var(--surface);border-radius:6px;font-size:11.5px;color:var(--muted);font-weight:600}
+.d3 .mode-e{display:flex;background:var(--surface);border-radius:8px;padding:2px;margin-right:170px}
+.d3 .mode-e b,.d3 .mode-e i{padding:4px 10px;border-radius:6px;font-style:normal;font-weight:600}
+.d3 .mode-e b{background:var(--surface-3);color:var(--text)}
+.d3 .mapframe{border-radius:3px;overflow:hidden}
+.d3 .zoom{top:18px;transform:none;flex-direction:row;width:auto;height:30px;padding:0 3px;border:0;border-radius:8px;font-size:11.5px}
+.d3 .zoom span{width:26px;height:24px}
+.d3 .zoom b{padding:0 6px}
+.d3 .zoom i{width:1px;height:14px;margin:0 2px}
+.d3 .brushc circle{fill:var(--accent);fill-opacity:.12;stroke:var(--accent);stroke-width:1.6;stroke-dasharray:4 3}
+.d3 .brushc .bc2{fill-opacity:1;stroke:none}
+.d3 .lf{font:700 12px var(--f-ui);letter-spacing:.05em;text-transform:uppercase;fill:var(--m-label);stroke:var(--m-halo);stroke-width:3px}
+.d3 .lv{font:600 11px var(--f-ui);fill:var(--m-label);stroke:var(--m-halo);stroke-width:3px}
+.d3 .ls{font:500 11.5px var(--f-ui);fill:var(--m-sea-label);letter-spacing:.02em}
+.d3 .lc{font:600 10.5px var(--f-ui);fill:var(--m-label);stroke:var(--m-halo);stroke-width:3px}
+.d3 .front{stroke-width:3}
+.d3 .front-h{stroke-width:7}
+.d3 .arw{stroke-width:6}
+.d3 .tk-b{fill:#FFFFFF;stroke:rgba(0,0,0,.28);stroke-width:1}
+.d3 .tk-lb{fill:var(--m-halo);opacity:.92}
+.d3 .tk-l{font:600 10px var(--f-ui);fill:var(--m-label);stroke:none}
+.d3 .ts .t-bg{fill:#0E0F11;opacity:.86}
+.d3 .ts .t-y{font:800 21px var(--f-ui);fill:#FFFFFF;letter-spacing:.01em;stroke:none}
+.d3 .tp{height:46px;border-bottom:1px solid var(--line);gap:8px}
+.d3 .pb{width:34px;height:34px;border-radius:50%;background:var(--accent);color:var(--accent-ink)}
+.d3 .tc b{font-size:14px;font-weight:700}
+.d3 .spd{height:28px}
+.d3 .tlb{padding:8px 16px 12px 0;gap:10px}
+.d3 .trk{margin-left:84px}
+.d3 .clips{position:relative}
+.d3 .lane{height:20px}
+.d3 .lb{line-height:16px;font-size:10.5px}
+.d3 .lab{position:absolute;right:calc(100% + 12px);top:50%;transform:translateY(-50%);font-size:11px;font-weight:600;color:var(--muted);white-space:nowrap;padding:0!important;background:none!important;box-shadow:none!important}
+.d3 .clips .lab{color:var(--text)}
+.d3 .ruler span{font-weight:600}
+.d3 .actb .act{top:1px;bottom:1px;height:auto;line-height:16px;border-radius:4px;background:var(--surface-2);font-weight:650;color:var(--muted);box-shadow:inset 2px 0 0 var(--line-strong)}
+.d3 .clip{padding:0;border:0;border-radius:6px;background:#000}
+.d3 .clip .th{position:absolute;inset:0;width:100%;height:100%;display:block}
+.d3 .clip .tr{z-index:1;display:grid;place-items:center;color:#fff;background:repeating-linear-gradient(135deg,rgba(255,255,255,.22) 0 2px,rgba(0,0,0,.25) 2px 6px);border-right:1px solid rgba(255,255,255,.55)}
+.d3 .clip .cl{position:absolute;left:6px;top:6px;z-index:2;padding:2px 6px;border-radius:4px;background:rgba(14,15,17,.8);color:#fff;font-size:11px;max-width:calc(100% - 12px)}
+.d3 .clip .cl .sd{font-weight:800}
+.d3 .clip .cl .st{font-weight:500;opacity:.85}
+.d3 .clip .sm{position:absolute;left:6px;bottom:5px;z-index:2;padding:1px 5px;border-radius:4px;background:rgba(14,15,17,.8);color:#D9DCE1;font-size:10px}
+.d3 .clip.cur{outline:2px solid var(--accent);outline-offset:-2px}
+.d3 .lane{background:var(--lane-bg);border-radius:5px}
+.d3 .lb{background:var(--lb-bg);border-radius:5px;font-weight:600;color:var(--text)}
+.d3 .lb.sel{background:var(--sel);color:var(--sel-ink);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.d3 .ph-line i{width:14px;height:16px;border-radius:3px 3px 0 0}
+.d3 .addst{align-self:flex-start;margin-top:44px;height:var(--clip-h);width:64px;border-radius:6px;border-style:solid;border-color:var(--line);background:var(--surface-2)}
+.d3 .toast{bottom:14px;border-radius:10px;font-weight:600}
+.d3 .toast .ico{color:var(--accent)}
+.d3.light .toast .ico{color:#5FDCEB}
+
+/* =================================================================
+   04 ÉDITORIAL
+   ================================================================= */
+.d4{--f-ui:"Neue Haas Grotesk Text","Helvetica Neue",Helvetica,"Arial Nova",Arial,sans-serif;--f-disp:"Neue Haas Grotesk Display","Helvetica Neue",Helvetica,"Arial Nova",Arial,sans-serif;--f-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --rail-w:206px;--panel-w:316px;--top-h:60px;--tl-h:168px;--areas:"top top top" "rail stage panel" "tl tl panel";
+  --r-ctl:0;--r-in:0;--r-card:0;--r-sw:0;--iw:1.6;--m-bw:.7}
+.d4.light{--bg:#FFFFFF;--surface:#FFFFFF;--surface-2:#F5F4F0;--stage:#F0EEE9;--line:#E6E3DC;--line-strong:#0A0A0A;--rule:#0A0A0A;--text:#0A0A0A;--muted:#5C5A55;--faint:#9C9990;--accent:#FFD23F;--accent-ink:#0A0A0A;--accent-text:#0A0A0A;--sel:#FFD23F;--sel-ink:#0A0A0A;--hover:#F5F4F0;--seg-on:#FFD23F;--seg-on-ink:#0A0A0A;--tip-bg:#0A0A0A;--tip-ink:#FFFFFF;--play:#0A0A0A;
+  --m-sea:#E4E7E6;--m-neu:#FBFAF7;--m-coast:#0A0A0A;--m-ott:#1F7A4D;--m-vas:#9FCBAF;--m-hun:#2F5DA8;--m-ven:#B8343F;--m-front:#0A0A0A;--m-front-halo:#FFFFFF;--m-arrow:#0A0A0A;--m-label:#0A0A0A;--m-halo:#FFFFFF;--m-prop:#0A0A0A;--m-sea-label:#7A807E}
+.d4.dark{--bg:#0B0B0A;--surface:#0B0B0A;--surface-2:#171715;--stage:#141413;--line:#262624;--line-strong:#F4F2EC;--rule:#F4F2EC;--text:#F4F2EC;--muted:#A3A098;--faint:#6C6A64;--accent:#FFD23F;--accent-ink:#0A0A0A;--accent-text:#FFD23F;--sel:#FFD23F;--sel-ink:#0A0A0A;--hover:#1C1C1A;--seg-on:#FFD23F;--seg-on-ink:#0A0A0A;--tip-bg:#F4F2EC;--tip-ink:#0B0B0A;--play:#FFD23F;
+  --m-sea:#1A1B1B;--m-neu:#2A2A28;--m-coast:#0B0B0A;--m-ott:#2E9A63;--m-vas:#8FCBA8;--m-hun:#4B7DD1;--m-ven:#D24B57;--m-front:#F4F2EC;--m-front-halo:#0B0B0A;--m-arrow:#F4F2EC;--m-label:#F4F2EC;--m-halo:#0B0B0A;--m-prop:#F4F2EC;--m-sea-label:#6C6E6C}
+.d4 .top{padding:0 20px;gap:16px;border-bottom:2px solid var(--rule)}
+.d4 .brand{border-right:1px solid var(--line);padding-right:20px}
+.d4 .wm{font:400 16px/1 var(--f-disp);letter-spacing:.06em}
+.d4 .wm b{font-weight:800}
+.d4 .crumb,.d4 .sep{display:none}
+.d4 .pname{font:700 20px/1 var(--f-disp);letter-spacing:-.025em}
+.d4 .fmt .val{border:0;border-bottom:1.5px solid var(--rule);border-radius:0;padding:0 2px}
+.d4 .btn{height:36px;padding:0 16px;font-weight:700;border:1.5px solid var(--rule);background:transparent}
+.d4 .btn.primary{background:var(--text);border-color:var(--text);color:var(--surface)}
+.d4 .seg{border:0;padding:0;gap:4px;background:transparent}
+.d4 .seg span{border-radius:0;min-width:26px;padding:0 4px;box-shadow:inset 0 -2px 0 transparent}
+.d4 .seg span.on{background:transparent;color:var(--text);box-shadow:inset 0 -2px 0 var(--rule)}
+.d4 .seg.wide{border-top:1px solid var(--line);border-bottom:1px solid var(--line);height:38px;gap:0}
+.d4 .seg.wide span{font-size:12.5px}
+.d4 .seg.wide span.on{background:var(--accent);color:#0A0A0A;box-shadow:none}
+.d4 .rail{padding:22px 0 14px;gap:0}
+.d4 .rail-h{display:block;font:700 10.5px var(--f-ui);letter-spacing:.16em;text-transform:uppercase;color:var(--muted);padding:0 20px 12px}
+.d4 .tool{flex-direction:row;justify-content:flex-start;height:40px;padding:0 16px 0 20px;gap:12px;font-size:13.5px;font-weight:500;color:var(--text)}
+.d4 .tool .n{display:inline;font:600 10.5px var(--f-mono);font-style:normal;color:var(--faint);width:16px}
+.d4 .tool .ico{width:18px;height:18px}
+.d4 .tool .k{display:inline;margin-left:auto;font:10.5px var(--f-mono);color:var(--faint)}
+.d4 .tool.on{background:var(--sel);color:var(--sel-ink)}
+.d4 .tool.on .n,.d4 .tool.on .k{color:#0A0A0A}
+.d4 .tool.mini .n{display:none}
+.d4 .tool .tl-lab{white-space:nowrap}
+.d4 .tip{border-radius:0;left:calc(100% + 4px)}
+.d4 .mapframe{outline:1.5px solid var(--rule)}
+.d4 .zoom{top:auto;bottom:10px;right:34px;transform:none;flex-direction:row;width:auto;height:30px;padding:0 4px;border-radius:0;border-color:var(--line);font-size:11.5px}
+.d4 .zoom span{width:26px;height:24px}
+.d4 .zoom b{padding:0 6px}
+.d4 .zoom i{width:1px;height:14px;margin:0 2px}
+.d4 .ph{padding:22px 24px 18px;border-bottom:2px solid var(--rule)}
+.d4 .ov{font:700 10.5px var(--f-ui);letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+.d4 .kn{font:800 26px/1.02 var(--f-disp);letter-spacing:-.035em}
+.d4 .km{margin-top:4px;font-size:12px}
+.d4 .emb{width:44px;height:30px;box-shadow:none}
+.d4 .sec{padding:16px 24px}
+.d4 .sh{display:flex;gap:10px;font:700 12.5px var(--f-ui);color:var(--text);margin-bottom:8px}
+.d4 .sh .n{display:inline;font:600 11px var(--f-mono);font-style:normal;color:var(--faint);padding-top:1px}
+.d4 .hint{display:none}
+.d4 .sw{width:28px;height:28px}
+.d4 .hex{color:var(--text)}
+.d4 .sel{border:0;border-bottom:1.5px solid var(--rule);padding:0 2px;height:28px}
+.d4 .lnk{text-decoration:underline;text-underline-offset:3px;color:var(--text)}
+.d4 .disc{padding:16px 24px;font-weight:700}
+.d4 .tl{border-top:2px solid var(--rule)}
+.d4 .tp{height:42px;padding:0 20px}
+.d4 .tt{font:700 10.5px var(--f-ui);letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.d4 .pb{width:30px;height:30px}
+.d4 .tc{font-size:12.5px}
+.d4 .spd{border:0;border-bottom:1.5px solid var(--rule);height:24px;padding:0 2px}
+.d4 .tlb{padding:0 20px 14px}
+.d4 .acts{column-gap:0}
+.d4 .acts .act{font:700 10.5px var(--f-ui);letter-spacing:.16em;text-transform:uppercase;border-top:2px solid var(--rule);padding-top:5px;margin-right:14px}
+.d4 .steps{gap:0}
+.d4 .step{border:0;border-left:1px solid var(--line);background:transparent;padding:6px 14px 4px}
+.d4 .step:first-child{border-left:0;padding-left:0}
+.d4 .step .sn{font:600 10.5px var(--f-mono);font-style:normal;color:var(--faint)}
+.d4 .step .sd{font:800 34px/1 var(--f-disp);letter-spacing:-.045em;margin-top:2px}
+.d4 .step .st{margin-top:5px}
+.d4 .step.cur{background:var(--accent);color:#0A0A0A;border-left-color:var(--accent)}
+.d4 .step.cur .sm,.d4 .step.cur .sn{color:#3B3A34}
+.d4 .ph-line{top:-28px;bottom:-4px}
+.d4.light .ph-line{background:#0A0A0A}
+.d4 .addst{border:1px solid var(--line);width:88px}
+.d4 .toast{left:24px;top:18px;bottom:auto;transform:none;border-radius:0;box-shadow:inset 4px 0 0 var(--accent),0 12px 28px -16px rgba(0,0,0,.6);padding-left:16px}
+.d4 .lf{font:800 13px var(--f-disp);letter-spacing:.03em;text-transform:uppercase;fill:var(--m-label);stroke:var(--m-halo);stroke-width:3.5px}
+.d4 .lv{font:600 11px var(--f-ui);fill:var(--m-label);stroke:var(--m-halo);stroke-width:3px}
+.d4 .ls{font:italic 500 12px var(--f-ui);fill:var(--m-sea-label)}
+.d4 .lc{font:600 10.5px var(--f-ui);fill:var(--m-label);stroke:var(--m-halo);stroke-width:3px}
+.d4 .front{stroke-width:3}
+.d4 .front-h{stroke-width:7}
+.d4 .arw{stroke-width:5}
+.d4 .tk-b{stroke:var(--m-halo);stroke-width:2}
+.d4 .tk-l{font:700 11px var(--f-ui);fill:var(--m-label);stroke:var(--m-halo);stroke-width:3px}
+.d4 .ts .t-rule{stroke:var(--m-label);stroke-width:2}
+.d4 .ts .t-s{font:700 11px var(--f-ui);fill:var(--m-label);stroke:var(--m-halo);stroke-width:3px}
+.d4 .ts .t-y{font:800 80px var(--f-disp);letter-spacing:-.05em;fill:var(--m-label);stroke:var(--m-halo);stroke-width:5px}
+.d4 .leg .lg-bg{fill:var(--m-halo);stroke:var(--m-label);stroke-width:1.5}
+.d4 .leg rect:not(.lg-bg){stroke:var(--m-label);stroke-width:.8}
+.d4 .leg text{font:600 10.5px var(--f-ui);fill:var(--m-label)}
+
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-select" viewBox="0 0 24 24"><path d="M6 3.5v15.2l4.1-4 2.9 6.6 2.6-1.1-2.9-6.5h5.7z" fill="none" stroke="currentColor" stroke-linejoin="round"/></symbol>
+<symbol id="i-territory" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linejoin="round"><path d="M4.5 8 10 4.5l7 2 2.5 6-3.5 6.5-8 1-3.5-5.5z"/><circle cx="10" cy="4.5" r="1.3" fill="currentColor" stroke="none"/><circle cx="19.5" cy="12.5" r="1.3" fill="currentColor" stroke="none"/><circle cx="4.5" cy="14" r="1.3" fill="currentColor" stroke="none"/></g></symbol>
+<symbol id="i-brush" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20 4 12.2 11.8"/><path d="M13.6 10.4l-1.4 1.4"/><path d="M11.6 12.4c-2.4-.9-5.1.6-5.1 3.3 0 1.6-.9 2.8-2.5 3.6 3.6 1.3 9.3.4 9.3-3.8 0-1.2-.6-2.4-1.7-3.1z"/></g></symbol>
+<symbol id="i-arrow" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19c2.5-6.5 7-10 14.5-10.5"/><path d="M14.5 5.2 19 8.5l-3.6 4.3"/></g></symbol>
+<symbol id="i-token" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linejoin="round"><rect x="3.5" y="6.5" width="17" height="11" rx="1"/><path d="M3.5 6.5l17 11M20.5 6.5l-17 11"/></g></symbol>
+<symbol id="i-text" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round"><path d="M5 7V4.5h14V7M12 4.5v15M9 19.5h6"/></g></symbol>
+<symbol id="i-import" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 14.5v5h15v-5"/><path d="M12 4v11M8 11l4 4 4-4"/></g></symbol>
+<symbol id="i-export" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 14.5v5h15v-5"/><path d="M12 15V4M8 8l4-4 4 4"/></g></symbol>
+<symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></symbol>
+<symbol id="i-playo" viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z" fill="none" stroke="currentColor" stroke-linejoin="round"/></symbol>
+<symbol id="i-pause" viewBox="0 0 24 24"><g fill="currentColor"><rect x="7" y="5.5" width="3.4" height="13" rx=".6"/><rect x="13.6" y="5.5" width="3.4" height="13" rx=".6"/></g></symbol>
+<symbol id="i-prev" viewBox="0 0 24 24"><g fill="currentColor"><rect x="5.5" y="6" width="2" height="12" rx=".5"/><path d="M18.5 6v12L9 12z"/></g></symbol>
+<symbol id="i-next" viewBox="0 0 24 24"><g fill="currentColor"><rect x="16.5" y="6" width="2" height="12" rx=".5"/><path d="M5.5 6v12L15 12z"/></g></symbol>
+<symbol id="i-sun" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7"/></g></symbol>
+<symbol id="i-moon" viewBox="0 0 24 24"><path d="M19.5 14.5A8 8 0 0 1 9.5 4.5a8 8 0 1 0 10 10z" fill="none" stroke="currentColor" stroke-linejoin="round"/></symbol>
+<symbol id="i-chev" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-chevr" viewBox="0 0 24 24"><path d="M10 7l5 5-5 5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-linecap="round"/></symbol>
+<symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14" fill="none" stroke="currentColor" stroke-linecap="round"/></symbol>
+<symbol id="i-undo" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7.5 4.5 12 9 16.5"/><path d="M4.5 12h10a5 5 0 0 1 0 10h-2"/></g></symbol>
+<symbol id="i-redo" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7.5l4.5 4.5-4.5 4.5"/><path d="M19.5 12h-10a5 5 0 0 0 0 10h2"/></g></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-layers" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linejoin="round"><path d="M12 4 3.5 8.5 12 13l8.5-4.5z"/><path d="M3.5 12.5 12 17l8.5-4.5M3.5 16.5 12 21l8.5-4.5"/></g></symbol>
+<symbol id="i-help" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.6a2.5 2.5 0 1 1 3.4 2.3c-.7.3-1 .8-1 1.6"/><circle cx="12" cy="16.6" r=".4" fill="currentColor"/></g></symbol>
+<symbol id="i-fit" viewBox="0 0 24 24"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-dots" viewBox="0 0 24 24"><g fill="currentColor"><circle cx="6" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="18" cy="12" r="1.5"/></g></symbol>
+<symbol id="i-trans" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linejoin="round"><path d="M4 6l8 6-8 6z"/><path d="M20 6l-8 6 8 6z"/></g></symbol>
+<symbol id="i-link" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></g></symbol>
+<symbol id="i-eye" viewBox="0 0 24 24"><g fill="none" stroke="currentColor"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></g></symbol>
+<symbol id="emb-ott" viewBox="0 0 36 24"><rect width="36" height="24" style="fill:var(--m-ott)"/><circle cx="15" cy="12" r="6.6" fill="#fff"/><circle cx="17" cy="12" r="5.3" style="fill:var(--m-ott)"/><path d="M23.2 12l3.4-1.1-2.1 2.9v-3.6l2.1 2.9z" fill="#fff"/></symbol>
+<symbol id="emb-hun" viewBox="0 0 36 24"><rect width="36" height="24" style="fill:var(--m-hun)"/><path d="M0 6h36M0 12h36M0 18h36" stroke="#fff" stroke-width="2.4" opacity=".85"/></symbol>
+<symbol id="emb-ven" viewBox="0 0 36 24"><rect width="36" height="24" style="fill:var(--m-ven)"/><path d="M11 17l4-9 3 5 3-6 4 10z" fill="#fff" opacity=".9"/></symbol>
+<symbol id="geo" viewBox="0 0 800 450">
+<rect width="800" height="450" style="fill:var(--m-sea)"/>
+<g style="stroke:var(--m-coast);stroke-width:var(--m-bw);stroke-linejoin:round">
+<path style="fill:var(--m-neu)" d="M0 0H110L100 40 118 92 112 110 80 130 40 120 0 140Z"/>
+<path style="fill:var(--m-neu)" d="M0 140 40 120 80 130 70 160 60 200 85 250 100 290 80 310 55 300 35 340 0 350Z"/>
+<path style="fill:var(--m-neu)" d="M560 0H800V62L720 55 660 68 600 58 578 52Z"/>
+<path style="fill:var(--m-hun)" d="M110 0H470L462 48 430 90 380 108 332 118 282 138 232 150 205 170 180 180 160 160 140 128 118 92 100 40Z"/>
+<path style="fill:var(--m-vas)" d="M470 0H560L578 52 562 110 532 152 480 160 430 150 380 108 430 90 462 48Z"/>
+<path style="fill:var(--m-ven)" d="M180 180 205 170 218 188 240 205 262 222 255 232 232 220 208 205 190 196Z"/>
+<path style="fill:var(--m-neu)" d="M205 170 232 150 258 144 282 138 292 180 300 208 275 218 262 222 240 205 218 188Z"/>
+<path style="fill:var(--m-ott);stroke:none" d="M282 138 292 180 300 208 275 218 268 200 262 172 258 144Z"/>
+<path style="fill:var(--m-neu)" d="M262 222 275 218 300 208 318 238 312 282 290 288 282 262 268 240 255 232Z"/>
+<path style="fill:var(--m-ott)" d="M282 138 332 118 380 108 430 150 480 160 532 152 556 172 566 215 574 240 548 258 505 272 462 282 425 300 392 292 362 276 340 262 318 238 300 208 292 180Z"/>
+<path style="fill:var(--m-ott)" d="M318 238 340 262 362 276 392 292 425 300 412 318 400 340 378 336 360 330 338 334 322 318 312 282Z"/>
+<path style="fill:var(--m-ott)" d="M332 346 372 344 384 362 372 392 352 414 340 398 334 384 322 378 316 360Z"/>
+<path style="fill:var(--m-ven)" d="M322 378 334 384 340 398 326 404Z"/>
+<path style="fill:var(--m-ven)" d="M404 318 430 306 438 314 414 334Z"/>
+<path style="fill:var(--m-ven)" d="M420 432 470 426 500 430 494 440 446 442 420 440Z"/>
+<path style="fill:var(--m-ott)" d="M584 248 620 232 680 226 740 222 800 214V318L760 322 722 305 682 318 640 338 606 356 590 330 570 300 560 272Z"/>
+<path style="fill:var(--m-neu)" d="M800 318V450H650L636 400 606 356 640 338 682 318 722 305 760 322Z"/>
+</g>
+<path d="M258 144 262 172 268 200 275 218" style="fill:none;stroke:var(--m-prop);stroke-width:1.2;stroke-dasharray:2 3"/>
+</symbol>
+</defs></svg>
+<div class="board">
+ <div class="kick">OPENMAP · UX · directions visuelles · série 1 · 29 sept. 2026</div>
+ <h1>Quatre directions pour l’éditeur</h1>
+ <p class="lead">Même écran pour les quatre : l’<b>éditeur pendant UJ-2</b>, Terrabellum raconte l’expansion ottomane dans les Balkans, Étape <b>1463</b> en cours de transition (la Bosnie bascule par propagation). Chaque direction est montrée en <b>mode sombre</b> puis en <b>mode clair</b>, avec au moins un état (survol, outil actif, toast). Les couleurs de la carte sont celles des Kits de Faction, pas de l’interface.</p>
+ <nav class="idx"><a href="#d1"><em>01</em><b>Atelier du cartographe</b><span>Papier chaud, encre brune, serif pour les titres.</span></a><a href="#d2"><em>02</em><b>Salle d’état-major</b><span>Angles vifs, monospace pour les données, clin d’œil RTS discret.</span></a><a href="#d3"><em>03</em><b>Banc de montage</b><span>Studio graphite, Timeline à pistes, un seul accent cyan.</span></a><a href="#d4"><em>04</em><b>Éditorial</b><span>Grotesque en graisses contrastées, filets noirs, jaune = actif.</span></a></nav>
+ 
+<section class="dir" id="d1">
+ <div class="dir-h"><div class="no">01</div><div><h2>Atelier du cartographe</h2><div class="tag">Papier chaud, encre brune, serif pour les titres.</div></div>
+ <div><p>Un atelier calme : fond papier, texte à l’encre, un serif réservé aux titres, aux dates et aux libellés de carte, le reste en sans-serif système. L’interface reste en demi-teintes pour laisser toute la couleur aux Factions ; on retrouve la simplicité rassurante de Canva, avec une rampe d’outils à libellés et des cartes d’Étape très lisibles.</p><p><b>Anti-slop :</b> un seul accent (sanguine) pour l’action et la tête de lecture, un filet de cadre gravé autour de la carte, des Actes soulignés comme sur un plan. <b>Compromis :</b> moins « outil vidéo » que CapCut, et un ton patrimonial qui peut sembler sage pour une chaîne géopolitique contemporaine.</p></div></div>
+ <div class="cap">Mode sombre<span>état montré : toast « Projet sauvegardé »</span></div>
+ <div class="scaler" style="--s:0.8594"><div class="win d1 dark"><div class="chrome"><i></i><i></i><i></i><div class="url">openmap.app/projets/expansion-ottomane-balkans</div></div><div class="app"><header class="top"><div class="brand"><svg class="mk" viewBox="0 0 24 24"><path d="M3.5 6.5 9 4.5l6 2 5.5-2v13l-5.5 2-6-2-5.5 2z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 4.5v13M15 6.5v13" stroke="currentColor" stroke-width="1.2"/></svg><span class="wm">Openmap</span></div>
+<div class="proj"><span class="crumb">Projets</span><span class="sep">/</span><span class="pname">Expansion ottomane — Balkans</span><span class="saved"><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-check"/></svg>Enregistré</span></div>
+<div class="fmt"><span class="lbl">Format de sortie</span><span class="val">16:9<svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg></span></div>
+<div class="sp"></div>
+<div class="hist"><span><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-undo"/></svg></span><span class="dis"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-redo"/></svg></span></div>
+<div class="seg mode" title="Thème"><span><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-sun"/></svg></span><span class="on"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-moon"/></svg></span></div>
+<div class="seg lang"><span class="on">FR</span><span>EN</span></div>
+<span class="btn ghost"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-playo"/></svg>Aperçu</span>
+<span class="btn primary"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-export"/></svg>Exporter</span>
+</header><nav class="rail"><div class="tool on"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-select"/></svg><span class="tl-lab">Sélection</span></div><div class="tool"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-territory"/></svg><span class="tl-lab">Territoire</span></div><div class="tool"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-brush"/></svg><span class="tl-lab">Conquête</span></div><div class="tool"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-arrow"/></svg><span class="tl-lab">Flèche</span></div><div class="tool"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-token"/></svg><span class="tl-lab">Jeton</span></div><div class="tool"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-text"/></svg><span class="tl-lab">Texte</span></div><div class="tool"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-import"/></svg><span class="tl-lab">Import</span></div><div class="sp"></div><div class="tool mini"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-layers"/></svg><span class="tl-lab">Calques</span></div></nav><main class="stage"><div class="mapframe"><svg class="map" width="736" height="414" viewBox="0 0 800 450"><use href="#geo"/><text class="lf" x="292" y="62" text-anchor="middle">Royaume de Hongrie</text><text class="lf" x="470" y="200" text-anchor="middle">Empire ottoman</text><text class="lf" x="690" y="282" text-anchor="middle">Empire ottoman</text><text class="lv" x="508" y="112" text-anchor="middle">Valachie</text><text class="lv" x="508" y="126" text-anchor="middle" style="font-size:9px;opacity:.8">vassal</text><text class="lv" x="204" y="228" transform="rotate(34 204 228)">Venise</text><text class="lv" x="722" y="398" text-anchor="middle">Karaman</text><text class="ls" x="690" y="150" text-anchor="middle">Mer Noire</text><text class="ls" x="505" y="372" text-anchor="middle">Mer Égée</text><text class="ls" x="118" y="214" text-anchor="middle" transform="rotate(52 118 214)">Mer Adriatique</text><circle class="cd" cx="571" cy="242" r="3"/><text class="lc" x="560" y="236" text-anchor="end">Constantinople</text><circle class="cd" cx="334" cy="121" r="2.6"/><text class="lc" x="340" y="134">Belgrade</text><path class="front-h" d="M380 108 332 118 282 138 258 144"/><path class="front" d="M380 108 332 118 282 138 258 144"/><path class="arw" d="M350 236C330 200 300 184 262 176"/><path class="ahd" d="M249.5 173.4 263.6 168.4 260.4 183.4Z"/><g class="toks"><g transform="translate(366 248)"><circle class="tk-b" r="12" style="stroke:var(--m-ott)"/><svg x="-7" y="-5" width="14" height="10" viewBox="0 0 36 24"><use href="#emb-ott"/></svg><text class="tk-l" y="25" text-anchor="middle">Mehmed II</text></g><g transform="translate(222 124)"><circle class="tk-b" r="12" style="stroke:var(--m-hun)"/><svg x="-7" y="-5" width="14" height="10" viewBox="0 0 36 24"><use href="#emb-hun"/></svg><text class="tk-l" y="25" text-anchor="middle">Corvin</text></g><g transform="translate(452 330)"><circle class="tk-b" r="12" style="stroke:var(--m-ven)"/><svg x="-7" y="-5" width="14" height="10" viewBox="0 0 36 24"><use href="#emb-ven"/></svg><text class="tk-l" y="25" text-anchor="middle">Négrepont</text></g></g><g class="ts" transform="translate(22 360)"><rect class="c1" width="118" height="68"/><rect class="c2" x="4" y="4" width="110" height="60"/><text class="t-s" x="59" y="22" text-anchor="middle">ANNO DOMINI</text><text class="t-y" x="59" y="52" text-anchor="middle">1463</text></g><g class="rose" transform="translate(760 40)"><circle r="15"/><path d="M0-22 4 0 0 22-4 0Z"/><path class="rn" d="M0-22 4 0H-4Z"/><text y="-26" text-anchor="middle">N</text></g></svg></div><div class="zoom"><span><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-minus"/></svg></span><b>100 %</b><span><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-plus"/></svg></span><i></i><span><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-fit"/></svg></span></div><div class="toast"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-check"/></svg><span><b>Projet sauvegardé</b><small>Sur cet appareil · à l’instant</small></span></div></main><aside class="panel">
+<div class="ph">
+  <div class="ov">Kit de Faction</div>
+  <div class="kt"><svg class="emb" viewBox="0 0 36 24"><use href="#emb-ott"/></svg><div><div class="kn">Empire ottoman</div><div class="km">Copie propre au Projet</div></div><span class="more"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-dots"/></svg></span></div>
+</div>
+<div class="sec"><div class="sh">Couleurs</div>
+  <div class="row"><span class="sw" style="background:#B9573E"></span><span class="rl">Remplissage</span><span class="hex">#B9573E</span></div>
+  <div class="row"><span class="sw ring" style="--c:#F0E6D2"></span><span class="rl">Contour</span><span class="hex">#F0E6D2</span></div>
+</div>
+<div class="sec"><div class="sh">Emblème &amp; police</div>
+  <div class="row"><svg class="emb lg" viewBox="0 0 36 24"><use href="#emb-ott"/></svg><span class="rl">Drapeau ottoman<small>Variante réduite auto.</small></span><span class="lnk">Remplacer</span></div>
+  <div class="row"><span class="rl">Police</span><span class="sel">Iowan Old Style<svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg></span></div>
+</div>
+<div class="sec"><div class="sh">Signature organique</div>
+  <div class="seg wide"><span>Désactivée</span><span class="on">Légère</span><span>Marquée</span></div>
+  <p class="hint">Léger dépassement, bordures à peine tremblées, pulsation avant bascule.</p>
+</div>
+<div class="sec"><div class="sh">Sous-factions</div>
+  <div class="row sub"><span class="sw" style="background:#D69A84"></span><span class="rl">Vassaux ottomans<small>hérite · couleur surchargée</small></span><svg class="ico sm lnk-i" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-link"/></svg></div>
+  <div class="add"><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-plus"/></svg>Ajouter une sous-faction</div>
+</div>
+<div class="disc"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chevr"/></svg><span>Plus d’options</span><small>Frontière, Flèche, Jeton</small></div>
+</aside><section class="tl"><div class="tp"><span class="tt">Timeline</span><span class="nav"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-prev"/></svg></span><span class="pb"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-pause"/></svg></span><span class="nav"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-next"/></svg></span><span class="tc"><b>00:08,4</b> / 00:20,5</span><span class="sp"></span><span class="spd">1×<svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg></span><span class="tz"><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-minus"/></svg><i><b></b></i><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-plus"/></svg></span></div><div class="tlb"><div class="grid5"><div class="acts"><span class="act" style="grid-column:1/2">Avant</span><span class="act" style="grid-column:2/5">Pendant</span><span class="act" style="grid-column:5/6">Après</span></div><div class="steps"><div class="step"><div class="sd">1453</div><div class="st">Chute de Constantinople</div><div class="sm"><span>Transition 1 s</span><span>Maintien 3 s</span></div></div><div class="step"><div class="sd">1459</div><div class="st">Annexion de la Serbie</div><div class="sm"><span>Transition 1,5 s</span><span>Maintien 2 s</span></div></div><div class="step cur"><div class="sd">1463</div><div class="st">Conquête de la Bosnie</div><div class="sm"><span>Transition 2 s</span><span>Maintien 2,5 s</span></div><span class="ph-line" style="left:20%"><i></i></span></div><div class="step"><div class="sd">1476</div><div class="st">Campagne de Moldavie</div><div class="sm"><span>Transition 1,5 s</span><span>Maintien 2 s</span></div></div><div class="step"><div class="sd">1481</div><div class="st">Mort de Mehmed II</div><div class="sm"><span>Transition 1 s</span><span>Maintien 4 s</span></div></div></div></div><div class="addst"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-plus"/></svg><span>Étape</span></div></div></section></div></div></div>
+ <div class="row2">
+  <div><div class="cap">Mode clair<span>outil Jeton survolé, infobulle + raccourci</span></div><div class="scaler" style="--s:0.64"><div class="win d1 light"><div class="chrome"><i></i><i></i><i></i><div class="url">openmap.app/projets/expansion-ottomane-balkans</div></div><div class="app"><header class="top"><div class="brand"><svg class="mk" viewBox="0 0 24 24"><path d="M3.5 6.5 9 4.5l6 2 5.5-2v13l-5.5 2-6-2-5.5 2z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 4.5v13M15 6.5v13" stroke="currentColor" stroke-width="1.2"/></svg><span class="wm">Openmap</span></div>
+<div class="proj"><span class="crumb">Projets</span><span class="sep">/</span><span class="pname">Expansion ottomane — Balkans</span><span class="saved"><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-check"/></svg>Enregistré</span></div>
+<div class="fmt"><span class="lbl">Format de sortie</span><span class="val">16:9<svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg></span></div>
+<div class="sp"></div>
+<div class="hist"><span><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-undo"/></svg></span><span class="dis"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-redo"/></svg></span></div>
+<div class="seg mode" title="Thème"><span class="on"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-sun"/></svg></span><span><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-moon"/></svg></span></div>
+<div class="seg lang"><span class="on">FR</span><span>EN</span></div>
+<span class="btn ghost"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-playo"/></svg>Aperçu</span>
+<span class="btn primary"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-export"/></svg>Exporter</span>
+</header><nav class="rail"><div class="tool on"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-select"/></svg><span class="tl-lab">Sélection</span></div><div class="tool"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-territory"/></svg><span class="tl-lab">Territoire</span></div><div class="tool"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-brush"/></svg><span class="tl-lab">Conquête</span></div><div class="tool"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-arrow"/></svg><span class="tl-lab">Flèche</span></div><div class="tool hov"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-token"/></svg><span class="tl-lab">Jeton</span><span class="tip">Jeton d’unité<kbd>J</kbd></span></div><div class="tool"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-text"/></svg><span class="tl-lab">Texte</span></div><div class="tool"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-import"/></svg><span class="tl-lab">Import</span></div><div class="sp"></div><div class="tool mini"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-layers"/></svg><span class="tl-lab">Calques</span></div></nav><main class="stage"><div class="mapframe"><svg class="map" width="736" height="414" viewBox="0 0 800 450"><use href="#geo"/><text class="lf" x="292" y="62" text-anchor="middle">Royaume de Hongrie</text><text class="lf" x="470" y="200" text-anchor="middle">Empire ottoman</text><text class="lf" x="690" y="282" text-anchor="middle">Empire ottoman</text><text class="lv" x="508" y="112" text-anchor="middle">Valachie</text><text class="lv" x="508" y="126" text-anchor="middle" style="font-size:9px;opacity:.8">vassal</text><text class="lv" x="204" y="228" transform="rotate(34 204 228)">Venise</text><text class="lv" x="722" y="398" text-anchor="middle">Karaman</text><text class="ls" x="690" y="150" text-anchor="middle">Mer Noire</text><text class="ls" x="505" y="372" text-anchor="middle">Mer Égée</text><text class="ls" x="118" y="214" text-anchor="middle" transform="rotate(52 118 214)">Mer Adriatique</text><circle class="cd" cx="571" cy="242" r="3"/><text class="lc" x="560" y="236" text-anchor="end">Constantinople</text><circle class="cd" cx="334" cy="121" r="2.6"/><text class="lc" x="340" y="134">Belgrade</text><path class="front-h" d="M380 108 332 118 282 138 258 144"/><path class="front" d="M380 108 332 118 282 138 258 144"/><path class="arw" d="M350 236C330 200 300 184 262 176"/><path class="ahd" d="M249.5 173.4 263.6 168.4 260.4 183.4Z"/><g class="toks"><g transform="translate(366 248)"><circle class="tk-b" r="12" style="stroke:var(--m-ott)"/><svg x="-7" y="-5" width="14" height="10" viewBox="0 0 36 24"><use href="#emb-ott"/></svg><text class="tk-l" y="25" text-anchor="middle">Mehmed II</text></g><g transform="translate(222 124)"><circle class="tk-b" r="12" style="stroke:var(--m-hun)"/><svg x="-7" y="-5" width="14" height="10" viewBox="0 0 36 24"><use href="#emb-hun"/></svg><text class="tk-l" y="25" text-anchor="middle">Corvin</text></g><g transform="translate(452 330)"><circle class="tk-b" r="12" style="stroke:var(--m-ven)"/><svg x="-7" y="-5" width="14" height="10" viewBox="0 0 36 24"><use href="#emb-ven"/></svg><text class="tk-l" y="25" text-anchor="middle">Négrepont</text></g></g><g class="ts" transform="translate(22 360)"><rect class="c1" width="118" height="68"/><rect class="c2" x="4" y="4" width="110" height="60"/><text class="t-s" x="59" y="22" text-anchor="middle">ANNO DOMINI</text><text class="t-y" x="59" y="52" text-anchor="middle">1463</text></g><g class="rose" transform="translate(760 40)"><circle r="15"/><path d="M0-22 4 0 0 22-4 0Z"/><path class="rn" d="M0-22 4 0H-4Z"/><text y="-26" text-anchor="middle">N</text></g></svg></div><div class="zoom"><span><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-minus"/></svg></span><b>100 %</b><span><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-plus"/></svg></span><i></i><span><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-fit"/></svg></span></div></main><aside class="panel">
+<div class="ph">
+  <div class="ov">Kit de Faction</div>
+  <div class="kt"><svg class="emb" viewBox="0 0 36 24"><use href="#emb-ott"/></svg><div><div class="kn">Empire ottoman</div><div class="km">Copie propre au Projet</div></div><span class="more"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-dots"/></svg></span></div>
+</div>
+<div class="sec"><div class="sh">Couleurs</div>
+  <div class="row"><span class="sw" style="background:#B4533A"></span><span class="rl">Remplissage</span><span class="hex">#B4533A</span></div>
+  <div class="row"><span class="sw ring" style="--c:#6E2A1B"></span><span class="rl">Contour</span><span class="hex">#6E2A1B</span></div>
+</div>
+<div class="sec"><div class="sh">Emblème &amp; police</div>
+  <div class="row"><svg class="emb lg" viewBox="0 0 36 24"><use href="#emb-ott"/></svg><span class="rl">Drapeau ottoman<small>Variante réduite auto.</small></span><span class="lnk">Remplacer</span></div>
+  <div class="row"><span class="rl">Police</span><span class="sel">Iowan Old Style<svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg></span></div>
+</div>
+<div class="sec"><div class="sh">Signature organique</div>
+  <div class="seg wide"><span>Désactivée</span><span class="on">Légère</span><span>Marquée</span></div>
+  <p class="hint">Léger dépassement, bordures à peine tremblées, pulsation avant bascule.</p>
+</div>
+<div class="sec"><div class="sh">Sous-factions</div>
+  <div class="row sub"><span class="sw" style="background:#D9A08C"></span><span class="rl">Vassaux ottomans<small>hérite · couleur surchargée</small></span><svg class="ico sm lnk-i" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-link"/></svg></div>
+  <div class="add"><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-plus"/></svg>Ajouter une sous-faction</div>
+</div>
+<div class="disc"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chevr"/></svg><span>Plus d’options</span><small>Frontière, Flèche, Jeton</small></div>
+</aside><section class="tl"><div class="tp"><span class="tt">Timeline</span><span class="nav"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-prev"/></svg></span><span class="pb"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-pause"/></svg></span><span class="nav"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-next"/></svg></span><span class="tc"><b>00:08,4</b> / 00:20,5</span><span class="sp"></span><span class="spd">1×<svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg></span><span class="tz"><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-minus"/></svg><i><b></b></i><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-plus"/></svg></span></div><div class="tlb"><div class="grid5"><div class="acts"><span class="act" style="grid-column:1/2">Avant</span><span class="act" style="grid-column:2/5">Pendant</span><span class="act" style="grid-column:5/6">Après</span></div><div class="steps"><div class="step"><div class="sd">1453</div><div class="st">Chute de Constantinople</div><div class="sm"><span>Transition 1 s</span><span>Maintien 3 s</span></div></div><div class="step"><div class="sd">1459</div><div class="st">Annexion de la Serbie</div><div class="sm"><span>Transition 1,5 s</span><span>Maintien 2 s</span></div></div><div class="step cur"><div class="sd">1463</div><div class="st">Conquête de la Bosnie</div><div class="sm"><span>Transition 2 s</span><span>Maintien 2,5 s</span></div><span class="ph-line" style="left:20%"><i></i></span></div><div class="step"><div class="sd">1476</div><div class="st">Campagne de Moldavie</div><div class="sm"><span>Transition 1,5 s</span><span>Maintien 2 s</span></div></div><div class="step"><div class="sd">1481</div><div class="st">Mort de Mehmed II</div><div class="sm"><span>Transition 1 s</span><span>Maintien 4 s</span></div></div></div></div><div class="addst"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-plus"/></svg><span>Étape</span></div></div></section></div></div></div></div>
+  <aside class="legend">
+   <section><h4>Sombre</h4><div class="chips"><div class="chip"><i style="background:#171513"></i><code>#171513</code><small>fond</small></div><div class="chip"><i style="background:#201D1A"></i><code>#201D1A</code><small>surface</small></div><div class="chip"><i style="background:#ECE4D5"></i><code>#ECE4D5</code><small>texte</small></div><div class="chip"><i style="background:#A69A86"></i><code>#A69A86</code><small>atténué</small></div><div class="chip"><i style="background:#D8744E"></i><code>#D8744E</code><small>accent</small></div><div class="chip"><i style="background:#B9573E"></i><code>#B9573E</code><small>ottoman</small></div></div></section>
+   <section><h4>Clair</h4><div class="chips"><div class="chip"><i style="background:#EFE9DD"></i><code>#EFE9DD</code><small>fond</small></div><div class="chip"><i style="background:#F9F6EF"></i><code>#F9F6EF</code><small>surface</small></div><div class="chip"><i style="background:#2A2520"></i><code>#2A2520</code><small>encre</small></div><div class="chip"><i style="background:#6F6556"></i><code>#6F6556</code><small>atténué</small></div><div class="chip"><i style="background:#9E3B26"></i><code>#9E3B26</code><small>sanguine</small></div><div class="chip"><i style="background:#B4533A"></i><code>#B4533A</code><small>ottoman</small></div></div></section>
+   <section><h4>Typographie</h4><div class="stack"><b>Titres, dates, carte</b>"Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", ui-serif, Georgia, serif<b>Interface</b>ui-sans-serif, -apple-system, "Segoe UI Variable Text", "Segoe UI", Roboto, sans-serif</div></section>
+   <section><h4>Forme &amp; densité</h4><ul><li>Rayons 7 px contrôles, 8 px cartes</li><li>Rampe 76 px avec libellés, panneau 300 px</li><li>Timeline 176 px entre rampe et panneau</li><li>Densité : moyenne, aérée</li></ul></section>
+  </aside>
+ </div>
+</section>
+<section class="dir" id="d2">
+ <div class="dir-h"><div class="no">02</div><div><h2>Salle d’état-major</h2><div class="tag">Angles vifs, monospace pour les données, clin d’œil RTS discret.</div></div>
+ <div><p>Une salle des cartes sobre : angles vifs, filets fins, étiquettes en capitales espacées, et chiffres en monospace pour tout ce qui se compte (dates, durées, coordonnées). Le clin d’œil RTS reste retenu : crochets de sélection, graticule, barre d’état et ambre de signalisation.</p><p><b>Anti-slop :</b> aucune ombre, aucun arrondi décoratif ; l’ambre n’apparaît que pour la sélection, l’Étape courante et la tête de lecture. <b>Compromis :</b> c’est la plus dense et la plus précise des quatre ; elle peut intimider un débutant si la densité dérape, et le monospace doit rester un accent.</p></div></div>
+ <div class="cap">Mode sombre<span>état montré : survol Conquête avec aide + Jeton sélectionné (crochets)</span></div>
+ <div class="scaler" style="--s:0.8594"><div class="win d2 dark"><div class="chrome"><i></i><i></i><i></i><div class="url">openmap.app/projets/expansion-ottomane-balkans</div></div><div class="app"><header class="top"><div class="brand"><svg class="mk" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M12 1.5v6M12 16.5v6M1.5 12h6M16.5 12h6" stroke="currentColor" stroke-width="1.5"/></svg><span class="wm">OPENMAP</span></div>
+<div class="proj"><span class="crumb">Projets</span><span class="sep">/</span><span class="pname">Expansion ottomane — Balkans</span><span class="saved"><i class="dot"></i>SYNC 14:32</span></div>
+<div class="fmt"><span class="lbl">Format de sortie</span><span class="val">16:9<svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg></span></div>
+<div class="sp"></div>
+<div class="hist"><span><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-undo"/></svg></span><span class="dis"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-redo"/></svg></span></div>
+<div class="seg mode" title="Thème"><span><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-sun"/></svg></span><span class="on"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-moon"/></svg></span></div>
+<div class="seg lang"><span class="on">FR</span><span>EN</span></div>
+<span class="btn ghost"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-playo"/></svg>Aperçu</span>
+<span class="btn primary"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-export"/></svg>Exporter</span>
+</header><nav class="rail"><div class="tool on"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-select"/></svg><span class="tl-lab">Sélection</span><kbd class="k">V</kbd></div><div class="tool"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-territory"/></svg><span class="tl-lab">Territoire</span><kbd class="k">T</kbd></div><div class="tool hov"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-brush"/></svg><span class="tl-lab">Conquête</span><kbd class="k">B</kbd><span class="tip">Conquête (pinceau)<kbd>B</kbd><small>Peindre des Entités pour la Faction active</small></span></div><div class="tool"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-arrow"/></svg><span class="tl-lab">Flèche</span><kbd class="k">F</kbd></div><div class="tool"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-token"/></svg><span class="tl-lab">Jeton</span><kbd class="k">J</kbd></div><div class="tool"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-text"/></svg><span class="tl-lab">Texte</span><kbd class="k">X</kbd></div><div class="tool"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-import"/></svg><span class="tl-lab">Import</span><kbd class="k">I</kbd></div><div class="sp"></div><div class="tool mini"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-layers"/></svg><span class="tl-lab">Calques</span></div></nav><main class="stage"><div class="mapframe"><svg class="map" width="768" height="432" viewBox="0 0 800 450"><use href="#geo"/><g class="grat"><path d="M0 0V450"/><path d="M100 0V450"/><path d="M200 0V450"/><path d="M300 0V450"/><path d="M400 0V450"/><path d="M500 0V450"/><path d="M600 0V450"/><path d="M700 0V450"/><path d="M800 0V450"/><path d="M0 0H800"/><path d="M0 90H800"/><path d="M0 180H800"/><path d="M0 270H800"/><path d="M0 360H800"/><path d="M0 450H800"/></g><text class="lf" x="292" y="62" text-anchor="middle">Royaume de Hongrie</text><text class="lf" x="470" y="200" text-anchor="middle">Empire ottoman</text><text class="lf" x="690" y="282" text-anchor="middle">Empire ottoman</text><text class="lv" x="508" y="112" text-anchor="middle">Valachie</text><text class="lv" x="508" y="126" text-anchor="middle" style="font-size:9px;opacity:.8">vassal</text><text class="lv" x="204" y="228" transform="rotate(34 204 228)">Venise</text><text class="lv" x="722" y="398" text-anchor="middle">Karaman</text><text class="ls" x="690" y="150" text-anchor="middle">Mer Noire</text><text class="ls" x="505" y="372" text-anchor="middle">Mer Égée</text><text class="ls" x="118" y="214" text-anchor="middle" transform="rotate(52 118 214)">Mer Adriatique</text><circle class="cd" cx="571" cy="242" r="3"/><text class="lc" x="560" y="236" text-anchor="end">Constantinople</text><circle class="cd" cx="334" cy="121" r="2.6"/><text class="lc" x="340" y="134">Belgrade</text><path class="front-h" d="M380 108 332 118 282 138 258 144"/><path class="front" d="M380 108 332 118 282 138 258 144"/><path class="arw" d="M350 236C330 200 300 184 262 176"/><path class="ahd" d="M249.5 173.4 263.6 168.4 260.4 183.4Z"/><g class="toks"><g transform="translate(366 248)"><rect class="tk-b" x="-14" y="-9" width="28" height="18" style="fill:var(--m-ott)"/><path class="tk-x" d="M-14-9 14 9M14-9-14 9"/> <path class="brk" d="M-19-9v-5h5M14-14h5v5M19 9v5h-5M-14 14h-5v-5"/><text class="tk-l" x="22" y="4">MEHMED II</text></g><g transform="translate(222 124)"><rect class="tk-b" x="-14" y="-9" width="28" height="18" style="fill:var(--m-hun)"/><path class="tk-x" d="M-14-9 14 9M14-9-14 9"/><text class="tk-l" x="22" y="4">CORVIN</text></g><g transform="translate(452 330)"><rect class="tk-b" x="-14" y="-9" width="28" height="18" style="fill:var(--m-ven)"/><path class="tk-x" d="M-14-9 14 9M14-9-14 9"/><text class="tk-l" x="22" y="4">NÉGREPONT</text></g></g><g class="ts" transform="translate(20 380)"><rect class="t-bg" width="128" height="50"/><text class="t-s" x="10" y="17">ÉTAPE 03/05 · T+08,4</text><text class="t-y" x="10" y="42">1463</text><path class="t-bar" d="M0 0V50"/></g><g class="scale" transform="translate(620 424)"><path d="M0 0H120M0-4V4M60-3V3M120-4V4"/><text x="0" y="-8">0</text><text x="120" y="-8" text-anchor="end">200 km</text></g></svg></div><div class="zoom"><span><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-minus"/></svg></span><b>100 %</b><span><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-plus"/></svg></span><i></i><span><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-fit"/></svg></span></div></main><aside class="panel">
+<div class="ph">
+  <div class="ov">Kit de Faction</div>
+  <div class="kt"><svg class="emb" viewBox="0 0 36 24"><use href="#emb-ott"/></svg><div><div class="kn">Empire ottoman</div><div class="km">Copie propre au Projet</div></div><span class="more"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-dots"/></svg></span></div>
+</div>
+<div class="sec"><div class="sh">Couleurs</div>
+  <div class="row"><span class="sw" style="background:#B8483B"></span><span class="rl">Remplissage</span><span class="hex">#B8483B</span></div>
+  <div class="row"><span class="sw ring" style="--c:#6A2219"></span><span class="rl">Contour</span><span class="hex">#6A2219</span></div>
+</div>
+<div class="sec"><div class="sh">Emblème &amp; police</div>
+  <div class="row"><svg class="emb lg" viewBox="0 0 36 24"><use href="#emb-ott"/></svg><span class="rl">Drapeau ottoman<small>Variante réduite auto.</small></span><span class="lnk">Remplacer</span></div>
+  <div class="row"><span class="rl">Police</span><span class="sel">Système — condensé<svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg></span></div>
+</div>
+<div class="sec"><div class="sh">Signature organique</div>
+  <div class="seg wide"><span>Désactivée</span><span class="on">Légère</span><span>Marquée</span></div>
+  <p class="hint">Léger dépassement, bordures à peine tremblées, pulsation avant bascule.</p>
+</div>
+<div class="sec"><div class="sh">Sous-factions</div>
+  <div class="row sub"><span class="sw" style="background:#D98B7F"></span><span class="rl">Vassaux ottomans<small>hérite · couleur surchargée</small></span><svg class="ico sm lnk-i" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-link"/></svg></div>
+  <div class="add"><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-plus"/></svg>Ajouter une sous-faction</div>
+</div>
+<div class="disc"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chevr"/></svg><span>Plus d’options</span><small>Frontière, Flèche, Jeton</small></div>
+</aside><section class="tl"><div class="tp"><span class="tt">TIMELINE</span><span class="nav"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-prev"/></svg></span><span class="pb"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-pause"/></svg></span><span class="nav"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-next"/></svg></span><span class="tc"><b>00:08,4</b> / 00:20,5</span><span class="sp"></span><span class="spd">1×<svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg></span><span class="tz"><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-minus"/></svg><i><b></b></i><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-plus"/></svg></span></div><div class="tlb"><div class="trk"><div class="ruler"><span style="left:0.000%">00:00</span><span style="left:24.390%">00:05</span><span style="left:48.780%">00:10</span><span style="left:73.171%">00:15</span><span style="left:97.561%">00:20</span></div><div class="actb"><span class="act" style="left:0.000%;width:19.512%">Avant</span><span class="act" style="left:19.512%;width:56.098%">Pendant</span><span class="act" style="left:75.610%;width:24.390%">Après</span></div><div class="clips"><div class="clip" style="flex:4.0"><span class="tr" style="width:25.0%"></span><div class="cl"><b class="sd">1453</b><span class="st">Chute de Constantinople</span></div><div class="sm">T 1 s · M 3 s</div></div><div class="clip" style="flex:3.5"><span class="tr" style="width:42.9%"></span><div class="cl"><b class="sd">1459</b><span class="st">Annexion de la Serbie</span></div><div class="sm">T 1,5 s · M 2 s</div></div><div class="clip cur" style="flex:4.5"><span class="tr" style="width:44.4%"></span><div class="cl"><b class="sd">1463</b><span class="st">Conquête de la Bosnie</span></div><div class="sm">T 2 s · M 2,5 s</div></div><div class="clip" style="flex:3.5"><span class="tr" style="width:42.9%"></span><div class="cl"><b class="sd">1476</b><span class="st">Campagne de Moldavie</span></div><div class="sm">T 1,5 s · M 2 s</div></div><div class="clip" style="flex:5.0"><span class="tr" style="width:20.0%"></span><div class="cl"><b class="sd">1481</b><span class="st">Mort de Mehmed II</span></div><div class="sm">T 1 s · M 4 s</div></div></div><span class="ph-line" style="left:40.976%"><i></i></span></div><div class="addst"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-plus"/></svg><span>Étape</span></div></div></section><footer class="status"><span>CURSEUR 43°52′N 18°25′E</span><span>ZOOM 100 %</span><span>SÉLECTION : KIT « EMPIRE OTTOMAN »</span><span class="sp"></span><span>5 ÉTAPES · 3 ACTES</span><span class="ok"><i class="dot"></i>SAUVEGARDÉ</span></footer></div></div></div>
+ <div class="row2">
+  <div><div class="cap">Mode clair<span>toast « Projet sauvegardé »</span></div><div class="scaler" style="--s:0.64"><div class="win d2 light"><div class="chrome"><i></i><i></i><i></i><div class="url">openmap.app/projets/expansion-ottomane-balkans</div></div><div class="app"><header class="top"><div class="brand"><svg class="mk" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M12 1.5v6M12 16.5v6M1.5 12h6M16.5 12h6" stroke="currentColor" stroke-width="1.5"/></svg><span class="wm">OPENMAP</span></div>
+<div class="proj"><span class="crumb">Projets</span><span class="sep">/</span><span class="pname">Expansion ottomane — Balkans</span><span class="saved"><i class="dot"></i>SYNC 14:32</span></div>
+<div class="fmt"><span class="lbl">Format de sortie</span><span class="val">16:9<svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg></span></div>
+<div class="sp"></div>
+<div class="hist"><span><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-undo"/></svg></span><span class="dis"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-redo"/></svg></span></div>
+<div class="seg mode" title="Thème"><span class="on"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-sun"/></svg></span><span><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-moon"/></svg></span></div>
+<div class="seg lang"><span class="on">FR</span><span>EN</span></div>
+<span class="btn ghost"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-playo"/></svg>Aperçu</span>
+<span class="btn primary"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-export"/></svg>Exporter</span>
+</header><nav class="rail"><div class="tool on"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-select"/></svg><span class="tl-lab">Sélection</span><kbd class="k">V</kbd></div><div class="tool"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-territory"/></svg><span class="tl-lab">Territoire</span><kbd class="k">T</kbd></div><div class="tool"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-brush"/></svg><span class="tl-lab">Conquête</span><kbd class="k">B</kbd></div><div class="tool"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-arrow"/></svg><span class="tl-lab">Flèche</span><kbd class="k">F</kbd></div><div class="tool"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-token"/></svg><span class="tl-lab">Jeton</span><kbd class="k">J</kbd></div><div class="tool"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-text"/></svg><span class="tl-lab">Texte</span><kbd class="k">X</kbd></div><div class="tool"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-import"/></svg><span class="tl-lab">Import</span><kbd class="k">I</kbd></div><div class="sp"></div><div class="tool mini"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-layers"/></svg><span class="tl-lab">Calques</span></div></nav><main class="stage"><div class="mapframe"><svg class="map" width="768" height="432" viewBox="0 0 800 450"><use href="#geo"/><g class="grat"><path d="M0 0V450"/><path d="M100 0V450"/><path d="M200 0V450"/><path d="M300 0V450"/><path d="M400 0V450"/><path d="M500 0V450"/><path d="M600 0V450"/><path d="M700 0V450"/><path d="M800 0V450"/><path d="M0 0H800"/><path d="M0 90H800"/><path d="M0 180H800"/><path d="M0 270H800"/><path d="M0 360H800"/><path d="M0 450H800"/></g><text class="lf" x="292" y="62" text-anchor="middle">Royaume de Hongrie</text><text class="lf" x="470" y="200" text-anchor="middle">Empire ottoman</text><text class="lf" x="690" y="282" text-anchor="middle">Empire ottoman</text><text class="lv" x="508" y="112" text-anchor="middle">Valachie</text><text class="lv" x="508" y="126" text-anchor="middle" style="font-size:9px;opacity:.8">vassal</text><text class="lv" x="204" y="228" transform="rotate(34 204 228)">Venise</text><text class="lv" x="722" y="398" text-anchor="middle">Karaman</text><text class="ls" x="690" y="150" text-anchor="middle">Mer Noire</text><text class="ls" x="505" y="372" text-anchor="middle">Mer Égée</text><text class="ls" x="118" y="214" text-anchor="middle" transform="rotate(52 118 214)">Mer Adriatique</text><circle class="cd" cx="571" cy="242" r="3"/><text class="lc" x="560" y="236" text-anchor="end">Constantinople</text><circle class="cd" cx="334" cy="121" r="2.6"/><text class="lc" x="340" y="134">Belgrade</text><path class="front-h" d="M380 108 332 118 282 138 258 144"/><path class="front" d="M380 108 332 118 282 138 258 144"/><path class="arw" d="M350 236C330 200 300 184 262 176"/><path class="ahd" d="M249.5 173.4 263.6 168.4 260.4 183.4Z"/><g class="toks"><g transform="translate(366 248)"><rect class="tk-b" x="-14" y="-9" width="28" height="18" style="fill:var(--m-ott)"/><path class="tk-x" d="M-14-9 14 9M14-9-14 9"/><text class="tk-l" x="22" y="4">MEHMED II</text></g><g transform="translate(222 124)"><rect class="tk-b" x="-14" y="-9" width="28" height="18" style="fill:var(--m-hun)"/><path class="tk-x" d="M-14-9 14 9M14-9-14 9"/><text class="tk-l" x="22" y="4">CORVIN</text></g><g transform="translate(452 330)"><rect class="tk-b" x="-14" y="-9" width="28" height="18" style="fill:var(--m-ven)"/><path class="tk-x" d="M-14-9 14 9M14-9-14 9"/><text class="tk-l" x="22" y="4">NÉGREPONT</text></g></g><g class="ts" transform="translate(20 380)"><rect class="t-bg" width="128" height="50"/><text class="t-s" x="10" y="17">ÉTAPE 03/05 · T+08,4</text><text class="t-y" x="10" y="42">1463</text><path class="t-bar" d="M0 0V50"/></g><g class="scale" transform="translate(620 424)"><path d="M0 0H120M0-4V4M60-3V3M120-4V4"/><text x="0" y="-8">0</text><text x="120" y="-8" text-anchor="end">200 km</text></g></svg></div><div class="zoom"><span><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-minus"/></svg></span><b>100 %</b><span><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-plus"/></svg></span><i></i><span><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-fit"/></svg></span></div><div class="toast"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-check"/></svg><span><b>Projet sauvegardé</b><small>SAUVEGARDE LOCALE · 14:32</small></span></div></main><aside class="panel">
+<div class="ph">
+  <div class="ov">Kit de Faction</div>
+  <div class="kt"><svg class="emb" viewBox="0 0 36 24"><use href="#emb-ott"/></svg><div><div class="kn">Empire ottoman</div><div class="km">Copie propre au Projet</div></div><span class="more"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-dots"/></svg></span></div>
+</div>
+<div class="sec"><div class="sh">Couleurs</div>
+  <div class="row"><span class="sw" style="background:#C0503F"></span><span class="rl">Remplissage</span><span class="hex">#C0503F</span></div>
+  <div class="row"><span class="sw ring" style="--c:#7A2A1F"></span><span class="rl">Contour</span><span class="hex">#7A2A1F</span></div>
+</div>
+<div class="sec"><div class="sh">Emblème &amp; police</div>
+  <div class="row"><svg class="emb lg" viewBox="0 0 36 24"><use href="#emb-ott"/></svg><span class="rl">Drapeau ottoman<small>Variante réduite auto.</small></span><span class="lnk">Remplacer</span></div>
+  <div class="row"><span class="rl">Police</span><span class="sel">Système — condensé<svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg></span></div>
+</div>
+<div class="sec"><div class="sh">Signature organique</div>
+  <div class="seg wide"><span>Désactivée</span><span class="on">Légère</span><span>Marquée</span></div>
+  <p class="hint">Léger dépassement, bordures à peine tremblées, pulsation avant bascule.</p>
+</div>
+<div class="sec"><div class="sh">Sous-factions</div>
+  <div class="row sub"><span class="sw" style="background:#E2A396"></span><span class="rl">Vassaux ottomans<small>hérite · couleur surchargée</small></span><svg class="ico sm lnk-i" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-link"/></svg></div>
+  <div class="add"><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-plus"/></svg>Ajouter une sous-faction</div>
+</div>
+<div class="disc"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chevr"/></svg><span>Plus d’options</span><small>Frontière, Flèche, Jeton</small></div>
+</aside><section class="tl"><div class="tp"><span class="tt">TIMELINE</span><span class="nav"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-prev"/></svg></span><span class="pb"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-pause"/></svg></span><span class="nav"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-next"/></svg></span><span class="tc"><b>00:08,4</b> / 00:20,5</span><span class="sp"></span><span class="spd">1×<svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg></span><span class="tz"><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-minus"/></svg><i><b></b></i><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-plus"/></svg></span></div><div class="tlb"><div class="trk"><div class="ruler"><span style="left:0.000%">00:00</span><span style="left:24.390%">00:05</span><span style="left:48.780%">00:10</span><span style="left:73.171%">00:15</span><span style="left:97.561%">00:20</span></div><div class="actb"><span class="act" style="left:0.000%;width:19.512%">Avant</span><span class="act" style="left:19.512%;width:56.098%">Pendant</span><span class="act" style="left:75.610%;width:24.390%">Après</span></div><div class="clips"><div class="clip" style="flex:4.0"><span class="tr" style="width:25.0%"></span><div class="cl"><b class="sd">1453</b><span class="st">Chute de Constantinople</span></div><div class="sm">T 1 s · M 3 s</div></div><div class="clip" style="flex:3.5"><span class="tr" style="width:42.9%"></span><div class="cl"><b class="sd">1459</b><span class="st">Annexion de la Serbie</span></div><div class="sm">T 1,5 s · M 2 s</div></div><div class="clip cur" style="flex:4.5"><span class="tr" style="width:44.4%"></span><div class="cl"><b class="sd">1463</b><span class="st">Conquête de la Bosnie</span></div><div class="sm">T 2 s · M 2,5 s</div></div><div class="clip" style="flex:3.5"><span class="tr" style="width:42.9%"></span><div class="cl"><b class="sd">1476</b><span class="st">Campagne de Moldavie</span></div><div class="sm">T 1,5 s · M 2 s</div></div><div class="clip" style="flex:5.0"><span class="tr" style="width:20.0%"></span><div class="cl"><b class="sd">1481</b><span class="st">Mort de Mehmed II</span></div><div class="sm">T 1 s · M 4 s</div></div></div><span class="ph-line" style="left:40.976%"><i></i></span></div><div class="addst"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-plus"/></svg><span>Étape</span></div></div></section><footer class="status"><span>CURSEUR 43°52′N 18°25′E</span><span>ZOOM 100 %</span><span>SÉLECTION : KIT « EMPIRE OTTOMAN »</span><span class="sp"></span><span>5 ÉTAPES · 3 ACTES</span><span class="ok"><i class="dot"></i>SAUVEGARDÉ</span></footer></div></div></div></div>
+  <aside class="legend">
+   <section><h4>Sombre</h4><div class="chips"><div class="chip"><i style="background:#0C1013"></i><code>#0C1013</code><small>fond</small></div><div class="chip"><i style="background:#11171B"></i><code>#11171B</code><small>surface</small></div><div class="chip"><i style="background:#D3DCE1"></i><code>#D3DCE1</code><small>texte</small></div><div class="chip"><i style="background:#80909A"></i><code>#80909A</code><small>atténué</small></div><div class="chip"><i style="background:#E3A63B"></i><code>#E3A63B</code><small>ambre</small></div><div class="chip"><i style="background:#B8483B"></i><code>#B8483B</code><small>ottoman</small></div></div></section>
+   <section><h4>Clair</h4><div class="chips"><div class="chip"><i style="background:#E5E9EB"></i><code>#E5E9EB</code><small>fond</small></div><div class="chip"><i style="background:#F7F9FA"></i><code>#F7F9FA</code><small>surface</small></div><div class="chip"><i style="background:#11171B"></i><code>#11171B</code><small>texte</small></div><div class="chip"><i style="background:#56646D"></i><code>#56646D</code><small>atténué</small></div><div class="chip"><i style="background:#A96A0F"></i><code>#A96A0F</code><small>ambre</small></div><div class="chip"><i style="background:#C0503F"></i><code>#C0503F</code><small>ottoman</small></div></div></section>
+   <section><h4>Typographie</h4><div class="stack"><b>Interface</b>system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif<b>Données, étiquettes</b>ui-monospace, "SF Mono", "Cascadia Mono", "JetBrains Mono", Menlo, Consolas, monospace</div></section>
+   <section><h4>Forme &amp; densité</h4><ul><li>Rayons 0–2 px</li><li>Rampe 52 px icônes seules + touche</li><li>Barre d’état 24 px</li><li>Densité : élevée</li></ul></section>
+  </aside>
+ </div>
+</section>
+<section class="dir" id="d3">
+ <div class="dir-h"><div class="no">03</div><div><h2>Banc de montage</h2><div class="tag">Studio graphite, Timeline à pistes, un seul accent cyan.</div></div>
+ <div><p>Un banc de montage à la CapCut : neutres graphite, une seule couleur d’accent (cyan) réservée à l’action, à l’outil actif et à la tête de lecture, et une Timeline qui occupe un tiers de l’écran avec vignettes d’Étape et pistes Flèches, Jetons, Texte. Elle parle directement aux vidéastes, qui savent déjà lire une piste.</p><p><b>Anti-slop :</b> pas de dégradé ni de verre ; les arrondis sont modérés et fonctionnels, les transitions sont hachurées plutôt que décorées. <b>Compromis :</b> la carte perd de la surface, et la ressemblance avec un éditeur vidéo peut laisser croire à des images clés que le modèle par Étapes n’a pas.</p></div></div>
+ <div class="cap">Mode sombre<span>état montré : outil Conquête actif, curseur pinceau sur la Bosnie</span></div>
+ <div class="scaler" style="--s:0.8594"><div class="win d3 dark"><div class="chrome"><i></i><i></i><i></i><div class="url">openmap.app/projets/expansion-ottomane-balkans</div></div><div class="app"><header class="top"><div class="brand"><svg class="mk" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="6" fill="currentColor"/><path d="M7 16.5 10.5 8l3 5.5 1.8-2.6L18 16.5z" fill="var(--bg)"/></svg><span class="wm">openmap</span></div>
+<div class="proj"><span class="crumb">Projets</span><span class="sep">/</span><span class="pname">Expansion ottomane — Balkans</span><span class="saved"><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-check"/></svg>Enregistré</span></div>
+<div class="fmt"><span class="lbl">Format de sortie</span><span class="val">16:9<svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg></span></div>
+<div class="sp"></div>
+<div class="hist"><span><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-undo"/></svg></span><span class="dis"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-redo"/></svg></span></div>
+<div class="seg mode" title="Thème"><span><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-sun"/></svg></span><span class="on"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-moon"/></svg></span></div>
+<div class="seg lang"><span class="on">FR</span><span>EN</span></div>
+<span class="btn ghost"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-playo"/></svg>Aperçu</span>
+<span class="btn primary"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-export"/></svg>Exporter</span>
+</header><main class="stage"><div class="stage-h"><nav class="rail h"><div class="tool"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-select"/></svg><span class="tl-lab">Sélection</span></div><div class="tool"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-territory"/></svg><span class="tl-lab">Territoire</span></div><div class="tool on"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-brush"/></svg><span class="tl-lab">Conquête</span></div><div class="tool"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-arrow"/></svg><span class="tl-lab">Flèche</span></div><div class="tool"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-token"/></svg><span class="tl-lab">Jeton</span></div><div class="tool"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-text"/></svg><span class="tl-lab">Texte</span></div><div class="tool"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-import"/></svg><span class="tl-lab">Import</span></div><div class="sp"></div><div class="tool mini"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-layers"/></svg><span class="tl-lab">Calques</span></div></nav><span class="sp"></span><span class="mode-e"><b>Édition</b><i>Présentation</i></span></div><span class="fmtb">16:9 · 1920 × 1080</span><div class="mapframe"><svg class="map" width="560" height="315" viewBox="0 0 800 450"><use href="#geo"/><text class="lf" x="292" y="62" text-anchor="middle">Royaume de Hongrie</text><text class="lf" x="470" y="200" text-anchor="middle">Empire ottoman</text><text class="lf" x="690" y="282" text-anchor="middle">Empire ottoman</text><text class="lv" x="508" y="112" text-anchor="middle">Valachie</text><text class="lv" x="508" y="126" text-anchor="middle" style="font-size:9px;opacity:.8">vassal</text><text class="lv" x="204" y="228" transform="rotate(34 204 228)">Venise</text><text class="lv" x="722" y="398" text-anchor="middle">Karaman</text><text class="ls" x="690" y="150" text-anchor="middle">Mer Noire</text><text class="ls" x="505" y="372" text-anchor="middle">Mer Égée</text><text class="ls" x="118" y="214" text-anchor="middle" transform="rotate(52 118 214)">Mer Adriatique</text><circle class="cd" cx="571" cy="242" r="3"/><text class="lc" x="560" y="236" text-anchor="end">Constantinople</text><circle class="cd" cx="334" cy="121" r="2.6"/><text class="lc" x="340" y="134">Belgrade</text><path class="front-h" d="M380 108 332 118 282 138 258 144"/><path class="front" d="M380 108 332 118 282 138 258 144"/><path class="arw" d="M350 236C330 200 300 184 262 176"/><path class="ahd" d="M249.5 173.4 263.6 168.4 260.4 183.4Z"/><g class="toks"><g transform="translate(366 248)"><rect class="tk-b" x="-15" y="-11" width="30" height="22" rx="6"/><svg x="-10" y="-6.5" width="20" height="13" viewBox="0 0 36 24"><use href="#emb-ott"/></svg><rect class="tk-lb" x="-38" y="14" width="75" height="16" rx="4"/><text class="tk-l" y="25.5" text-anchor="middle">Mehmed II</text></g><g transform="translate(222 124)"><rect class="tk-b" x="-15" y="-11" width="30" height="22" rx="6"/><svg x="-10" y="-6.5" width="20" height="13" viewBox="0 0 36 24"><use href="#emb-hun"/></svg><rect class="tk-lb" x="-28" y="14" width="56" height="16" rx="4"/><text class="tk-l" y="25.5" text-anchor="middle">Corvin</text></g><g transform="translate(452 330)"><rect class="tk-b" x="-15" y="-11" width="30" height="22" rx="6"/><svg x="-10" y="-6.5" width="20" height="13" viewBox="0 0 36 24"><use href="#emb-ven"/></svg><rect class="tk-lb" x="-38" y="14" width="75" height="16" rx="4"/><text class="tk-l" y="25.5" text-anchor="middle">Négrepont</text></g></g><g class="ts" transform="translate(692 18)"><rect class="t-bg" width="90" height="38" rx="8"/><text class="t-y" x="45" y="27" text-anchor="middle">1463</text></g><g class="brushc"><circle cx="276" cy="196" r="20"/><circle class="bc2" cx="276" cy="196" r="1.6"/></g></svg></div><div class="zoom"><span><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-minus"/></svg></span><b>100 %</b><span><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-plus"/></svg></span><i></i><span><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-fit"/></svg></span></div></main><aside class="panel">
+<div class="ph">
+  <div class="ov">Kit de Faction</div>
+  <div class="kt"><svg class="emb" viewBox="0 0 36 24"><use href="#emb-ott"/></svg><div><div class="kn">Empire ottoman</div><div class="km">Copie propre au Projet</div></div><span class="more"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-dots"/></svg></span></div>
+</div>
+<div class="sec"><div class="sh">Couleurs</div>
+  <div class="row"><span class="sw" style="background:#D0533F"></span><span class="rl">Remplissage</span><span class="hex">#D0533F</span></div>
+  <div class="row"><span class="sw ring" style="--c:#FFFFFF"></span><span class="rl">Contour</span><span class="hex">#FFFFFF</span></div>
+</div>
+<div class="sec"><div class="sh">Emblème &amp; police</div>
+  <div class="row"><svg class="emb lg" viewBox="0 0 36 24"><use href="#emb-ott"/></svg><span class="rl">Drapeau ottoman<small>Variante réduite auto.</small></span><span class="lnk">Remplacer</span></div>
+  <div class="row"><span class="rl">Police</span><span class="sel">Sans système · Gras<svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg></span></div>
+</div>
+<div class="sec"><div class="sh">Signature organique</div>
+  <div class="seg wide"><span>Désactivée</span><span class="on">Légère</span><span>Marquée</span></div>
+  <p class="hint">Léger dépassement, bordures à peine tremblées, pulsation avant bascule.</p>
+</div>
+<div class="sec"><div class="sh">Sous-factions</div>
+  <div class="row sub"><span class="sw" style="background:#E89A89"></span><span class="rl">Vassaux ottomans<small>hérite · couleur surchargée</small></span><svg class="ico sm lnk-i" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-link"/></svg></div>
+  <div class="add"><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-plus"/></svg>Ajouter une sous-faction</div>
+</div>
+<div class="disc"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chevr"/></svg><span>Plus d’options</span><small>Frontière, Flèche, Jeton</small></div>
+</aside><section class="tl"><div class="tp"><span class="tt"></span><span class="nav"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-prev"/></svg></span><span class="pb"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-pause"/></svg></span><span class="nav"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-next"/></svg></span><span class="tc"><b>00:08,4</b> / 00:20,5</span><span class="sp"></span><span class="spd">1×<svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg></span><span class="tz"><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-minus"/></svg><i><b></b></i><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-plus"/></svg></span></div><div class="tlb"><div class="trk"><div class="ruler"><span style="left:0.000%">00:00</span><span style="left:24.390%">00:05</span><span style="left:48.780%">00:10</span><span style="left:73.171%">00:15</span><span style="left:97.561%">00:20</span></div><div class="actb"><span class="lab">Actes</span><span class="act" style="left:0.000%;width:19.512%">Avant</span><span class="act" style="left:19.512%;width:56.098%">Pendant</span><span class="act" style="left:75.610%;width:24.390%">Après</span></div><div class="clips"><span class="lab">Carte</span><div class="clip" style="flex:4.0"><span class="tr" style="width:25.0%"><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-trans"/></svg></span><svg class="th" viewBox="0 0 800 450" preserveAspectRatio="xMidYMid slice"><use href="#geo"/></svg><div class="cl"><b class="sd">1453</b><span class="st">Chute de Constantinople</span></div><div class="sm">T 1 s · M 3 s</div></div><div class="clip" style="flex:3.5"><span class="tr" style="width:42.9%"><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-trans"/></svg></span><svg class="th" viewBox="0 0 800 450" preserveAspectRatio="xMidYMid slice"><use href="#geo"/></svg><div class="cl"><b class="sd">1459</b><span class="st">Annexion de la Serbie</span></div><div class="sm">T 1,5 s · M 2 s</div></div><div class="clip cur" style="flex:4.5"><span class="tr" style="width:44.4%"><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-trans"/></svg></span><svg class="th" viewBox="0 0 800 450" preserveAspectRatio="xMidYMid slice"><use href="#geo"/></svg><div class="cl"><b class="sd">1463</b><span class="st">Conquête de la Bosnie</span></div><div class="sm">T 2 s · M 2,5 s</div></div><div class="clip" style="flex:3.5"><span class="tr" style="width:42.9%"><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-trans"/></svg></span><svg class="th" viewBox="0 0 800 450" preserveAspectRatio="xMidYMid slice"><use href="#geo"/></svg><div class="cl"><b class="sd">1476</b><span class="st">Campagne de Moldavie</span></div><div class="sm">T 1,5 s · M 2 s</div></div><div class="clip" style="flex:5.0"><span class="tr" style="width:20.0%"><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-trans"/></svg></span><svg class="th" viewBox="0 0 800 450" preserveAspectRatio="xMidYMid slice"><use href="#geo"/></svg><div class="cl"><b class="sd">1481</b><span class="st">Mort de Mehmed II</span></div><div class="sm">T 1 s · M 4 s</div></div></div><div class="lane"><span class="lab">Flèches</span><span class="lb sel" style="left:36.585%;width:21.951%">Offensive de Bosnie</span><span class="lb " style="left:68.293%;width:17.073%">Vers la Moldavie</span></div><div class="lane"><span class="lab">Jetons</span><span class="lb " style="left:0.000%;width:100.000%">Mehmed II</span></div><div class="lane"><span class="lb " style="left:0.000%;width:78.049%">Corvin</span><span class="lb " style="left:78.049%;width:21.951%">Hongrie — réserve</span></div><div class="lane"><span class="lab">Texte</span><span class="lb " style="left:0.000%;width:100.000%">Horodatage · 1453 → 1481</span></div><span class="ph-line" style="left:40.976%"><i></i></span></div><div class="addst"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-plus"/></svg><span>Étape</span></div></div></section></div></div></div>
+ <div class="row2">
+  <div><div class="cap">Mode clair<span>Conquête active + toast « Projet sauvegardé »</span></div><div class="scaler" style="--s:0.64"><div class="win d3 light"><div class="chrome"><i></i><i></i><i></i><div class="url">openmap.app/projets/expansion-ottomane-balkans</div></div><div class="app"><header class="top"><div class="brand"><svg class="mk" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="6" fill="currentColor"/><path d="M7 16.5 10.5 8l3 5.5 1.8-2.6L18 16.5z" fill="var(--bg)"/></svg><span class="wm">openmap</span></div>
+<div class="proj"><span class="crumb">Projets</span><span class="sep">/</span><span class="pname">Expansion ottomane — Balkans</span><span class="saved"><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-check"/></svg>Enregistré</span></div>
+<div class="fmt"><span class="lbl">Format de sortie</span><span class="val">16:9<svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg></span></div>
+<div class="sp"></div>
+<div class="hist"><span><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-undo"/></svg></span><span class="dis"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-redo"/></svg></span></div>
+<div class="seg mode" title="Thème"><span class="on"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-sun"/></svg></span><span><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-moon"/></svg></span></div>
+<div class="seg lang"><span class="on">FR</span><span>EN</span></div>
+<span class="btn ghost"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-playo"/></svg>Aperçu</span>
+<span class="btn primary"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-export"/></svg>Exporter</span>
+</header><main class="stage"><div class="stage-h"><nav class="rail h"><div class="tool"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-select"/></svg><span class="tl-lab">Sélection</span></div><div class="tool"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-territory"/></svg><span class="tl-lab">Territoire</span></div><div class="tool on"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-brush"/></svg><span class="tl-lab">Conquête</span></div><div class="tool"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-arrow"/></svg><span class="tl-lab">Flèche</span></div><div class="tool"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-token"/></svg><span class="tl-lab">Jeton</span></div><div class="tool"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-text"/></svg><span class="tl-lab">Texte</span></div><div class="tool"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-import"/></svg><span class="tl-lab">Import</span></div><div class="sp"></div><div class="tool mini"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-layers"/></svg><span class="tl-lab">Calques</span></div></nav><span class="sp"></span><span class="mode-e"><b>Édition</b><i>Présentation</i></span></div><span class="fmtb">16:9 · 1920 × 1080</span><div class="mapframe"><svg class="map" width="560" height="315" viewBox="0 0 800 450"><use href="#geo"/><text class="lf" x="292" y="62" text-anchor="middle">Royaume de Hongrie</text><text class="lf" x="470" y="200" text-anchor="middle">Empire ottoman</text><text class="lf" x="690" y="282" text-anchor="middle">Empire ottoman</text><text class="lv" x="508" y="112" text-anchor="middle">Valachie</text><text class="lv" x="508" y="126" text-anchor="middle" style="font-size:9px;opacity:.8">vassal</text><text class="lv" x="204" y="228" transform="rotate(34 204 228)">Venise</text><text class="lv" x="722" y="398" text-anchor="middle">Karaman</text><text class="ls" x="690" y="150" text-anchor="middle">Mer Noire</text><text class="ls" x="505" y="372" text-anchor="middle">Mer Égée</text><text class="ls" x="118" y="214" text-anchor="middle" transform="rotate(52 118 214)">Mer Adriatique</text><circle class="cd" cx="571" cy="242" r="3"/><text class="lc" x="560" y="236" text-anchor="end">Constantinople</text><circle class="cd" cx="334" cy="121" r="2.6"/><text class="lc" x="340" y="134">Belgrade</text><path class="front-h" d="M380 108 332 118 282 138 258 144"/><path class="front" d="M380 108 332 118 282 138 258 144"/><path class="arw" d="M350 236C330 200 300 184 262 176"/><path class="ahd" d="M249.5 173.4 263.6 168.4 260.4 183.4Z"/><g class="toks"><g transform="translate(366 248)"><rect class="tk-b" x="-15" y="-11" width="30" height="22" rx="6"/><svg x="-10" y="-6.5" width="20" height="13" viewBox="0 0 36 24"><use href="#emb-ott"/></svg><rect class="tk-lb" x="-38" y="14" width="75" height="16" rx="4"/><text class="tk-l" y="25.5" text-anchor="middle">Mehmed II</text></g><g transform="translate(222 124)"><rect class="tk-b" x="-15" y="-11" width="30" height="22" rx="6"/><svg x="-10" y="-6.5" width="20" height="13" viewBox="0 0 36 24"><use href="#emb-hun"/></svg><rect class="tk-lb" x="-28" y="14" width="56" height="16" rx="4"/><text class="tk-l" y="25.5" text-anchor="middle">Corvin</text></g><g transform="translate(452 330)"><rect class="tk-b" x="-15" y="-11" width="30" height="22" rx="6"/><svg x="-10" y="-6.5" width="20" height="13" viewBox="0 0 36 24"><use href="#emb-ven"/></svg><rect class="tk-lb" x="-38" y="14" width="75" height="16" rx="4"/><text class="tk-l" y="25.5" text-anchor="middle">Négrepont</text></g></g><g class="ts" transform="translate(692 18)"><rect class="t-bg" width="90" height="38" rx="8"/><text class="t-y" x="45" y="27" text-anchor="middle">1463</text></g></svg></div><div class="zoom"><span><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-minus"/></svg></span><b>100 %</b><span><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-plus"/></svg></span><i></i><span><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-fit"/></svg></span></div><div class="toast"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-check"/></svg><span><b>Projet sauvegardé</b><small>Sur cet appareil · à l’instant</small></span></div></main><aside class="panel">
+<div class="ph">
+  <div class="ov">Kit de Faction</div>
+  <div class="kt"><svg class="emb" viewBox="0 0 36 24"><use href="#emb-ott"/></svg><div><div class="kn">Empire ottoman</div><div class="km">Copie propre au Projet</div></div><span class="more"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-dots"/></svg></span></div>
+</div>
+<div class="sec"><div class="sh">Couleurs</div>
+  <div class="row"><span class="sw" style="background:#D0533F"></span><span class="rl">Remplissage</span><span class="hex">#D0533F</span></div>
+  <div class="row"><span class="sw ring" style="--c:#7C2A1C"></span><span class="rl">Contour</span><span class="hex">#7C2A1C</span></div>
+</div>
+<div class="sec"><div class="sh">Emblème &amp; police</div>
+  <div class="row"><svg class="emb lg" viewBox="0 0 36 24"><use href="#emb-ott"/></svg><span class="rl">Drapeau ottoman<small>Variante réduite auto.</small></span><span class="lnk">Remplacer</span></div>
+  <div class="row"><span class="rl">Police</span><span class="sel">Sans système · Gras<svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg></span></div>
+</div>
+<div class="sec"><div class="sh">Signature organique</div>
+  <div class="seg wide"><span>Désactivée</span><span class="on">Légère</span><span>Marquée</span></div>
+  <p class="hint">Léger dépassement, bordures à peine tremblées, pulsation avant bascule.</p>
+</div>
+<div class="sec"><div class="sh">Sous-factions</div>
+  <div class="row sub"><span class="sw" style="background:#EBA595"></span><span class="rl">Vassaux ottomans<small>hérite · couleur surchargée</small></span><svg class="ico sm lnk-i" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-link"/></svg></div>
+  <div class="add"><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-plus"/></svg>Ajouter une sous-faction</div>
+</div>
+<div class="disc"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chevr"/></svg><span>Plus d’options</span><small>Frontière, Flèche, Jeton</small></div>
+</aside><section class="tl"><div class="tp"><span class="tt"></span><span class="nav"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-prev"/></svg></span><span class="pb"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-pause"/></svg></span><span class="nav"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-next"/></svg></span><span class="tc"><b>00:08,4</b> / 00:20,5</span><span class="sp"></span><span class="spd">1×<svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg></span><span class="tz"><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-minus"/></svg><i><b></b></i><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-plus"/></svg></span></div><div class="tlb"><div class="trk"><div class="ruler"><span style="left:0.000%">00:00</span><span style="left:24.390%">00:05</span><span style="left:48.780%">00:10</span><span style="left:73.171%">00:15</span><span style="left:97.561%">00:20</span></div><div class="actb"><span class="lab">Actes</span><span class="act" style="left:0.000%;width:19.512%">Avant</span><span class="act" style="left:19.512%;width:56.098%">Pendant</span><span class="act" style="left:75.610%;width:24.390%">Après</span></div><div class="clips"><span class="lab">Carte</span><div class="clip" style="flex:4.0"><span class="tr" style="width:25.0%"><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-trans"/></svg></span><svg class="th" viewBox="0 0 800 450" preserveAspectRatio="xMidYMid slice"><use href="#geo"/></svg><div class="cl"><b class="sd">1453</b><span class="st">Chute de Constantinople</span></div><div class="sm">T 1 s · M 3 s</div></div><div class="clip" style="flex:3.5"><span class="tr" style="width:42.9%"><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-trans"/></svg></span><svg class="th" viewBox="0 0 800 450" preserveAspectRatio="xMidYMid slice"><use href="#geo"/></svg><div class="cl"><b class="sd">1459</b><span class="st">Annexion de la Serbie</span></div><div class="sm">T 1,5 s · M 2 s</div></div><div class="clip cur" style="flex:4.5"><span class="tr" style="width:44.4%"><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-trans"/></svg></span><svg class="th" viewBox="0 0 800 450" preserveAspectRatio="xMidYMid slice"><use href="#geo"/></svg><div class="cl"><b class="sd">1463</b><span class="st">Conquête de la Bosnie</span></div><div class="sm">T 2 s · M 2,5 s</div></div><div class="clip" style="flex:3.5"><span class="tr" style="width:42.9%"><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-trans"/></svg></span><svg class="th" viewBox="0 0 800 450" preserveAspectRatio="xMidYMid slice"><use href="#geo"/></svg><div class="cl"><b class="sd">1476</b><span class="st">Campagne de Moldavie</span></div><div class="sm">T 1,5 s · M 2 s</div></div><div class="clip" style="flex:5.0"><span class="tr" style="width:20.0%"><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-trans"/></svg></span><svg class="th" viewBox="0 0 800 450" preserveAspectRatio="xMidYMid slice"><use href="#geo"/></svg><div class="cl"><b class="sd">1481</b><span class="st">Mort de Mehmed II</span></div><div class="sm">T 1 s · M 4 s</div></div></div><div class="lane"><span class="lab">Flèches</span><span class="lb sel" style="left:36.585%;width:21.951%">Offensive de Bosnie</span><span class="lb " style="left:68.293%;width:17.073%">Vers la Moldavie</span></div><div class="lane"><span class="lab">Jetons</span><span class="lb " style="left:0.000%;width:100.000%">Mehmed II</span></div><div class="lane"><span class="lb " style="left:0.000%;width:78.049%">Corvin</span><span class="lb " style="left:78.049%;width:21.951%">Hongrie — réserve</span></div><div class="lane"><span class="lab">Texte</span><span class="lb " style="left:0.000%;width:100.000%">Horodatage · 1453 → 1481</span></div><span class="ph-line" style="left:40.976%"><i></i></span></div><div class="addst"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-plus"/></svg><span>Étape</span></div></div></section></div></div></div></div>
+  <aside class="legend">
+   <section><h4>Sombre</h4><div class="chips"><div class="chip"><i style="background:#0E0F11"></i><code>#0E0F11</code><small>fond</small></div><div class="chip"><i style="background:#17181B"></i><code>#17181B</code><small>surface</small></div><div class="chip"><i style="background:#F0F1F3"></i><code>#F0F1F3</code><small>texte</small></div><div class="chip"><i style="background:#9197A1"></i><code>#9197A1</code><small>atténué</small></div><div class="chip"><i style="background:#2FD3E6"></i><code>#2FD3E6</code><small>cyan</small></div><div class="chip"><i style="background:#D0533F"></i><code>#D0533F</code><small>ottoman</small></div></div></section>
+   <section><h4>Clair</h4><div class="chips"><div class="chip"><i style="background:#E9EAED"></i><code>#E9EAED</code><small>fond</small></div><div class="chip"><i style="background:#FFFFFF"></i><code>#FFFFFF</code><small>surface</small></div><div class="chip"><i style="background:#15161A"></i><code>#15161A</code><small>texte</small></div><div class="chip"><i style="background:#5E636D"></i><code>#5E636D</code><small>atténué</small></div><div class="chip"><i style="background:#0796A9"></i><code>#0796A9</code><small>cyan</small></div><div class="chip"><i style="background:#D0533F"></i><code>#D0533F</code><small>ottoman</small></div></div></section>
+   <section><h4>Typographie</h4><div class="stack"><b>Interface (graisses 500–800)</b>"SF Pro Text", system-ui, -apple-system, "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", sans-serif<b>Hexa</b>ui-monospace, "SF Mono", Menlo, Consolas, monospace</div></section>
+   <section><h4>Forme &amp; densité</h4><ul><li>Rayons 6–10 px</li><li>Timeline 284 px, vignettes + 4 pistes</li><li>Outils en barre horizontale au-dessus de la scène</li><li>Densité : moyenne-haute, groupée</li></ul></section>
+  </aside>
+ </div>
+</section>
+<section class="dir" id="d4">
+ <div class="dir-h"><div class="no">04</div><div><h2>Éditorial</h2><div class="tag">Grotesque en graisses contrastées, filets noirs, jaune = actif.</div></div>
+ <div><p>Une mise en page éditoriale : une seule famille grotesque en graisses très contrastées, des filets au lieu de cartes, de grands chiffres pour les dates, un noir pour agir et un jaune franc qui marque uniquement ce qui est actif (outil, Étape, option). La hiérarchie vient de la typographie et de l’espace, avec l’assurance d’un Canva pro.</p><p><b>Anti-slop :</b> aucun fond de carte grise, aucune ombre, rayons à zéro ; la règle couleur est explicite et vérifiable. <b>Compromis :</b> moins de réglages visibles à la fois (aides masquées), et le jaune demande de la discipline pour ne pas devenir décoratif.</p></div></div>
+ <div class="cap">Mode sombre<span>état montré : outil Jeton survolé</span></div>
+ <div class="scaler" style="--s:0.8594"><div class="win d4 dark"><div class="chrome"><i></i><i></i><i></i><div class="url">openmap.app/projets/expansion-ottomane-balkans</div></div><div class="app"><header class="top"><div class="brand"><span class="wm">OPEN<b>MAP</b></span></div>
+<div class="proj"><span class="crumb">Projets</span><span class="sep">/</span><span class="pname">Expansion ottomane — Balkans</span><span class="saved"><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-check"/></svg>Enregistré</span></div>
+<div class="fmt"><span class="lbl">Format de sortie</span><span class="val">16:9<svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg></span></div>
+<div class="sp"></div>
+<div class="hist"><span><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-undo"/></svg></span><span class="dis"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-redo"/></svg></span></div>
+<div class="seg mode" title="Thème"><span><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-sun"/></svg></span><span class="on"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-moon"/></svg></span></div>
+<div class="seg lang"><span class="on">FR</span><span>EN</span></div>
+<span class="btn ghost"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-playo"/></svg>Aperçu</span>
+<span class="btn primary"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-export"/></svg>Exporter</span>
+</header><nav class="rail"><div class="rail-h">Outils</div><div class="tool on"><em class="n">01</em><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-select"/></svg><span class="tl-lab">Sélection</span><kbd class="k">V</kbd></div><div class="tool"><em class="n">02</em><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-territory"/></svg><span class="tl-lab">Territoire</span><kbd class="k">T</kbd></div><div class="tool"><em class="n">03</em><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-brush"/></svg><span class="tl-lab">Conquête au pinceau</span><kbd class="k">B</kbd></div><div class="tool"><em class="n">04</em><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-arrow"/></svg><span class="tl-lab">Flèche</span><kbd class="k">F</kbd></div><div class="tool hov"><em class="n">05</em><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-token"/></svg><span class="tl-lab">Jeton</span><kbd class="k">J</kbd><span class="tip">Jeton d’unité<kbd>J</kbd></span></div><div class="tool"><em class="n">06</em><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-text"/></svg><span class="tl-lab">Texte</span><kbd class="k">X</kbd></div><div class="tool"><em class="n">07</em><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-import"/></svg><span class="tl-lab">Import</span><kbd class="k">I</kbd></div><div class="sp"></div><div class="tool mini"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-layers"/></svg><span class="tl-lab">Calques</span></div></nav><main class="stage"><div class="mapframe"><svg class="map" width="696" height="392" viewBox="0 0 800 450"><use href="#geo"/><text class="lf" x="292" y="62" text-anchor="middle">Royaume de Hongrie</text><text class="lf" x="470" y="200" text-anchor="middle">Empire ottoman</text><text class="lf" x="690" y="282" text-anchor="middle">Empire ottoman</text><text class="lv" x="508" y="112" text-anchor="middle">Valachie</text><text class="lv" x="508" y="126" text-anchor="middle" style="font-size:9px;opacity:.8">vassal</text><text class="lv" x="204" y="228" transform="rotate(34 204 228)">Venise</text><text class="lv" x="722" y="398" text-anchor="middle">Karaman</text><text class="ls" x="690" y="150" text-anchor="middle">Mer Noire</text><text class="ls" x="505" y="372" text-anchor="middle">Mer Égée</text><text class="ls" x="118" y="214" text-anchor="middle" transform="rotate(52 118 214)">Mer Adriatique</text><circle class="cd" cx="571" cy="242" r="3"/><text class="lc" x="560" y="236" text-anchor="end">Constantinople</text><circle class="cd" cx="334" cy="121" r="2.6"/><text class="lc" x="340" y="134">Belgrade</text><path class="front-h" d="M380 108 332 118 282 138 258 144"/><path class="front" d="M380 108 332 118 282 138 258 144"/><path class="arw" d="M350 236C330 200 300 184 262 176"/><path class="ahd" d="M249.5 173.4 263.6 168.4 260.4 183.4Z"/><g class="toks"><g transform="translate(366 248)"><rect class="tk-b" x="-8" y="-8" width="16" height="16" style="fill:var(--m-ott)"/><text class="tk-l" x="13" y="4">Mehmed II</text></g><g transform="translate(222 124)"><rect class="tk-b" x="-8" y="-8" width="16" height="16" style="fill:var(--m-hun)"/><text class="tk-l" x="13" y="4">Corvin</text></g><g transform="translate(452 330)"><rect class="tk-b" x="-8" y="-8" width="16" height="16" style="fill:var(--m-ven)"/><text class="tk-l" x="13" y="4">Négrepont</text></g></g><g class="ts" transform="translate(24 350)"><path class="t-rule" d="M0 0H176"/><text class="t-s" x="0" y="20">Étape 3 — Conquête de la Bosnie</text><text class="t-y" x="-4" y="84">1463</text></g><g class="leg" transform="translate(628 22)"><rect class="lg-bg" width="156" height="88"/><rect x="12" y="14" width="10" height="10" style="fill:var(--m-ott)"/><text x="30" y="23">Empire ottoman</text><rect x="12" y="32" width="10" height="10" style="fill:var(--m-vas)"/><text x="30" y="41">Vassaux ottomans</text><rect x="12" y="50" width="10" height="10" style="fill:var(--m-hun)"/><text x="30" y="59">Royaume de Hongrie</text><rect x="12" y="68" width="10" height="10" style="fill:var(--m-ven)"/><text x="30" y="77">Venise</text></g></svg></div><div class="zoom"><span><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-minus"/></svg></span><b>100 %</b><span><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-plus"/></svg></span><i></i><span><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-fit"/></svg></span></div></main><aside class="panel">
+<div class="ph">
+  <div class="ov">Kit de Faction</div>
+  <div class="kt"><svg class="emb" viewBox="0 0 36 24"><use href="#emb-ott"/></svg><div><div class="kn">Empire ottoman</div><div class="km">Copie propre au Projet</div></div><span class="more"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-dots"/></svg></span></div>
+</div>
+<div class="sec"><div class="sh"><em class="n">01</em>Couleurs</div>
+  <div class="row"><span class="sw" style="background:#2E9A63"></span><span class="rl">Remplissage</span><span class="hex">#2E9A63</span></div>
+  <div class="row"><span class="sw ring" style="--c:#F4F2EC"></span><span class="rl">Contour</span><span class="hex">#F4F2EC</span></div>
+</div>
+<div class="sec"><div class="sh"><em class="n">02</em>Emblème &amp; police</div>
+  <div class="row"><svg class="emb lg" viewBox="0 0 36 24"><use href="#emb-ott"/></svg><span class="rl">Drapeau ottoman<small>Variante réduite auto.</small></span><span class="lnk">Remplacer</span></div>
+  <div class="row"><span class="rl">Police</span><span class="sel">Grotesque · Noir<svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg></span></div>
+</div>
+<div class="sec"><div class="sh"><em class="n">03</em>Signature organique</div>
+  <div class="seg wide"><span>Désactivée</span><span class="on">Légère</span><span>Marquée</span></div>
+  <p class="hint">Léger dépassement, bordures à peine tremblées, pulsation avant bascule.</p>
+</div>
+<div class="sec"><div class="sh"><em class="n">04</em>Sous-factions</div>
+  <div class="row sub"><span class="sw" style="background:#8FCBA8"></span><span class="rl">Vassaux ottomans<small>hérite · couleur surchargée</small></span><svg class="ico sm lnk-i" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-link"/></svg></div>
+  <div class="add"><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-plus"/></svg>Ajouter une sous-faction</div>
+</div>
+<div class="disc"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chevr"/></svg><span>Plus d’options</span><small>Frontière, Flèche, Jeton</small></div>
+</aside><section class="tl"><div class="tp"><span class="pb"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-pause"/></svg></span><span class="tc"><b>00:08,4</b> / 00:20,5</span><span class="sp"></span><span class="tt">Timeline</span><span class="sp"></span><span class="spd">1×<svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg></span></div><div class="tlb"><div class="grid5"><div class="acts"><span class="act" style="grid-column:1/2">Avant</span><span class="act" style="grid-column:2/5">Pendant</span><span class="act" style="grid-column:5/6">Après</span></div><div class="steps"><div class="step"><em class="sn">01</em><div class="sd">1453</div><div class="st">Chute de Constantinople</div><div class="sm"><span>Transition 1 s</span><span>Maintien 3 s</span></div></div><div class="step"><em class="sn">02</em><div class="sd">1459</div><div class="st">Annexion de la Serbie</div><div class="sm"><span>Transition 1,5 s</span><span>Maintien 2 s</span></div></div><div class="step cur"><em class="sn">03</em><div class="sd">1463</div><div class="st">Conquête de la Bosnie</div><div class="sm"><span>Transition 2 s</span><span>Maintien 2,5 s</span></div><span class="ph-line" style="left:20%"><i></i></span></div><div class="step"><em class="sn">04</em><div class="sd">1476</div><div class="st">Campagne de Moldavie</div><div class="sm"><span>Transition 1,5 s</span><span>Maintien 2 s</span></div></div><div class="step"><em class="sn">05</em><div class="sd">1481</div><div class="st">Mort de Mehmed II</div><div class="sm"><span>Transition 1 s</span><span>Maintien 4 s</span></div></div></div></div><div class="addst"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-plus"/></svg><span>Étape</span></div></div></section></div></div></div>
+ <div class="row2">
+  <div><div class="cap">Mode clair<span>toast « Projet sauvegardé »</span></div><div class="scaler" style="--s:0.64"><div class="win d4 light"><div class="chrome"><i></i><i></i><i></i><div class="url">openmap.app/projets/expansion-ottomane-balkans</div></div><div class="app"><header class="top"><div class="brand"><span class="wm">OPEN<b>MAP</b></span></div>
+<div class="proj"><span class="crumb">Projets</span><span class="sep">/</span><span class="pname">Expansion ottomane — Balkans</span><span class="saved"><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-check"/></svg>Enregistré</span></div>
+<div class="fmt"><span class="lbl">Format de sortie</span><span class="val">16:9<svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg></span></div>
+<div class="sp"></div>
+<div class="hist"><span><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-undo"/></svg></span><span class="dis"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-redo"/></svg></span></div>
+<div class="seg mode" title="Thème"><span class="on"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-sun"/></svg></span><span><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-moon"/></svg></span></div>
+<div class="seg lang"><span class="on">FR</span><span>EN</span></div>
+<span class="btn ghost"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-playo"/></svg>Aperçu</span>
+<span class="btn primary"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-export"/></svg>Exporter</span>
+</header><nav class="rail"><div class="rail-h">Outils</div><div class="tool on"><em class="n">01</em><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-select"/></svg><span class="tl-lab">Sélection</span><kbd class="k">V</kbd></div><div class="tool"><em class="n">02</em><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-territory"/></svg><span class="tl-lab">Territoire</span><kbd class="k">T</kbd></div><div class="tool"><em class="n">03</em><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-brush"/></svg><span class="tl-lab">Conquête au pinceau</span><kbd class="k">B</kbd></div><div class="tool"><em class="n">04</em><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-arrow"/></svg><span class="tl-lab">Flèche</span><kbd class="k">F</kbd></div><div class="tool"><em class="n">05</em><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-token"/></svg><span class="tl-lab">Jeton</span><kbd class="k">J</kbd></div><div class="tool"><em class="n">06</em><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-text"/></svg><span class="tl-lab">Texte</span><kbd class="k">X</kbd></div><div class="tool"><em class="n">07</em><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-import"/></svg><span class="tl-lab">Import</span><kbd class="k">I</kbd></div><div class="sp"></div><div class="tool mini"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-layers"/></svg><span class="tl-lab">Calques</span></div></nav><main class="stage"><div class="mapframe"><svg class="map" width="696" height="392" viewBox="0 0 800 450"><use href="#geo"/><text class="lf" x="292" y="62" text-anchor="middle">Royaume de Hongrie</text><text class="lf" x="470" y="200" text-anchor="middle">Empire ottoman</text><text class="lf" x="690" y="282" text-anchor="middle">Empire ottoman</text><text class="lv" x="508" y="112" text-anchor="middle">Valachie</text><text class="lv" x="508" y="126" text-anchor="middle" style="font-size:9px;opacity:.8">vassal</text><text class="lv" x="204" y="228" transform="rotate(34 204 228)">Venise</text><text class="lv" x="722" y="398" text-anchor="middle">Karaman</text><text class="ls" x="690" y="150" text-anchor="middle">Mer Noire</text><text class="ls" x="505" y="372" text-anchor="middle">Mer Égée</text><text class="ls" x="118" y="214" text-anchor="middle" transform="rotate(52 118 214)">Mer Adriatique</text><circle class="cd" cx="571" cy="242" r="3"/><text class="lc" x="560" y="236" text-anchor="end">Constantinople</text><circle class="cd" cx="334" cy="121" r="2.6"/><text class="lc" x="340" y="134">Belgrade</text><path class="front-h" d="M380 108 332 118 282 138 258 144"/><path class="front" d="M380 108 332 118 282 138 258 144"/><path class="arw" d="M350 236C330 200 300 184 262 176"/><path class="ahd" d="M249.5 173.4 263.6 168.4 260.4 183.4Z"/><g class="toks"><g transform="translate(366 248)"><rect class="tk-b" x="-8" y="-8" width="16" height="16" style="fill:var(--m-ott)"/><text class="tk-l" x="13" y="4">Mehmed II</text></g><g transform="translate(222 124)"><rect class="tk-b" x="-8" y="-8" width="16" height="16" style="fill:var(--m-hun)"/><text class="tk-l" x="13" y="4">Corvin</text></g><g transform="translate(452 330)"><rect class="tk-b" x="-8" y="-8" width="16" height="16" style="fill:var(--m-ven)"/><text class="tk-l" x="13" y="4">Négrepont</text></g></g><g class="ts" transform="translate(24 350)"><path class="t-rule" d="M0 0H176"/><text class="t-s" x="0" y="20">Étape 3 — Conquête de la Bosnie</text><text class="t-y" x="-4" y="84">1463</text></g><g class="leg" transform="translate(628 22)"><rect class="lg-bg" width="156" height="88"/><rect x="12" y="14" width="10" height="10" style="fill:var(--m-ott)"/><text x="30" y="23">Empire ottoman</text><rect x="12" y="32" width="10" height="10" style="fill:var(--m-vas)"/><text x="30" y="41">Vassaux ottomans</text><rect x="12" y="50" width="10" height="10" style="fill:var(--m-hun)"/><text x="30" y="59">Royaume de Hongrie</text><rect x="12" y="68" width="10" height="10" style="fill:var(--m-ven)"/><text x="30" y="77">Venise</text></g></svg></div><div class="zoom"><span><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-minus"/></svg></span><b>100 %</b><span><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-plus"/></svg></span><i></i><span><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-fit"/></svg></span></div><div class="toast"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-check"/></svg><span><b>Projet sauvegardé</b><small>Sur cet appareil · à l’instant</small></span></div></main><aside class="panel">
+<div class="ph">
+  <div class="ov">Kit de Faction</div>
+  <div class="kt"><svg class="emb" viewBox="0 0 36 24"><use href="#emb-ott"/></svg><div><div class="kn">Empire ottoman</div><div class="km">Copie propre au Projet</div></div><span class="more"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-dots"/></svg></span></div>
+</div>
+<div class="sec"><div class="sh"><em class="n">01</em>Couleurs</div>
+  <div class="row"><span class="sw" style="background:#1F7A4D"></span><span class="rl">Remplissage</span><span class="hex">#1F7A4D</span></div>
+  <div class="row"><span class="sw ring" style="--c:#0A0A0A"></span><span class="rl">Contour</span><span class="hex">#0A0A0A</span></div>
+</div>
+<div class="sec"><div class="sh"><em class="n">02</em>Emblème &amp; police</div>
+  <div class="row"><svg class="emb lg" viewBox="0 0 36 24"><use href="#emb-ott"/></svg><span class="rl">Drapeau ottoman<small>Variante réduite auto.</small></span><span class="lnk">Remplacer</span></div>
+  <div class="row"><span class="rl">Police</span><span class="sel">Grotesque · Noir<svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg></span></div>
+</div>
+<div class="sec"><div class="sh"><em class="n">03</em>Signature organique</div>
+  <div class="seg wide"><span>Désactivée</span><span class="on">Légère</span><span>Marquée</span></div>
+  <p class="hint">Léger dépassement, bordures à peine tremblées, pulsation avant bascule.</p>
+</div>
+<div class="sec"><div class="sh"><em class="n">04</em>Sous-factions</div>
+  <div class="row sub"><span class="sw" style="background:#9FCBAF"></span><span class="rl">Vassaux ottomans<small>hérite · couleur surchargée</small></span><svg class="ico sm lnk-i" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-link"/></svg></div>
+  <div class="add"><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-plus"/></svg>Ajouter une sous-faction</div>
+</div>
+<div class="disc"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chevr"/></svg><span>Plus d’options</span><small>Frontière, Flèche, Jeton</small></div>
+</aside><section class="tl"><div class="tp"><span class="pb"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-pause"/></svg></span><span class="tc"><b>00:08,4</b> / 00:20,5</span><span class="sp"></span><span class="tt">Timeline</span><span class="sp"></span><span class="spd">1×<svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg></span></div><div class="tlb"><div class="grid5"><div class="acts"><span class="act" style="grid-column:1/2">Avant</span><span class="act" style="grid-column:2/5">Pendant</span><span class="act" style="grid-column:5/6">Après</span></div><div class="steps"><div class="step"><em class="sn">01</em><div class="sd">1453</div><div class="st">Chute de Constantinople</div><div class="sm"><span>Transition 1 s</span><span>Maintien 3 s</span></div></div><div class="step"><em class="sn">02</em><div class="sd">1459</div><div class="st">Annexion de la Serbie</div><div class="sm"><span>Transition 1,5 s</span><span>Maintien 2 s</span></div></div><div class="step cur"><em class="sn">03</em><div class="sd">1463</div><div class="st">Conquête de la Bosnie</div><div class="sm"><span>Transition 2 s</span><span>Maintien 2,5 s</span></div><span class="ph-line" style="left:20%"><i></i></span></div><div class="step"><em class="sn">04</em><div class="sd">1476</div><div class="st">Campagne de Moldavie</div><div class="sm"><span>Transition 1,5 s</span><span>Maintien 2 s</span></div></div><div class="step"><em class="sn">05</em><div class="sd">1481</div><div class="st">Mort de Mehmed II</div><div class="sm"><span>Transition 1 s</span><span>Maintien 4 s</span></div></div></div></div><div class="addst"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-plus"/></svg><span>Étape</span></div></div></section></div></div></div></div>
+  <aside class="legend">
+   <section><h4>Sombre</h4><div class="chips"><div class="chip"><i style="background:#0B0B0A"></i><code>#0B0B0A</code><small>fond</small></div><div class="chip"><i style="background:#171715"></i><code>#171715</code><small>surface-2</small></div><div class="chip"><i style="background:#F4F2EC"></i><code>#F4F2EC</code><small>texte</small></div><div class="chip"><i style="background:#A3A098"></i><code>#A3A098</code><small>atténué</small></div><div class="chip"><i style="background:#FFD23F"></i><code>#FFD23F</code><small>jaune</small></div><div class="chip"><i style="background:#2E9A63"></i><code>#2E9A63</code><small>ottoman</small></div></div></section>
+   <section><h4>Clair</h4><div class="chips"><div class="chip"><i style="background:#FFFFFF"></i><code>#FFFFFF</code><small>fond</small></div><div class="chip"><i style="background:#F5F4F0"></i><code>#F5F4F0</code><small>surface-2</small></div><div class="chip"><i style="background:#0A0A0A"></i><code>#0A0A0A</code><small>texte</small></div><div class="chip"><i style="background:#5C5A55"></i><code>#5C5A55</code><small>atténué</small></div><div class="chip"><i style="background:#FFD23F"></i><code>#FFD23F</code><small>jaune</small></div><div class="chip"><i style="background:#1F7A4D"></i><code>#1F7A4D</code><small>ottoman</small></div></div></section>
+   <section><h4>Typographie</h4><div class="stack"><b>Titres (700–800)</b>"Neue Haas Grotesk Display", "Helvetica Neue", Helvetica, "Arial Nova", Arial, sans-serif<b>Interface</b>"Neue Haas Grotesk Text", "Helvetica Neue", Helvetica, "Arial Nova", Arial, sans-serif<b>Numéros</b>ui-monospace, "SF Mono", Menlo, Consolas, monospace</div></section>
+   <section><h4>Forme &amp; densité</h4><ul><li>Rayons 0 px, filets 1–2 px</li><li>Rampe 206 px en liste numérotée</li><li>Panneau 316 px pleine hauteur</li><li>Densité : faible, très aérée</li></ul></section>
+  </aside>
+ </div>
+</section>
+ <p class="foot">Rendus statiques, polices système uniquement, aucune ressource externe. La géographie est simplifiée à dessein. Les valeurs hexadécimales complètes de chaque direction et de chaque mode sont documentées en commentaire en tête de la feuille de style.</p>
+</div>
+</body>
+</html>
