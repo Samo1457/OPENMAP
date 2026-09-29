@@ -1,6 +1,6 @@
 ---
 title: OPENMAP — PRD
-status: draft
+status: final
 created: 2026-09-25
 updated: 2026-09-29
 ---
@@ -10,7 +10,7 @@ updated: 2026-09-29
 
 ## 0. Objet du document
 
-Cette PRD définit ce qu'OPENMAP v1 doit permettre de faire, pour servir de base aux étapes suivantes (UX, architecture, epics et stories). Elle s'appuie sur le Product Brief final (`briefs/brief-OPENMAP-2026-09-24/brief.md`), sur son addendum (spécifications détaillées issues du brainstorming) et sur les références visuelles fournies : carte des alliances de la Guerre froide, campagne de Normandie 1944, plans de Waterloo, timelapses Kiev et Marioupol, démonstration du War Tool d'AnimateMyMap.
+Cette PRD définit ce qu'OPENMAP v1 doit permettre de faire, pour servir de base aux phases suivantes (UX, architecture, epics et stories). Elle s'appuie sur le Product Brief final (`briefs/brief-OPENMAP-2026-09-24/brief.md`), sur son addendum (spécifications détaillées issues du brainstorming) et sur les références visuelles fournies : carte des alliances de la Guerre froide, campagne de Normandie 1944, plans de Waterloo, timelapses Kiev et Marioupol, démonstration du War Tool d'AnimateMyMap.
 
 **Autorité.** En cas de divergence avec l'addendum du brief, la PRD prévaut. Un élément de l'addendum du brief absent de la PRD est hors v1, sauf mention contraire.
 
@@ -45,16 +45,16 @@ Publics : créateurs de contenu historique et géopolitique (primaire) ; enseign
 ### 2.3 Parcours utilisateur clés
 
 - **UJ-1. Terrabellum sort un Short sur le siège de Marioupol le soir même.**
-  Terrabellum, YouTubeur géopolitique, veut publier un Short vertical pendant que le sujet est chaud. Il ouvre OPENMAP sur son PC, sans compte. Dans l'assistant, il choisit le Template « Conflit contemporain — siège de ville », tape « Marioupol » comme Région, la date de référence 2022 et les Factions Russie et Ukraine, dont les Kits officiels s'appliquent automatiquement. Il passe en Fond satellite, dessine la Poche ukrainienne à main levée, puis crée une Étape par semaine de mars à mai, en resserrant le tracé de la Poche à chaque fois. Il aligne des badges ronds à drapeau le long de la Ligne de front — ils suivront le front à chaque Étape —, ajoute un Compteur d'effectifs par camp et un Horodatage qui défile jour après jour. Il scrubbe la Timeline : la Poche se resserre en se déformant, avec la Signature organique. Il exporte en 9:16. **Climax :** en moins de 20 minutes depuis l'ouverture, il a un MP4 vertical prêt pour son montage. **Cas limite :** il trouve le tracé de la Poche trop grossier à la 3e Étape ; il corrige ses points à cette Étape, et la correction s'applique aux Étapes suivantes qui n'ont pas leur propre tracé, sans toucher aux Étapes 1 et 2.
+  Terrabellum, YouTubeur géopolitique, veut publier un Short vertical pendant que le sujet est chaud. Il ouvre OPENMAP sur son PC, sans compte. Dans l'assistant, il choisit le Template « Conflit contemporain — siège de ville », tape « Marioupol » comme Région, la Date de référence 2022 et les Factions Russie et Ukraine, dont les Kits officiels s'appliquent automatiquement. Il passe en Fond satellite, dessine la Poche ukrainienne à main levée, puis crée une Étape par semaine de mars à mai, en resserrant le tracé de la Poche à chaque fois. Il aligne des badges ronds à drapeau le long de la Ligne de front — ils suivront le front à chaque Étape —, ajoute un Compteur d'effectifs par camp et un Horodatage qui défile jour après jour. Il scrubbe la Timeline : la Poche se resserre en se déformant, avec la Signature organique. Il exporte en 9:16. **Climax :** en moins de 20 minutes depuis l'ouverture, il a un MP4 vertical prêt pour son montage. **Cas limite :** il trouve le tracé de la Poche trop grossier à la 3e Étape ; il corrige ses points à cette Étape, et la correction s'applique aux Étapes suivantes qui n'ont pas leur propre tracé, sans toucher aux Étapes 1 et 2.
 
 - **UJ-2. Terrabellum raconte l'expansion ottomane dans les Balkans.**
-  Pour une vidéo longue en 16:9, il part du Template « Expansion d'empire » (ère Temps modernes), date de référence 1450. Il applique le Kit officiel « Empire ottoman » — une copie propre au Projet — puis crée une Sous-faction « Vassaux ottomans » qui hérite du style mais change de couleur. Étape après étape (1453, 1459, 1463…), il désigne l'Empire ottoman comme attaquant et peint au pinceau les Entités géographiques conquises ; là où les données n'ont pas le découpage voulu, il peint librement une surface qui s'ajoute au Territoire ottoman. La Ligne de front se redessine seule face aux Factions en conflit, mais pas entre l'Empire et ses vassaux. Il choisit le Preset caméra « fly-to » pour les Étapes clés. **Climax :** en changeant la teinte du Kit parent à la fin, tous les Territoires, Flèches et Jetons ottomans — vassaux compris — se mettent à jour sur toute la Timeline. **Cas limite :** il enregistre sa version du Kit parmi ses Kits personnels pour sa prochaine vidéo ; le Kit officiel de la Bibliothèque reste inchangé.
+  Pour une vidéo longue en 16:9, il part du Template « Expansion d'empire » (Ère Temps modernes), Date de référence 1450. Il applique le Kit officiel « Empire ottoman » — une copie propre au Projet — puis crée une Sous-faction « Vassaux ottomans » qui hérite du style mais change de couleur. Étape après étape (1453, 1459, 1463…), il désigne l'Empire ottoman comme attaquant et peint au pinceau les Entités géographiques conquises ; là où les données n'ont pas le découpage voulu, il peint librement une surface qui s'ajoute au Territoire ottoman. La Ligne de front se redessine seule face aux Factions en conflit, mais pas entre l'Empire et ses vassaux. Il choisit le Preset caméra « fly-to » pour les Étapes clés. **Climax :** en changeant la teinte du Kit parent à la fin, tous les Territoires, Flèches et Jetons ottomans — vassaux compris — se mettent à jour sur toute la Timeline. **Cas limite :** il enregistre sa version du Kit parmi ses Kits personnels pour sa prochaine vidéo ; le Kit officiel de la Bibliothèque reste inchangé.
 
 - **UJ-3. Claire, prof d'histoire-géo, prépare la carte des alliances de la Guerre froide.**
-  Claire n'a jamais utilisé d'outil de motion design. Elle part du Template « Alliances », date de référence 1968, et assigne les pays à l'OTAN et au Pacte de Varsovie, avec une teinte plus claire pour les adhésions tardives (Sous-factions). Elle applique des hachures à l'Albanie (retrait en 1968) et laisse la Suède, la Finlande et la Yougoslavie neutres. Le Template désactive la Ligne de front : aucune ligne n'apparaît sur le rideau de fer. La Légende se génère toute seule. Elle exporte une image PNG pour son diaporama, puis une courte vidéo montrant les adhésions de 1949 à 1968 pour lancer son cours. **Climax :** une Carte propre et lisible, comparable aux cartes des manuels, sans rien dessiner. **Cas limite :** les libellés de pays sont en anglais ; elle les renomme sur sa Carte (voir Q4).
+  Claire n'a jamais utilisé d'outil de motion design. Elle part du Template « Alliances », Date de référence 1968, et assigne les pays à l'OTAN et au Pacte de Varsovie, avec une teinte plus claire pour les adhésions tardives (Sous-factions). Elle applique des hachures à l'Albanie (retrait en 1968) et laisse la Suède, la Finlande et la Yougoslavie neutres. Le Template désactive la Ligne de front : aucune ligne n'apparaît sur le rideau de fer. La Légende se génère toute seule. Elle exporte une image PNG pour son diaporama, puis une courte vidéo montrant les adhésions de 1949 à 1968 pour lancer son cours. **Climax :** une Carte propre et lisible, comparable aux cartes des manuels, sans rien dessiner. **Cas limite :** les libellés de pays sont en anglais ; elle les renomme sur sa Carte (voir Q4).
 
 - **UJ-4. Hugo, passionné de wargame, reconstitue la percée de Normandie à partir d'une vieille carte.**
-  Hugo possède un scan d'une carte d'époque de l'été 1944. Il crée un Projet vierge, importe le scan par glisser-déposer et le cale à la main sur la Normandie (position, échelle, rotation, opacité). Il trace les Territoires alliés aux dates du 6 juin, du 12 juin et du 25 juillet et garde visibles les Traces de front de ces dates, chacune avec sa date. Il trace de grosses Flèches de percée dans la catégorie « Percée » (rouge) et d'autres dans la catégorie « Réduction de la poche » (bleu). Il place des Jetons d'unité à drapeau avec une étiquette encadrée (« 7 C. », « 1 Ar. ») et des étiquettes de commandement (« Gal Bradley »). Il choisit le Fond parchemin. **Climax :** son animation reprend l'esthétique vintage qu'il aime, mais les fronts avancent tout seuls. **Cas limite :** il ferme l'onglet par erreur ; en rouvrant OPENMAP, son Projet est là, dans l'état d'il y a quelques secondes au plus (NFR-5).
+  Hugo possède un scan d'une carte d'époque de l'été 1944. Il crée un Projet vierge, importe le scan par glisser-déposer et le cale à la main sur la Normandie (position, échelle, rotation, opacité). Il trace les Territoires alliés aux dates du 6 juin, du 12 juin et du 25 juillet et garde visibles les Traces de front de ces dates, chacune avec sa date. Il trace de grosses Flèches de percée dans la Catégorie de flèche « Percée » (rouge) et d'autres dans la Catégorie de flèche « Réduction de la poche » (bleu). Il place des Jetons d'unité à drapeau avec une étiquette encadrée (« 7 C. », « 1 Ar. ») et des étiquettes de commandement (« Gal Bradley »). Il choisit le Fond parchemin. **Climax :** son animation reprend l'esthétique vintage qu'il aime, mais les fronts avancent tout seuls. **Cas limite :** il ferme l'onglet par erreur ; en rouvrant OPENMAP, son Projet est là, dans l'état d'il y a quelques secondes au plus (NFR-5).
 
 ## 3. Glossaire
 
@@ -158,7 +158,7 @@ L'utilisateur peut rechercher un pays, une ville ou une Entité géographique pa
 
 #### FR-9 : Couches et libellés géographiques [P1]
 L'utilisateur peut afficher ou masquer villes, fleuves et noms de lieux, et renommer tout libellé dans son Projet. Réalise UJ-3.
-- Un Territoire peut afficher automatiquement le nom de sa Faction, placé dans sa surface et recentré quand elle change.
+- Un Territoire peut afficher automatiquement le nom de sa Faction, placé dans sa surface et recentré quand cette surface change.
 
 #### FR-10 : Attribution des sources [P0]
 L'outil affiche la source et la licence des données utilisées par le Projet, et permet d'inclure le crédit dans l'export.
@@ -175,8 +175,8 @@ L'utilisateur peut redessiner, découper ou fusionner une Entité géographique 
 **Description :** Chaque Faction porte un Kit de Faction : un seul endroit pour son identité visuelle, appliqué partout où la Faction apparaît. Dans un Projet, un Kit est toujours une copie : le modifier n'affecte que ce Projet. Les Kits personnels servent à réutiliser un style d'un Projet à l'autre. Réalise UJ-1, UJ-2, UJ-3.
 
 #### FR-12 : Créer et éditer un Kit [P0]
-L'utilisateur peut créer ou éditer un Kit : nom, Ère, couleurs (remplissage, contour, sélection), Emblème et sa variante réduite, police, style de frontière (épaisseur, intensité du tremblé), style de Flèche (épaisseur, forme de tête), forme de Jeton d'unité, réglages de Signature organique (FR-42).
-- Chaque champ modifié s'applique immédiatement à tous les éléments de la Faction, sur toutes les Étapes du Projet. Réalise UJ-2.
+L'utilisateur peut créer ou éditer un Kit : nom, Ère, couleurs (remplissage, contour, sélection), Emblème et sa variante réduite, police, style de frontière (épaisseur, intensité du tremblé), style de Flèche (épaisseur, forme de tête), forme de Jeton d'unité, réglages de Signature organique (FR-42). Réalise UJ-2.
+- Chaque champ modifié s'applique immédiatement à tous les éléments de la Faction, sur toutes les Étapes du Projet.
 
 #### FR-13 : Appliquer un Kit [P0]
 L'utilisateur peut assigner une Faction à un Territoire, une Flèche ou un Jeton en un clic ; l'élément prend le style du Kit.
@@ -386,7 +386,7 @@ L'utilisateur retrouve ses Projets à l'ouverture d'OPENMAP, et peut les renomme
 
 #### FR-53 : Sauvegarde automatique [P0]
 Le Projet est sauvegardé localement en continu, sans action de l'utilisateur, dans le délai fixé par NFR-5. Réalise UJ-4.
-- Après fermeture ou plantage de l'onglet, la réouverture restitue le Projet dans cet état.
+- Après fermeture ou plantage de l'onglet, la réouverture restitue le Projet dans son dernier état sauvegardé.
 - L'outil demande au navigateur un stockage persistant ; s'il est refusé, ou si l'espace disponible approche de sa limite, il le signale et invite à exporter un Fichier projet.
 
 #### FR-54 : Fichier projet [P0]
@@ -428,7 +428,7 @@ C'est le chantier le plus risqué du projet ; il mérite ses propres règles.
 - **NFR-6 Confidentialité** — Aucun contenu de Projet ni média importé ne quitte la machine de l'utilisateur. Sont téléchargées : les tuiles de carte et les données de la Bibliothèque. Sont envoyées : les seules statistiques d'usage anonymes, si l'utilisateur les a acceptées (FR-58).
 - **NFR-7 Temps jusqu'à la première animation** — Via l'assistant, la Carte décrite en FR-2 est obtenue en moins de 2 minutes. `[HYPOTHÈSE]` (Les trois cibles de temps s'emboîtent : 2 min pour une première animation, NFR-7 ; 15 min pour un premier export, SM-2 ; 20 min pour un Short fini, UJ-1.)
 - **NFR-8 Écran** — Dès 1366×768, aucun panneau essentiel n'est masqué et aucun défilement horizontal n'est nécessaire. `[HYPOTHÈSE]`
-- **NFR-9 Divulgation progressive** — Par défaut, chaque panneau n'affiche que les réglages essentiels ; les réglages avancés restent accessibles derrière une action « plus d'options ». Protège la tension vitesse/personnalisation (R1, SM-C1).
+- **NFR-9 Divulgation progressive** — Par défaut, chaque panneau n'affiche que les réglages essentiels ; les réglages avancés restent accessibles derrière une action « plus d'options ». Répond à la tension vitesse/personnalisation (R1, SM-C1).
 
 ## 7. Esthétique et plateforme
 
@@ -509,7 +509,7 @@ SM-1 se mesure par veille manuelle ; SM-2 à SM-7 par la télémétrie anonyme, 
 
 ## 13. Questions ouvertes
 
-Chaque question indique l'étape qu'elle bloque.
+Chaque question indique la phase qu'elle bloque.
 
 1. **Licence du code** — OPENMAP sera-t-il open source ? Ouvre ou ferme l'accès aux données copyleft et à la réutilisation de code d'OpenAnimateMyMaps (MIT). *Bloque : architecture (choix des données).*
 2. **Satellite via Copernicus** — Mosaïque Sentinel-2 sans nuages à produire soi-même via le Copernicus Data Space Ecosystem et ses API, ou service de tuiles existant ? Quel coût d'hébergement, quel plafond mensuel ? Repli : Fond sombre. *Bloque : architecture.*
@@ -533,7 +533,7 @@ Chaque question indique l'étape qu'elle bloque.
 - §5 — Seuil de 2 Templates par Ère, objectif de 5 Templates et 10 Kits par Ère.
 - §6 NFR-2 — Machine de référence et projet type.
 - §6 NFR-3 — 3 minutes pour exporter 60 s en 1080p/30.
-- §6 NFR-4 — Chrome et Edge requis, Firefox au mieux.
+- §6 NFR-4 — Chrome et Edge pris en charge, Firefox au mieux.
 - §6 NFR-5 — Persistance en 5 secondes.
 - §6 NFR-7 — Première animation en moins de 2 minutes.
 - §6 NFR-8 — Utilisable dès 1366×768.
