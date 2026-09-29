@@ -1,6 +1,6 @@
 ---
 title: OPENMAP — DESIGN
-status: draft
+status: final
 created: 2026-09-29
 updated: 2026-09-29
 sources:
@@ -267,7 +267,9 @@ components:
 
 # OPENMAP — Design Spine
 
-**Ce spine l'emporte** en cas de conflit avec les maquettes de `mockups/`, les planches de `.working/` ou les images de `imports/`. Maquettes clés (1366 × 768, polices embarquées) : [`mockups/editeur.html`](mockups/editeur.html), [`mockups/assistant.html`](mockups/assistant.html), [`mockups/export.html`](mockups/export.html). Planches d'exploration : `.working/color-themes-1.html` (palette retenue : variation **02 « Bleu de Prusse & ivoire »**) et `.working/directions-1.html` (hybride **01 Atelier du cartographe** + Timeline de **03 Banc de montage**). `.working/key-*.html` sont les sources d'origine des maquettes et ne font pas référence. Écarts voulus avec les planches : pas de cadre gravé ni de bordure graduée d'atlas autour de la Carte, pas de toggle FR/EN dans la barre haute. Dans les maquettes, les états (a) à (c) de l'Éditeur et l'Éditeur derrière la modale Export gardent la hauteur de Timeline rejetée (280 px) ; seul l'état (d) montre la hauteur retenue.
+**Ce spine l'emporte** en cas de conflit avec les maquettes de `mockups/`, les planches de `.working/` ou les images de `imports/`. Maquettes clés (1366 × 768, polices embarquées) : [`mockups/editeur.html`](mockups/editeur.html), [`mockups/assistant.html`](mockups/assistant.html), [`mockups/export.html`](mockups/export.html). Planches d'exploration : `.working/color-themes-1.html` (palette retenue : variation **02 « Bleu de Prusse & ivoire »**) et `.working/directions-1.html` (hybride **01 Atelier du cartographe** + Timeline de **03 Banc de montage**). `.working/key-*.html` sont les sources d'origine des maquettes et ne font pas référence.
+
+Écarts voulus avec les planches : pas de cadre gravé ni de bordure graduée d'atlas autour de la Carte, pas de toggle FR/EN dans la barre haute. Dans les maquettes, les états (a) à (c) de l'Éditeur et l'Éditeur derrière la modale Export gardent la hauteur de Timeline rejetée (280 px) ; seul l'état (d) montre la hauteur retenue.
 
 ## Brand & Style
 
@@ -283,13 +285,15 @@ Registre du **rendu de Carte** (le contenu exporté, pas l'interface ; aucune de
 - [`imports/ref-waterloo-1815-plan.jpg`](imports/ref-waterloo-1815-plan.jpg) : plan d'époque avec cartouche ; son échelle tactique est hors v1.
 - [`imports/ref-waterloo-baz-battles.jpg`](imports/ref-waterloo-baz-battles.jpg) : style d'animation Baz Battles, portraits, ellipses et flèches blanches.
 
-UI system : **shadcn/ui, fortement personnalisé** (confirmé par l'utilisateur). Tout composant shadcn est restylé par les tokens ci-dessus : couleurs, rayons, typographie, ombres. Livrer un composant shadcn avec son look par défaut est une faute, pas un raccourci.
+UI system : **shadcn/ui, fortement personnalisé** (confirmé par l'utilisateur). Tout composant shadcn est restylé par les tokens du frontmatter : couleurs, rayons, typographie, ombres. Livrer un composant shadcn avec son look par défaut est une faute, pas un raccourci.
 
 ## Colors
 
 ### Chrome — deux modes
 
-**Résolution des modes.** Une référence au token de couleur `x` se résout en `x` en mode clair et en `x-dark` en mode sombre, dès que `x-dark` existe. Une clé de composant suffixée `-dark` (ex. `foreground-dark` de `tool-rail-item-active`) prime sur cette règle. Les tokens sans variante `-dark` (`scrim`, `canvas-*`, `map-*`) sont mono-mode : ils ne changent jamais avec le thème. Tous les couples de texte courant atteignent AA (4,5:1). Aucun n'est limité à AA-large. Ratios calculés sur la planche 02 : texte sur `background`, accent en tant que texte sur `surface`, états sur `surface-raised`.
+**Résolution des modes.** Une référence au token de couleur `x` se résout en `x` en mode clair et en `x-dark` en mode sombre, dès que `x-dark` existe. Une clé de composant suffixée `-dark` (ex. `foreground-dark` de `tool-rail-item-active`) prime sur cette règle. Les tokens sans variante `-dark` (`scrim`, `canvas-*`, `map-*`) sont mono-mode : ils ne changent jamais avec le thème.
+
+Tous les couples de texte courant atteignent AA (4,5:1). Aucun n'est limité à AA-large. Ratios calculés sur la planche 02 : texte sur `background`, accent en tant que texte sur `surface`, états sur `surface-raised`.
 
 | Token | Clair | Sombre | Contraste (clair / sombre) | Rôle |
 |---|---|---|---|---|
@@ -317,11 +321,17 @@ UI system : **shadcn/ui, fortement personnalisé** (confirmé par l'utilisateur)
 | `playhead` | `#1D4163` | `#8EB6D8` | 10,0 / 7,7:1 (≥ 3:1) | Tête de lecture |
 | `act-rule` | `#7A8590` | `#687786` | 3,3 / 4,0:1 (≥ 3:1) | Filets des Actes |
 
-**Accent bleu de Prusse.** Il est très sombre en clair et très pâle en sombre. Il se distingue du bleu d'une Faction comme « Royaume de Hongrie » par la **valeur**, pas par la teinte. Il reste dans le chrome : bouton Exporter, bouton de lecture, outil actif, Étape courante, tête de lecture, liens d'action, clip sélectionné. **Correspondance shadcn.** `primary` ← `{colors.accent}` · `primary-foreground` ← `{colors.on-accent}` · `background` ← `{colors.background}` · `card` ← `{colors.surface}` · `popover` ← `{colors.surface-raised}` · `foreground` ← `{colors.text-primary}` · `muted-foreground` ← `{colors.text-muted}` · `border` ← `{colors.border}` · `input` ← `{colors.border-input}` · `ring` ← `{colors.focus-ring}` · `destructive` ← `{colors.danger}` · `accent` (le fond de survol chez shadcn) ← `{colors.selection}`. Attention au faux ami : l'`accent` de shadcn est un fond de survol, alors que l'`accent` d'OPENMAP est la couleur d'action.
+**Accent bleu de Prusse.** Il est très sombre en mode clair et très pâle en mode sombre. Il se distingue du bleu d'une Faction comme « Royaume de Hongrie » par la **valeur**, pas par la teinte. Il reste dans le chrome : bouton Exporter, bouton de lecture, outil actif, Étape courante, tête de lecture, liens d'action, clip sélectionné.
 
-**Bordures.** `{colors.border}` passe sous 3:1. Il est décoratif et ne porte jamais seul une information. Un état se signale toujours par une couleur de texte, une icône ou un fond `{colors.selection}`. La limite d'un **champ de saisie** est une information (WCAG 1.4.11) : champs, sélecteurs, cases à cocher, sliders et contrôles segmentés prennent `{colors.border-input}`, à 3:1 au moins sur tous les fonds, dans les deux modes. Les boutons secondaires gardent `{colors.border}`, car leur libellé suffit à les identifier. **Texte sur `selection`.** `{colors.text-muted}` sur `{colors.selection}` tombe à 4,1 / 4,4:1, sous AA : ce couple est interdit. Sur une rangée survolée ou sélectionnée, légendes et résumés passent en `{colors.text-secondary}` (6,2 / 6,7:1).
+**Correspondance shadcn.** `primary` ← `{colors.accent}` · `primary-foreground` ← `{colors.on-accent}` · `background` ← `{colors.background}` · `card` ← `{colors.surface}` · `popover` ← `{colors.surface-raised}` · `foreground` ← `{colors.text-primary}` · `muted-foreground` ← `{colors.text-muted}` · `border` ← `{colors.border}` · `input` ← `{colors.border-input}` · `ring` ← `{colors.focus-ring}` · `destructive` ← `{colors.danger}` · `accent` (le fond de survol chez shadcn) ← `{colors.selection}`. Attention au faux ami : l'`accent` de shadcn est un fond de survol, alors que l'`accent` d'OPENMAP est la couleur d'action.
 
-**Désactivé.** Un contrôle désactivé passe à 55 % d'opacité (`control-disabled`, texte équivalent `{colors.text-disabled}`) et garde sa place. Il ne sert jamais à signaler un réglage imposé : un crédit obligatoire se montre verrouillé, avec un cadenas et une explication (`export-credit-locked`). **États.** `success`, `warning` et `danger` s'affichent toujours avec leur icône et un libellé. La couleur seule n'est jamais le signal.
+**Bordures.** `{colors.border}` passe sous 3:1. Il est décoratif et ne porte jamais seul une information. Un état se signale toujours par une couleur de texte, une icône ou un fond `{colors.selection}`. La limite d'un **champ de saisie** est une information (WCAG 1.4.11) : champs, sélecteurs, cases à cocher, sliders et contrôles segmentés prennent `{colors.border-input}`, à 3:1 au moins sur tous les fonds, dans les deux modes. Les boutons secondaires gardent `{colors.border}`, car leur libellé suffit à les identifier.
+
+**Texte sur `selection`.** `{colors.text-muted}` sur `{colors.selection}` tombe à 4,1 / 4,4:1, sous AA : ce couple est interdit. Sur une rangée survolée ou sélectionnée, légendes et résumés passent en `{colors.text-secondary}` (6,2 / 6,7:1).
+
+**Désactivé.** Un contrôle désactivé passe à 55 % d'opacité (`control-disabled`, texte équivalent `{colors.text-disabled}`) et garde sa place. Cet état ne sert jamais à signaler un réglage imposé : un crédit obligatoire se montre verrouillé, avec un cadenas et une explication (`export-credit-locked`).
+
+**États.** `success`, `warning` et `danger` s'affichent toujours avec leur icône et un libellé. La couleur seule n'est jamais le signal.
 
 ### Canevas — surimpressions d'édition (identiques dans les deux modes)
 
@@ -342,7 +352,9 @@ La Carte ne suit **jamais** le thème de l'interface : un Fond sombre reste somb
 | Ligne de front par défaut, tiret-point avec halo (`map-front`) | `#18222D` | `#ECE7DB` | `#1E2A36` | `#1F2A33` |
 | Flèche sans Faction ni Catégorie (`map-arrow`) | `#7A2716` | `#E07A5F` | `#9E2F1F` | `#7A2716` |
 
-Le **relief** ajoute un ombrage `{colors.map-shade-relief}` en mode produit (multiply) à 35 % sur les terres. Le **satellite** remplace mer et terres par l'imagerie ; libellés, halos, Ligne de front et Flèche par défaut y prennent les valeurs `-sombre`, et le **Fond de repli** du satellite est le Fond sombre (FR-5). Pendant le chargement des tuiles, le fond uni est `map-land-neutral` **du Fond actif** (`map-land-neutral-sombre` pour le satellite). **Réglages du Fond (FR-5).** Ils s'appliquent au Fond seul, jamais aux Territoires ni aux éléments posés. « Rétablir les réglages du Fond » revient aux défauts du Fond actif ; changer de Fond conserve les réglages modifiés. `[ASSUMPTION: bornes, défauts et conservation]`
+Le **relief** ajoute un ombrage `{colors.map-shade-relief}` en mode produit (multiply) à 35 % sur les terres. Le **satellite** remplace mer et terres par l'imagerie ; libellés, halos, Ligne de front et Flèche par défaut y prennent les valeurs `-sombre`, et le **Fond de repli** du satellite est le Fond sombre (FR-5). Pendant le chargement des tuiles, le fond uni est `map-land-neutral` **du Fond actif** (`map-land-neutral-sombre` pour le satellite).
+
+**Réglages du Fond (FR-5).** Ils s'appliquent au Fond seul, jamais aux Territoires ni aux éléments posés. « Rétablir les réglages du Fond » revient aux défauts du Fond actif ; changer de Fond conserve les réglages modifiés. `[ASSUMPTION: bornes, défauts et conservation]`
 
 | Réglage | Plage | Défaut Fonds stylisés | Défaut satellite |
 |---|---|---|---|
@@ -352,7 +364,9 @@ Le **relief** ajoute un ombrage `{colors.map-shade-relief}` en mode produit (mul
 
 ### Couleurs de Faction : du contenu, pas des tokens
 
-Les couleurs de Faction appartiennent à l'utilisateur, via son Kit de Faction, ou à la Bibliothèque. Ce ne sont **pas** des tokens UI. Elles ne changent jamais avec le mode, et le chrome ne les emprunte jamais pour lui-même. Seule exception : les pastilles `faction-swatch`, qui *montrent* une Faction, toujours entourées d'un anneau neutre. Jeu de test de la planche (valeurs d'exemple, pas des tokens) : Empire ottoman `#B3342B`, Royaume de Hongrie `#3C6AA0`, Venise `#D2A03A`, Valachie `#E0A99C`. **Garde-fou couleur de Faction.** L'écart ΔE 2000 entre une couleur de Faction (remplissage ou contour) et l'accent UI des **deux** modes se lit ainsi : ≥ 20 distinct, 10 à 20 voisin, < 10 risque. Quand une couleur de Kit passe **sous ΔE 10** face à `{colors.accent}` ou à `{colors.accent-dark}`, l'éditeur de Kit affiche un avertissement non bloquant (`{colors.warning}`, avec icône). `[ASSUMPTION: seuil d'alerte fixé à < 10 ; la zone « voisin » ne déclenche rien, parce que la règle « pas d'accent sur la Carte » la neutralise. Référence : Hongrie vs accent clair = ΔE 14,7.]`
+Les couleurs de Faction appartiennent à l'utilisateur, via son Kit de Faction, ou à la Bibliothèque. Ce ne sont **pas** des tokens UI. Elles ne changent jamais avec le mode, et le chrome ne les emprunte jamais pour lui-même. Seule exception : les pastilles `faction-swatch`, qui *montrent* une Faction, toujours entourées d'un anneau neutre. Jeu de test de la planche (valeurs d'exemple, pas des tokens) : Empire ottoman `#B3342B`, Royaume de Hongrie `#3C6AA0`, Venise `#D2A03A`, Valachie `#E0A99C`.
+
+**Garde-fou couleur de Faction.** L'écart ΔE 2000 entre une couleur de Faction (remplissage ou contour) et l'accent UI des **deux** modes se lit ainsi : ≥ 20 distinct, 10 à 20 voisin, < 10 risque. Quand une couleur de Kit passe **sous ΔE 10** face à `{colors.accent}` ou à `{colors.accent-dark}`, l'éditeur de Kit affiche un avertissement non bloquant (`{colors.warning}`, avec icône). `[ASSUMPTION: seuil d'alerte fixé à < 10 ; la zone « voisin » ne déclenche rien, parce que la règle « pas d'accent sur la Carte » la neutralise. Référence : Hongrie vs accent clair = ΔE 14,7.]`
 
 ## Typography
 
@@ -421,14 +435,18 @@ Angles **francs** : ceux d'un atlas relié, pas d'une app grand public.
 - `{rounded.md}` : toasts, popovers, dialogues, tiroir (côté droit seulement), barre du Mode présentation. `[ASSUMPTION: la planche fixe 2 px partout ; 4 px ici seulement pour les couches flottantes]`
 - `{rounded.full}` : réservé aux curseurs de slider, aux points de statut et à l'anneau de pinceau. **Jamais** pour un bouton, un badge ou un champ : pas de pilule.
 
-Icônes : trait de `{spacing.icon-stroke}`, `{spacing.icon-size-rail}` dans le rail, `{spacing.icon-size-control}` dans les contrôles. `[ASSUMPTION: Lucide (défaut shadcn) passé en trait de 1,5, avec des icônes dessinées sur mesure pour Territoire, Conquête et Jeton, comme sur la planche.]` **Zone de frappe.** Toute cible interactive offre au moins `{spacing.hit-area-min}` × `{spacing.hit-area-min}` de zone active, quelle que soit sa taille visuelle : un clip de 20 px se saisit sur toute la hauteur de sa piste (26 px) ; la poignée de 12 px de la tête de lecture a une zone de 24 × 24 px ; une case à cocher de 16 px est cliquable sur toute sa rangée, libellé compris ; une `canvas-handle` a une zone de 24 px. Les bords de clip et de transition gardent une bande de saisie de 8 px de large sur toute la hauteur de leur rangée : ils relèvent de l'exception « équivalent » de WCAG 2.5.8, car les mêmes durées se règlent dans le panneau.
+Icônes : trait de `{spacing.icon-stroke}`, `{spacing.icon-size-rail}` dans le rail, `{spacing.icon-size-control}` dans les contrôles. `[ASSUMPTION: Lucide (défaut shadcn) passé en trait de 1,5, avec des icônes dessinées sur mesure pour Territoire, Conquête et Jeton, comme sur la planche.]`
+
+**Zone de frappe.** Toute cible interactive offre au moins `{spacing.hit-area-min}` × `{spacing.hit-area-min}` de zone active, quelle que soit sa taille visuelle : un clip de 20 px se saisit sur toute la hauteur de sa piste (26 px) ; la poignée de 12 px de la tête de lecture a une zone de 24 × 24 px ; une case à cocher de 16 px est cliquable sur toute sa rangée, libellé compris ; une `canvas-handle` a une zone de 24 px. Les bords de clip et de transition gardent une bande de saisie de 8 px de large sur toute la hauteur de leur rangée : ils relèvent de l'exception « équivalent » de WCAG 2.5.8, car les mêmes durées se règlent dans le panneau.
 
 ## Components
 
-Composants shadcn restylés par les tokens (Button, Dialog, Popover, DropdownMenu, ContextMenu, Tabs, Tooltip, Slider, Select, Toggle, ToggleGroup, Checkbox, Progress, Sheet, Skeleton, Toast via Sonner) : pas de rayon shadcn par défaut, pas de police Geist, pas d'ombre shadcn. Rendus de référence : Éditeur dans [`mockups/editeur.html`](mockups/editeur.html), Assistant dans [`mockups/assistant.html`](mockups/assistant.html), modale Export dans [`mockups/export.html`](mockups/export.html). Spécifiques à OPENMAP (valeurs dans le frontmatter, anatomie ici) :
+Composants shadcn restylés par les tokens (Button, Dialog, Popover, DropdownMenu, ContextMenu, Tabs, Tooltip, Slider, Select, Toggle, ToggleGroup, Checkbox, Progress, Sheet, Skeleton, Toast via Sonner) : pas de rayon shadcn par défaut, pas de police Geist, pas d'ombre shadcn. Rendus de référence : Éditeur dans [`mockups/editeur.html`](mockups/editeur.html), Assistant dans [`mockups/assistant.html`](mockups/assistant.html), modale Export dans [`mockups/export.html`](mockups/export.html).
+
+Composants propres à OPENMAP (valeurs dans le frontmatter, anatomie ici) :
 
 **Chrome de l'Éditeur**
-- **Barre haute** (`top-bar`) — un seul `button-primary` par écran, `button-ghost` pour les actions d'icône et « Replier » : logotype, fil « Projets / {nom du Projet} » (nom en `title-md`), statut de sauvegarde (`caption` avec icône `{colors.success}`), Format de sortie, annuler/rétablir, recherche de lieu, Présentation (`button-secondary`), **Exporter** (`button-primary`).
+- **Barre haute** (`top-bar`) : logotype, fil « Projets / {nom du Projet} » (nom en `title-md`), statut de sauvegarde (`caption` avec icône `{colors.success}`), Format de sortie, annuler/rétablir, recherche de lieu, Présentation (`button-secondary`), **Exporter** (`button-primary`). Un seul `button-primary` par écran ; `button-ghost` pour les actions d'icône et « Replier ».
 - **Rail d'outils** (`tool-rail`, `tool-rail-item`, `tool-rail-item-active`) : icône au-dessus d'un libellé en petites capitales. Actif : fond de sélection, libellé accent (clair) ou `{colors.text-primary-dark}` (sombre), barre de 3 px au bord gauche. Infobulle : nom complet et raccourci.
 - **Barre d'options de l'outil** (`tool-options-bar`) : sans filet. À gauche, « Étape 1463 · Conquête de la Bosnie » (date en `title-md`), puis les options de l'outil actif (pastille de Faction, segments, slider). À droite, le libellé du Format de sortie.
 - **Panneau de propriétés** (`properties-panel`) : titre `title-lg` avec Emblème ou icône, surtitre `caption` (« Copie propre au Projet »), sections à titre `label-caps` séparées par des filets. Hex en `timecode`. En lecture seule (Projet ouvert dans un autre onglet), les valeurs gardent `{colors.text-primary}` mais perdent contour et curseur de saisie.
@@ -440,7 +458,7 @@ Composants shadcn restylés par les tokens (Button, Dialog, Popover, DropdownMen
 - **Tiroir Bibliothèque** (`library-drawer`) : pleine hauteur sous la barre haute, contre le rail ; onglets Templates · Kits · Emblèmes · Icônes d'événement, recherche, filtres en `Select`, grille de vignettes carrées à angles vifs. Dans Kits, un segmenté « Bibliothèque · Kits personnels ».
 - **Squelette** (`skeleton`) : blocs pleins à la forme exacte du contenu attendu (vignette, carte de Projet, rangée). **Infobulle** (`tooltip`), **popover** (`popover`), **toast** (`toast`) : un toast porte une icône d'état cerclée, un titre `body-strong` et une sous-ligne `caption`.
 - **Bandeaux** (`banner-warning`, `banner-info`) : pleine largeur sous la barre haute, liseré gauche de 3 px, icône, texte `body`, une action au plus (`button-secondary` compact) et une croix de masquage. `banner-warning` pour le stockage (« Stockage presque plein. Exportez un Fichier projet pour ne rien perdre. » + « Exporter le Fichier projet »), le hors-ligne et le navigateur ; `banner-info` pour la lecture seule d'un Projet ouvert ailleurs (« Reprendre ici »).
-- **Dialogue** (`dialog`) : titre `title-lg`, actions alignées à droite, le primaire à droite, voile `dialog-scrim`. L'**Assistant** (`assistant`) est un dialogue plein cadre : en-tête de `{spacing.assistant-header-height}`, étapes numérotées de `{spacing.assistant-step-height}` (courante en accent avec filet bas), colonne « Dans ce Projet » de `{spacing.assistant-aside-width}` en `surface` ([rendu](mockups/assistant.html)).
+- **Dialogue** (`dialog`) : titre `title-lg`, actions alignées à droite, le primaire le plus à droite, voile `dialog-scrim`. L'**Assistant** (`assistant`) est un dialogue plein cadre : en-tête de `{spacing.assistant-header-height}`, étapes numérotées de `{spacing.assistant-step-height}` (courante en accent avec filet bas), colonne « Dans ce Projet » de `{spacing.assistant-aside-width}` en `surface` ([rendu](mockups/assistant.html)).
 
 **Timeline**
 - **En-tête** (`timeline`) : « Timeline » en `title-md`, bouton de lecture `timeline-play-button`, Étape précédente/suivante, minutage `timecode-strong` / `timecode`, vitesse, zoom, « Replier » ; poignée de redimensionnement centrée sur le bord haut.

@@ -1,6 +1,6 @@
 ---
 title: OPENMAP — EXPERIENCE
-status: draft
+status: final
 created: 2026-09-29
 updated: 2026-09-29
 sources:
@@ -13,7 +13,9 @@ name: OPENMAP
 
 # OPENMAP — Experience Spine
 
-Ce fichier définit *comment ça marche*. Pour *à quoi ça ressemble*, voir `DESIGN.md`, référencé par tokens `{path.to.token}`. Les exigences produit (FR, NFR, UJ) restent dans la PRD : elles sont citées ici, pas recopiées. Le vocabulaire est celui du Glossaire de la PRD (§3), employé tel quel. **Ce spine l'emporte** en cas de conflit avec les maquettes de `mockups/`, les planches de `.working/` ou les images de `imports/`. Maquettes clés : [`mockups/editeur.html`](mockups/editeur.html) (Éditeur, UJ-2), [`mockups/assistant.html`](mockups/assistant.html) (Assistant, écran Factions, UJ-1) et [`mockups/export.html`](mockups/export.html) (modale Export, UJ-1). Planches d'exploration : `.working/directions-1.html` (hybride 01 + Timeline 03) et `.working/color-themes-1.html` (variation 02) ; `.working/key-*.html` ne sont que les sources d'origine des maquettes.
+Ce fichier définit *comment ça marche*. Pour *à quoi ça ressemble*, voir `DESIGN.md`, référencé par tokens `{path.to.token}`. Les exigences produit (FR, NFR, UJ) restent dans la PRD : elles sont citées ici, pas recopiées. Le vocabulaire est celui du Glossaire de la PRD (§3), employé tel quel. **Ce spine l'emporte** en cas de conflit avec les maquettes de `mockups/`, les planches de `.working/` ou les images de `imports/`.
+
+Maquettes clés : [`mockups/editeur.html`](mockups/editeur.html) (Éditeur, UJ-2), [`mockups/assistant.html`](mockups/assistant.html) (Assistant, écran Factions, UJ-1) et [`mockups/export.html`](mockups/export.html) (modale Export, UJ-1). Planches d'exploration : `.working/directions-1.html` (hybride 01 + Timeline 03) et `.working/color-themes-1.html` (variation 02) ; `.working/key-*.html` ne sont que les sources d'origine des maquettes.
 
 ## Foundation
 
@@ -161,7 +163,7 @@ Geste commun de **Tracé** et règles de sélection : voir Interaction Primitive
 | Outil | Barre d'options | Geste et validation | Résultat (Carte, panneau, piste) |
 |---|---|---|---|
 | **Territoire** (`T`, FR-18, FR-19) | Faction active (compacte ; dernière utilisée), segmenté **Entités · Zone dessinée** ; en Zone : « Main levée · Points » | **Entités** (défaut) : survol en `canvas-hover` ; clic = l'Entité rejoint la Faction active, sans validation ; `Alt` + clic la rend neutre. **Zone dessinée** : Tracé ; la Zone fermée rejoint le Territoire de la Faction active. Modifier une Zone : outil Sélection, glisser ses points, double-clic sur le contour pour ajouter un point, `Suppr` pour retirer le point choisi. | Même résultat qu'une conquête ; seule la manière diffère (clic unitaire immédiat contre peinture puis validation). La transition suit FR-39. Panneau Territoire ou Zone dessinée. Pas de clip. |
-| **Conquête** (`C`, FR-20, FR-21) | **Faction attaquante** (dernière utilisée, sinon la première Faction non neutre), segmenté **Entités · Peinture libre**, taille de pinceau (`[` et `]`) | Glisser peint une sélection *en attente* (`canvas-pending`), avec « 12 Entités sélectionnées » (FR-20). `Alt` + glisser retire des Entités. « Valider la conquête » (`Entrée`) applique à l'Étape courante ; `Échap` abandonne. Rien ne se lance tout seul après validation. | Sans subdivisions pour la Région, la barre d'options le signale et propose la Peinture libre (FR-7, P1). La Peinture libre ajoute une Zone dessinée (FR-21). |
+| **Conquête** (`C`, FR-20, FR-21) | **Faction attaquante** (dernière utilisée, sinon la première Faction non neutre), segmenté **Entités · Peinture libre**, taille de pinceau (`[` et `]`) | Glisser peint une sélection *en attente* (`canvas-pending`), avec « 12 Entités sélectionnées » (FR-20). `Alt` + glisser retire des Entités. « Valider la conquête » (`Entrée`) applique à l'Étape courante ; `Échap` abandonne. Rien ne se lance tout seul après validation. | Quand la Région n'a pas de subdivisions, la barre d'options le signale et propose la Peinture libre (FR-7, P1). La Peinture libre ajoute une Zone dessinée (FR-21). |
 | **Flèche** (`F`, FR-28) | Faction (défaut : Faction active ; sans Faction, `{colors.map-arrow}`), épaisseur (slider, `[` et `]`) | Tracé par points : la courbe passe par les points, lissée. Double-clic ou `Entrée` termine (2 points au moins) ; `Retour arrière` retire le dernier point ; `Échap` annule. L'outil reste actif. | Clip sur la piste Flèches. La Flèche se dessine de l'origine à la tête pendant la transition d'entrée de son Étape (sur la première Étape : pendant la première seconde du maintien `[ASSUMPTION]`). Points modifiables par Étape. |
 | **Jeton** (`J`, FR-30) | Faction, forme (segmenté à icônes : OTAN simplifié · Carré bicolore · Badge rond à drapeau · Mini-drapeau ; défaut : forme du Kit), segmenté **Jeton · Série** (Série : P1) | Clic : pose un Jeton centré sur le point ; le focus passe au champ Étiquette du panneau (`Entrée` valide, `Échap` laisse vide) ; l'outil reste actif. Déplacer : glisser. Orienter : poignée de rotation au-dessus du Jeton (`Maj` : pas de 15°) ou champ Rotation. | Clip sur la piste Jetons. Position et rotation suivent §4.0 ; pendant la transition, le Jeton glisse et pivote de l'ancien état au nouveau (FR-30). |
 | **Série de Jetons** (P1, FR-31) | Outil Jeton en mode Série : Faction, forme, « Inverser le côté » | Survol d'une Ligne de front ou d'un contour de Territoire : `canvas-hover` sur le tracé. Clic : la Série s'y attache, du côté du clic. `Échap` annule. | Un seul clip « Série · 14 Jetons » sur la piste Jetons. Quand le tracé change à une Étape, la Série se redistribue pendant la transition. |
@@ -353,7 +355,9 @@ Noms repris tels quels de la PRD §2.3. Entre crochets, la surface concernée.
 12. **Climax :** la barre atteint 100 % et la modale affiche « Export terminé » : le MP4 vertical est dans ses téléchargements ([état terminé](mockups/export.html#etat-termine)). Moins de 20 minutes depuis l'ouverture.
 
 **Variante P0 (tranche de validation, PRD §10.1) :** à l'étape 7, une Zone dessinée du Territoire ukrainien, sans marque « Poche » ; à l'étape 9, des Jetons posés un à un, et un Texte par Étape à la place du Compteur et de l'Horodatage.
+
 **Cas limite :** à la 3e Étape, le tracé est trop grossier. Il corrige les points ; le panneau affiche « Défini à cette Étape ». Les Étapes 4 et suivantes sans tracé propre héritent de la correction ; les Étapes 1 et 2 ne changent pas.
+
 **Échec :** le satellite est indisponible. La Carte passe au Fond sombre, un toast le dit, et le reste du parcours ne change pas.
 
 ### UJ-2. Terrabellum raconte l'expansion ottomane dans les Balkans.
@@ -364,13 +368,15 @@ Rendu de l'Éditeur à l'Étape 1463 : [`mockups/editeur.html`](mockups/editeur.
 2. [Éditeur · éditeur de Kit] Le Kit officiel devient une « Copie propre au Projet ». Il clique sur « Ajouter une Sous-faction » et crée « Vassaux ottomans ». Dans le panneau de la Sous-faction, il surcharge la couleur. De retour sur le Kit parent, la rangée de la Sous-faction résume « Hérite · couleur surchargée ».
 3. [Timeline] Il crée les Étapes 1453, 1459, 1463…
 4. [Outil Conquête] Pour chaque Étape : Faction attaquante « Empire ottoman », peinture au pinceau des Entités (« 12 Entités sélectionnées »), « Valider la conquête ». Là où le découpage manque, il passe en Peinture libre.
-5. [Carte] La Ligne de front se redessine seule face aux Factions en conflit, mais pas entre l'Empire et ses vassaux, alliés par défaut.
+5. [Carte] La Ligne de front se redessine seule entre les Factions en conflit, mais pas entre l'Empire et ses vassaux, alliés par défaut.
 6. [Panneau Étape · Caméra] Preset caméra « Fly-to » sur les Étapes clés.
 7. [Éditeur de Kit parent] Il change la teinte de l'Empire ottoman.
 8. **Climax :** tous les Territoires, Flèches et Jetons ottomans, vassaux compris, se mettent à jour sur toute la Timeline. Les vignettes d'Étape se recolorent sous ses yeux.
 
 **Cas limite :** [menu du Kit] « Enregistrer dans les Kits personnels » (P1). Le Kit officiel de la Bibliothèque ne bouge pas.
+
 **Garde-fou :** si la nouvelle teinte tombe sous ΔE 10 face à l'accent, un avertissement non bloquant s'affiche sous le champ.
+
 **Échec :** la Bibliothèque n'a pas de Kit officiel pour la Principauté de Zeta. L'Assistant lui donne un Kit par défaut de couleur distincte des autres Factions (FR-2) ; il le retouche dans l'éditeur de Kit, et la Faction reste utilisable partout.
 
 ### UJ-3. Claire, prof d'histoire-géo, prépare la carte des alliances de la Guerre froide.
@@ -385,6 +391,7 @@ Rendu de l'Éditeur à l'Étape 1463 : [`mockups/editeur.html`](mockups/editeur.
 8. **Climax :** une Carte propre et lisible, comparable à celles des manuels ([`imports/ref-guerre-froide-alliances.png`](imports/ref-guerre-froide-alliances.png)), sans rien dessiner.
 
 **Cas limite :** les libellés de pays sont en anglais. Elle sélectionne un libellé et le renomme dans le panneau (FR-9, P1). La langue des libellés reste ouverte (Q4).
+
 **Échec :** les données n'ont pas d'état exact en 1968 pour cette Région. La Carte prend l'état le plus proche et affiche « Données les plus proches : 1965 » (FR-6). Un pays absent se trace en Zone dessinée avec l'outil Territoire, ou se corrige dans le Projet (FR-11, P1).
 
 ### UJ-4. Hugo, passionné de wargame, reconstitue la percée de Normandie à partir d'une vieille carte.
@@ -402,7 +409,7 @@ Rendu de l'Éditeur à l'Étape 1463 : [`mockups/editeur.html`](mockups/editeur.
 
 ## Open Questions & Assumptions
 
-**Hypothèses posées dans ce fichier** (colonne « Bloque » : ce qu'il faut trancher avant d'avancer)
+**Hypothèses posées dans ce fichier** (colonne « Bloque » : ce qui attend que l'hypothèse soit tranchée)
 
 | Hypothèse | Bloque |
 |---|---|
@@ -417,7 +424,7 @@ Rendu de l'Éditeur à l'Étape 1463 : [`mockups/editeur.html`](mockups/editeur.
 | Démarrage du Mode présentation (attente de 10 s au plus), repli si le plein écran est refusé, arrêt en fin de Timeline | Story |
 | Sous-rangées automatiques de piste en cas de chevauchement ; pistes sans voies créées par l'utilisateur | Rien |
 | Thème par défaut : préférence système ; Réglages en dialogue à onglets | Rien |
-| Emplacements de l'IA (liste sous Information Architecture) | Rien |
+| Emplacements posés par défaut (liste sous Information Architecture) | Rien |
 | Édition en pleine transition : calage sur l'Étape d'arrivée ; héritage affiché en texte ; « Appliquer à toutes les Étapes » en lien ; repères sous les vignettes | Rien |
 | Date proposée pour une nouvelle Étape ; suppression d'Étape ou de Projet avec « Annuler » ; durées de transition réglables au bord du bloc | Rien |
 | Crédit facultatif décoché ; position et discrétion par défaut ; messages d'échec d'export | Rien |
@@ -430,9 +437,9 @@ Rendu de l'Éditeur à l'Étape 1463 : [`mockups/editeur.html`](mockups/editeur.
 - `[NOTE FOR UX]` Comportement exact quand on édite avec la tête de lecture en pleine transition.
 - `[NOTE FOR UX]` Découvrabilité d'« Appliquer à toutes les Étapes » : lien contextuel ou sélecteur de portée ? À tester avec 3 à 5 créateurs (PRD §12).
 
-**Contrôle de fermeture de l'IA**
+**Contrôle de fermeture de l'Information Architecture**
 - Toutes les FR P0 et P1 ont une surface, FR-7 comprise (Carte et outil Conquête). Plusieurs emplacements viennent d'hypothèses (liste ci-dessus) : ils sont à confirmer.
-- L'onglet Templates du tiroir dans l'Éditeur ouvre un nouveau Projet via l'Assistant (hypothèse, IA) : un Projet contient une seule Carte, et FR-3 ne prévoit pas d'appliquer un Template à un Projet existant.
+- L'onglet Templates du tiroir dans l'Éditeur ouvre un nouveau Projet via l'Assistant (hypothèse posée sous Information Architecture) : un Projet contient une seule Carte, et FR-3 ne prévoit pas d'appliquer un Template à un Projet existant.
 - La PRD ne prévoit aucune entrée de création dédiée pour la Légende, le Compteur, l'Horodatage et les Icônes d'événement ; les emplacements retenus (Outils de Carte) sont des hypothèses.
 - **Surfaces sans parcours** : aucun UJ n'atterrit sur Réglages ou l'import de Fichier projet ; le Mode présentation n'apparaît qu'au climax d'UJ-4. Ces surfaces se justifient par FR-58, FR-16, FR-57, FR-54 et les décisions de thème et de langue du log.
 - **Parcours qui dépendent du P2** : UJ-4 s'appuie sur FR-27 (Traces de front) et FR-29 (Catégories de flèche). Leurs surfaces sont réservées dans le panneau, sans rien à livrer avant P2.
