@@ -5,7 +5,7 @@ purpose: build-substrate
 altitude: initiative
 paradigm: 'Functional core / imperative shell — pure evaluate(project, t, ctx) → Scene, command-sourced document, local-first static web app'
 scope: 'OPENMAP v1 (P0 validation slice through P1 public launch): browser editor, local persistence, in-browser export, static data/tile hosting, anonymous telemetry'
-status: draft
+status: final
 created: '2026-09-29'
 updated: '2026-09-29'
 binds: [FR-1..FR-58, NFR-1..NFR-9]
@@ -157,7 +157,7 @@ The dependency direction is enforced in CI by dependency-cruiser; forbidden APIs
 
 - **Binds:** FR-5, FR-53 (storage is per-origin), NFR-6, PRD §8
 - **Prevents:** a domain change orphaning users' local Projects; tiles the CDN cannot cache; a paid provider added unnoticed.
-- **Rule:** The app origin (`app.<domain>`) is fixed before public launch and never changes; the host behind it may change. The app is a static build on Cloudflare Pages. Tiles, Basemap styles, glyphs, sprites and Library data are self-hosted on a separate data origin (`data.<domain>`): the Hostinger VPS behind the Cloudflare proxy (free plan). Tilesets are named with a version (`<name>-v<n>.pmtiles`) and served by `pmtiles serve` as `/<name>-v<n>/{z}/{x}/{y}.<mvt|webp>` with TileJSON. Library data paths are `/library/v<n>/…`. The origin sends `Cache-Control: public, max-age=31536000, immutable` on versioned paths, and a Cloudflare Cache Rule caches them (including `.mvt` and `.json`). CORS allows the production app origin, `*.pages.dev` previews of the project, and `localhost` dev ports. Development builds may use third-party tiles for prototyping; production builds fail if a non-OPENMAP tile URL is configured. Recurring spend beyond the VPS stays within the ceiling recorded in Deferred; exceeding it requires a new decision here.
+- **Rule:** The app origin (`app.<domain>`) is fixed before public launch and never changes; the host behind it may change. The app is a static build on Cloudflare Pages. Tiles, Basemap styles, glyphs, sprites and Library data are self-hosted on a separate data origin (`data.<domain>`): the Hostinger VPS behind the Cloudflare proxy (free plan). Tilesets are named with a version (`<name>-v<n>.pmtiles`) and served by `pmtiles serve` as `/<name>-v<n>/{z}/{x}/{y}.<mvt|webp>` with TileJSON. Library data paths are `/library/v<n>/…`. The origin sends `Cache-Control: public, max-age=31536000, immutable` on versioned paths, and a Cloudflare Cache Rule caches them (including `.mvt` and `.json`). CORS allows the production app origin, `*.pages.dev` previews of the project, and `localhost` dev ports. Development builds may use third-party tiles for prototyping; production builds fail if a non-OPENMAP tile URL is configured. Recurring hosting spend beyond the VPS already paid is capped at 20 EUR/month; the owner accepts raising it if usage grows, but only by a new decision recorded here. When sustained VPS bandwidth or CPU saturates, tiles move to Cloudflare R2 within that cap, keeping the data origin unchanged. A Cloudflare billing alert is set before any paid Cloudflare product is enabled.
 
 ### AD-19 — Browser support and capability gating
 
@@ -363,7 +363,6 @@ openmap/
 
 ## Deferred
 
-- **Monthly hosting cost ceiling** (PRD §8). Proposed default is 20 EUR/month on top of the VPS already paid; the trigger to move tiles to Cloudflare R2 is sustained VPS bandwidth or CPU saturation. To confirm with the owner before public launch.
 - **GeoEntity file format and chunking** (GeoJSON vs FlatGeobuf, per-Region split). AD-12 already fixes whole polygons, pinned simplification and identity; decide in the first Territory epic.
 - **Per-tileset max zoom** within the ≤ 70 GB VPS budget. Decide in the Basemap pipeline epic; city-level satellite for current-events Regions takes priority over global depth.
 - **`pipeline/` tooling** (tile building and simplification tools). Decide in the pipeline epic, under AD-17 licence rules, with versions verified at that time.
