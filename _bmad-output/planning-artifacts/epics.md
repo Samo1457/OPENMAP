@@ -743,7 +743,7 @@ So that my work is never lost and I need no account.
 
 **Given** the core model
 **When** a blank Project is created
-**Then** it is a document with a nanoid `id`, `schemaVersion` 1, a generated `project.seed`, `revision` 0, `referenceDate` defaulting to year 1900, the parchment Basemap, `outputFormat` 16:9, `mapLocale` equal to the current UI language, and empty Steps/Factions/members (AD-2, AD-9, AD-12, AD-25)
+**Then** it is a document with a nanoid `id`, `schemaVersion` 1, a generated `project.seed`, `revision` 0, `referenceDate` defaulting to year 1900, the parchment Basemap, `outputFormat` 16:9, `mapLocale` equal to the current UI language, one initial Step (Step 0, hidden from the UI until the Timeline arrives in Epic 3) and empty Factions/members (AD-2, AD-4, AD-9, AD-12, AD-25)
 **And** the Zod schema of v1 is committed as a JSON Schema snapshot in `schemas/`, and CI fails if the schema changes without a new version and migration (AD-9)
 
 **Given** the Home screen with no Project
@@ -984,3 +984,226 @@ So that I can protect my work in time.
 **Given** a save fails (quota exceeded)
 **When** the error occurs
 **Then** the save status shows the error, an error toast stays until closed, and no data already saved is lost (UX-DR137, UX-DR152)
+
+---
+
+## Epic 2: Color the map with Factions
+
+The creator adds Factions from the Library Kits, edits their style, creates SubFactions, assigns GeoEntities, draws zones, conquers with the brush, paints freely, sets Relations and sees FrontLines appear by themselves, with fill patterns and a minimal Legend. Until Epic 3, every edit applies to the Project's single Step (Step 0), using the sparse track model of AD-4 so nothing changes when Steps arrive.
+
+### Story 2.1: Add Factions from the Library of Kits
+
+As a creator,
+I want to add Factions by picking official Kits from a Library,
+So that my map gets correct colours and emblems without design work.
+
+**Acceptance Criteria:**
+
+**Given** the pipeline
+**When** Library data v1 is built
+**Then** it includes a starter set of official FactionKits (at least 6, covering several Eras) whose Emblems have a verified licence recorded in their metadata; no Emblem without a verified licence is published (PRD §5, AD-17)
+
+**Given** the Editor
+**When** the user opens the Library drawer (rail button or `B`) on the Kits tab
+**Then** the drawer opens beside the rail at full height without reframing the Map, lists Kits with search and filters by Era and world region, and closes with Escape, the rail button or the cross (UX-DR60, FR-15)
+
+**Given** a Kit in the drawer
+**When** the user chooses "Ajouter comme nouvelle Faction"
+**Then** a Faction is added with a deep copy of the Kit in the Project, its Emblem bytes are copied into the media store with their licence record, and only provenance `{kind, id, version}` is kept (AD-11, AD-29, FR-13)
+**And** a later Library update never changes this Project (FR-13); Library Kits are never editable by the user (FR-15)
+
+**Given** "Ajouter une Faction" without a Library Kit
+**When** the user confirms
+**Then** a default Kit is created with a colour distinct from the other Factions of the Project (FR-2 rule reused, UX-DR15)
+
+**Given** Project settings → Factions & Relations
+**When** Factions exist
+**Then** they are listed with colour swatch and name, and can be renamed, reordered and deleted through undoable Commands (AD-3)
+
+### Story 2.2: Edit a FactionKit
+
+As a creator,
+I want to change a Faction's colours, emblem and styles in one place,
+So that every element of that Faction updates everywhere at once.
+
+**Acceptance Criteria:**
+
+**Given** a selected Faction
+**When** the FactionKit editor opens in the properties panel
+**Then** it shows name, Era, colours (fill, border, selection), Emblem and its reduced variant, font, border style (width, jitter intensity), Arrow style (width, head shape), UnitToken shape and Organic Signature level, with essentials first and the rest behind "plus d'options" (FR-12, UX-DR51, UX-DR54, NFR-9)
+
+**Given** a Kit field change
+**When** it is committed
+**Then** it applies immediately to every element of that Faction on every Step, as one undoable Command (FR-12, AD-3)
+**And** a continuous colour drag previews live and commits a single Command on release (AD-3)
+
+**Given** a fill colour too close to another Faction's colour or to the Basemap land colour
+**When** it is chosen
+**Then** the colour guardrail of DESIGN.md warns without blocking (UX-DR15)
+
+**Given** an imported Emblem image (PNG, JPG, SVG)
+**When** it is added to the Kit
+**Then** SVGs are sanitized before storage and every image is stored by SHA-256 in the media store (AD-29)
+
+### Story 2.3: SubFactions that inherit their parent's style
+
+As a creator,
+I want to create a SubFaction that follows its parent's style but overrides some fields,
+So that vassals or armies stay visually related to their parent.
+
+**Acceptance Criteria:**
+
+**Given** a Faction
+**When** the user creates a SubFaction
+**Then** its Kit stores the parent's `kitId` and an empty sparse `overrides` object; effective fields are resolved in `src/core` at evaluation (AD-11, FR-14)
+
+**Given** a non-overridden field
+**When** the parent Kit changes
+**Then** the SubFaction follows; an overridden field keeps its value (FR-14)
+
+**Given** the SubFaction's Kit editor
+**When** it is displayed
+**Then** each field shows whether it is inherited or overridden and offers "revenir à la valeur héritée" (UX-DR49, UX-DR50, FR-14)
+
+**Given** a SubFaction and its parent
+**When** no Relation override exists
+**Then** they are allied by default (FR-14, FR-22)
+
+### Story 2.4: Assign GeoEntities to a Faction
+
+As a creator,
+I want to click countries or empires and give them to a Faction,
+So that I can build who controls what.
+
+**Acceptance Criteria:**
+
+**Given** the members model of AD-22
+**When** a GeoEntity is assigned
+**Then** `project.map.members` gets an entry keyed `dataset@version:entityId` with an `owner` property `{default, track}` set at the current Step (AD-4, AD-12, AD-22); neutral means `null`
+
+**Given** the Select tool (`V`)
+**When** the user clicks a GeoEntity (Shift+click or rectangle for several)
+**Then** the panel "Entité géographique" (or "5 Entités") opens on the faction-picker; clicking a Faction swatch assigns all selected GeoEntities, "Neutre" removes them from any Territory (UX-DR36, UX-DR55, UX-DR89, UX-DR99)
+**And** the same assignment is available from the context menu "Assigner à" and from the Territory tool (`T`) in Entities mode for chained clicks (UX-DR70, UX-DR90, UX-DR99)
+**And** a toast "5 Entités assignées à OTAN · Annuler" appears and one Ctrl+Z undoes the whole assignment (UX-DR115, AD-3)
+
+**Given** assigned GeoEntities
+**When** the Map is evaluated
+**Then** `derive.coverage()` produces the partition and deck.gl draws each Territory filled and outlined with its Faction's resolved Kit; neutral Territories use the neutral style (AD-5, AD-6, AD-22)
+**And** selection highlights use ink + halo, never the UI accent (UX-DR100, UX-DR102)
+
+**Given** a double-click on a Territory surface
+**When** it is selected
+**Then** the panel "Territoire" shows its Faction and style fields, addressed as `(factionId, stepId)` (UX-DR37, AD-22)
+
+**Given** a project with 200 Territories
+**When** the user pans and zooms on the reference machine (4 cores, 16 GB, Intel Iris Xe class)
+**Then** the Map stays at 30 fps or more; the measurement is recorded in the story's dev notes (NFR-2)
+
+### Story 2.5: Draw a zone
+
+As a creator,
+I want to draw a zone freehand or point by point,
+So that I can show areas that don't follow country borders (landings, occupied zones).
+
+**Acceptance Criteria:**
+
+**Given** the Territory tool (`T`) in Zone mode
+**When** the user clicks points, or drags for freehand, then double-clicks or presses Enter
+**Then** a DrawnZone is created with `[lon, lat]` coordinates and an owner Faction; Backspace removes the last point and Escape cancels the drawing (FR-19, UX-DR90, UX-DR117, AD-14)
+
+**Given** a selected DrawnZone
+**When** the user drags its handles
+**Then** its points change at the current Step through one Command per drag (FR-19, AD-3, AD-4)
+**And** the panel "Zone dessinée" shows Faction, style and order (UX-DR38)
+
+**Given** a DrawnZone over a GeoEntity or another DrawnZone
+**When** coverage is derived
+**Then** the DrawnZone wins over the GeoEntity, and between DrawnZones the higher stored `z` wins; "Mettre au premier plan / à l'arrière-plan" changes `z` (AD-22, PRD §4.0)
+
+### Story 2.6: Conquest brush and free paint
+
+As a creator,
+I want to pick an attacking Faction and paint what it conquers,
+So that building a conquest is as fast as colouring.
+
+**Acceptance Criteria:**
+
+**Given** the Conquest tool (`C`)
+**When** the user selects the attacking Faction in the options bar and paints over GeoEntities
+**Then** touched GeoEntities are pre-selected and the count is shown before validation ("12 Entités"); validating assigns them to the attacker at the current Step in one Command (FR-20, UX-DR91)
+**And** `[` / `]` change the brush size; Escape cancels the pending selection (UX-DR110, UX-DR112)
+
+**Given** free paint mode inside the Conquest tool
+**When** the user paints a surface independent of GeoEntities
+**Then** it is added to the attacker's Territory as a DrawnZone (FR-21, AD-22)
+
+**Given** a Region with no subdivisions available
+**When** conquest starts
+**Then** the tool suggests free paint (FR-7 message, P0 wording) (UX-DR91)
+
+### Story 2.7: Relations and automatic FrontLines
+
+As a creator,
+I want FrontLines to appear by themselves between Factions at war,
+So that I never trace a front by hand.
+
+**Acceptance Criteria:**
+
+**Given** Factions with no Relation override
+**When** Relations are computed
+**Then** two non-neutral Factions with no parent link are "en conflit", a SubFaction and its parent are "alliées", a neutral Territory is never in conflict (FR-22, AD-11)
+
+**Given** Project settings → Factions & Relations
+**When** the user sets a pair to conflict, allied or no link
+**Then** an override keyed by the sorted Faction pair is stored through a Command (FR-22, UX-DR57, AD-11)
+
+**Given** Territories of two Factions in conflict that touch
+**When** coverage changes
+**Then** the FrontLine is derived from the coverage partition (never stored) and drawn with its style; it is recomputed after every change, with no manual tracing (FR-23, AD-5, AD-22)
+
+**Given** a FrontLine
+**When** the user selects it
+**Then** the panel "Ligne de front" offers style settings and hiding it for this pair; Project settings offer hiding all FrontLines (FR-23, UX-DR39)
+
+### Story 2.8: Fill patterns and neutral style
+
+As a creator,
+I want to fill Territories solid, semi-transparent or hatched,
+So that I can express status such as withdrawal, occupation or alliance tiers.
+
+**Acceptance Criteria:**
+
+**Given** a Territory or a Faction
+**When** the user picks a fill pattern
+**Then** solid, semi-transparent and hatched fills are available, stored in the Kit with optional per-member overrides (FR-25, AD-22)
+**And** the flag fill option is visible but marked as coming later (P1, FR-17)
+
+**Given** a neutral Territory
+**When** it is drawn
+**Then** it uses a default style distinct from every Faction (FR-25, UX-DR107)
+
+**Given** any pattern
+**When** it is rendered on each stylized Basemap
+**Then** patterns and outlines stay legible and the Map is identical in light and dark UI themes (UX-DR101, UX-DR107)
+
+### Story 2.9: Minimal Legend
+
+As a creator,
+I want a small Legend listing my Factions and their colours to appear automatically,
+So that my map is readable as soon as it is coloured.
+
+**Acceptance Criteria:**
+
+**Given** at least one Faction present on the Map
+**When** the Scene is evaluated
+**Then** a Legend is emitted in the screen-overlay band listing the Factions present with their colour, in their Kit order, anchored to a frame corner in reference pixels (FR-35 P0 part, AD-14, AD-24)
+**And** adding a Faction adds its entry without manual action; removing it removes the entry (FR-35)
+
+**Given** the Legend in P0
+**When** the user interacts with it
+**Then** it cannot be edited (entries, position editing come in Epic 10); it can be shown or hidden in Project settings
+
+**Given** a change of Output Format
+**When** the frame changes
+**Then** the Legend stays anchored to the same corner (FR-50, AD-14)
