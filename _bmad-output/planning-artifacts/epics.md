@@ -656,7 +656,7 @@ Pockets that tighten, TokenSeries along the front, Counters, a DateDisplay that 
 **FRs covered:** FR-24, FR-31, FR-32, FR-36, FR-37 (scrolling)
 
 ### Epic 10: Educational maps and personal identity [P1]
-Full editable Legend, labels and layers, Layers panel, flag fill, Personal Kits, subdivisions, data correction, Acts, personal map background, PNG/JPG image export.
+Full editable Legend, labels and layers, Layers panel, flag fill, Personal Kits, subdivisions, data correction, Acts, personal map background, PNG/JPG image export, historical place-name aliases for search (e.g. Constantinople → Istanbul, Stalingrad → Volgograd; curated list, FR-8 enrichment).
 **FRs covered:** FR-7, FR-9, FR-11, FR-16, FR-17, FR-35 (full), FR-43, FR-49, FR-51, FR-56
 
 ### Epic 11: Effects and polish [P2]
@@ -897,7 +897,9 @@ So that I find my Region in seconds.
 
 **Given** the search field in the top bar (shortcut `/`)
 **When** the user types at least 2 characters of a country, city or GeoEntity name
-**Then** matching results from Library data (Natural Earth populated places and GeoEntities valid at the reference date) are listed, keyboard-navigable (UX-DR62, FR-8)
+**Then** matching results from Library data (Natural Earth populated places and countries, and GeoEntities valid at the reference date) are listed, keyboard-navigable (UX-DR62, FR-8)
+**And** matching is accent- and case-insensitive and covers both the English and the French names shipped by Natural Earth (e.g. "Londres" and "London", "Allemagne" and "Germany"); the search index is built by the pipeline from Library data only
+**And** historical city names (e.g. "Constantinople", "Stalingrad") are not expected to match in P0; they arrive with the alias list of Epic 10
 **And** no geocoding API or third-party service is called (AD-16)
 
 **Given** a result
