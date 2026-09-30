@@ -2,7 +2,8 @@
 title: 'Story 1.1: Project scaffold and quality guardrails'
 type: 'chore'
 created: '2026-09-30'
-status: 'draft'
+status: 'in-progress'
+baseline_commit: 'f0fd633b19f9069c13caac3953afe4c4014b5a39'
 route: 'dispatch'
 review_loop_iteration: 0
 context:
@@ -34,11 +35,11 @@ context:
 | Dependency with non-allowlisted licence | e.g. GPL, CC-BY-4.0 | licence check exits non-zero listing the package | passes if listed in `licence-overrides.json` with a non-empty `reason` |
 | Lazy chunk fails after redeploy | `vite:preloadError` event | pending saves flushed, page reloads once | second failure in same session does not reload again |
 
+**Decisions:**
+- Full spec kept (~1,800 tokens, single goal).
+- Work is committed to a new `main` branch created from this work; `main` is the production branch. Its deploy job runs only once `CLOUDFLARE_API_TOKEN`/`CLOUDFLARE_ACCOUNT_ID` exist.
+
 </frozen-after-approval>
-
-## Open Questions
-
-- Where do commits go? AGENTS.md says commit to `main` after review, but the remote only has `claude/blissful-hawking-vsusvu` (no `main`). Options: push to `claude/blissful-hawking-vsusvu` (safe; a PR/merge to `main` later triggers the first prod deploy) / create `main` from this work (first push to `main` becomes the production branch; deploy runs only once Cloudflare secrets exist).
 
 ## Code Map
 
