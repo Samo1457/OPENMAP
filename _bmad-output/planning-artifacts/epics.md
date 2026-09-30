@@ -664,3 +664,321 @@ Fog of war, conquest bar, FrontTraces, ArrowCategories, highlight, curved text, 
 **FRs covered:** FR-26, FR-27, FR-29, FR-31 (Counter link), FR-33, FR-34 (curved), FR-38, FR-44, FR-46 (motion blur)
 
 **Sequencing notes:** P1/P2 epics stay coarse and are detailed after the P0 validation with 3–5 creators. Official Templates/Kits are produced with the editor as soon as Epic 3 is done.
+
+---
+
+## Epic 1: Open OPENMAP and lay down a historical map
+
+A creator opens OPENMAP on their PC, creates a blank Project, sees a stylized Basemap with the GeoEntities valid at the chosen reference date, searches for a place and sees the data sources. The Project saves itself continuously, supports undo/redo and is safe across tabs; the UI works in light/dark and French/English. Everything runs locally (no VPS until Epic 7).
+
+**Cross-cutting rule for every story from 1.4 on:** every Project change goes through a Command with an inverse (AD-3); no animation outside the evaluator (AD-1); no forbidden globals in `src/core` (AD-2); UI strings only through i18n keys (AD-20).
+
+### Story 1.1: Project scaffold and quality guardrails
+
+As the builder of OPENMAP,
+I want a scaffolded codebase whose rules are checked automatically on every push,
+So that AI coding agents cannot silently break the architecture.
+
+**Acceptance Criteria:**
+
+**Given** an empty repository
+**When** the project is scaffolded from the official Vite `react-ts` template with the Stack versions of the spine (TypeScript 6.0, Vite 8.3, React 19.3, Tailwind 4.3, shadcn/ui CLI 4.21)
+**Then** `npm run dev` serves a blank page titled "OPENMAP" and `npm run build` succeeds
+**And** the directories `src/core`, `src/render`, `src/export`, `src/persistence`, `src/library`, `src/telemetry`, `src/ui`, `src/i18n`, `pipeline/`, `ops/`, `schemas/`, `tests/e2e/` exist, each adapter exposing a public `index.ts` (ARCH-1)
+
+**Given** the dependency rules of the spine (Design Paradigm table)
+**When** dependency-cruiser runs
+**Then** an import from `src/core` to React, MapLibre, deck.gl, the DOM, `src/i18n` or any adapter fails the check, and an import of another adapter's internals (not its `index.ts`) fails the check
+
+**Given** the oxlint configuration
+**When** code in `src/core` uses `Math.random`, `Date.now`, `performance.now`, `new Date()` or `crypto.getRandomValues`, or any code uses MapLibre `flyTo`/`easeTo`/`panTo`
+**Then** lint fails with a message naming AD-1 or AD-2
+
+**Given** the licence policy of AD-17
+**When** the licence check runs on the dependency tree
+**Then** a dependency outside the allowlist (MIT, BSD, ISC, Apache-2.0, 0BSD, Unlicense, BlueOak-1.0.0, OFL; MPL-2.0 only for listed unmodified packages) fails CI unless listed in `licence-overrides.json` with a reason
+
+**Given** a push to any branch
+**When** GitHub Actions runs
+**Then** it executes typecheck, oxlint, dependency-cruiser, licence check, Vitest and Playwright (one smoke test that the page loads), and Cloudflare Pages deploys `main` only if CI passes; branch previews are enabled (ARCH-2)
+**And** a `README` section explains in plain French how to run the app and the checks locally
+
+### Story 1.2: Visual identity, themes and languages
+
+As a creator,
+I want the interface to look like an archival atlas in light or dark mode and in French or English,
+So that OPENMAP feels calm, trustworthy and readable in my language.
+
+**Acceptance Criteria:**
+
+**Given** DESIGN.md tokens
+**When** the design-system layer is implemented
+**Then** every chrome colour token exists as a CSS custom property with light and dark values (UX-DR1), mono-mode tokens never change with the theme (UX-DR2), shadcn theme variables map to OPENMAP tokens (UX-DR5), and the border, forbidden-pair, disabled, progress, scrim and status rules apply (UX-DR6–UX-DR11)
+**And** the accent colour is used only in chrome, never in anything drawn on the Map (UX-DR12, UX-DR102)
+
+**Given** the typography rules
+**When** a page renders
+**Then** Libre Baskerville (400, 600) and Source Sans 3 are self-hosted (no third-party font request, AD-16), the UI type scale, tabular figures and small-caps rules apply (UX-DR16–UX-DR20), and spacing, radius, elevation, icon (lucide) and 24 px minimum hit-area tokens exist (UX-DR22–UX-DR27)
+
+**Given** a first launch
+**When** the OS is in dark mode
+**Then** OPENMAP opens in dark theme; the user can choose System · Light · Dark and the choice persists (UX-DR28); the choice is stored in the Dexie preferences table, not localStorage (AD-8)
+
+**Given** the UI in French
+**When** the user switches the language to English
+**Then** every visible string changes immediately without reload, all strings come from `fr`/`en` i18next resources, and French typography rules (non-breaking spaces before « : ; ? ! », « » quotes) are respected (UX-DR150, UX-DR151, AD-20)
+**And** an automated check fails if a key exists in one language and not the other
+
+**Given** all chrome text and controls
+**When** contrast is measured
+**Then** WCAG 2.2 AA ratios hold in both themes (UX-DR153) and a visible focus ring appears on keyboard focus (UX-DR27)
+
+### Story 1.3: Home: create and manage my Projects locally
+
+As a creator,
+I want to create a blank Project and find all my Projects when I reopen OPENMAP,
+So that my work is never lost and I need no account.
+
+**Acceptance Criteria:**
+
+**Given** the core model
+**When** a blank Project is created
+**Then** it is a document with a nanoid `id`, `schemaVersion` 1, a generated `project.seed`, `revision` 0, `referenceDate` defaulting to year 1900, the parchment Basemap, `outputFormat` 16:9, `mapLocale` equal to the current UI language, and empty Steps/Factions/members (AD-2, AD-9, AD-12, AD-25)
+**And** the Zod schema of v1 is committed as a JSON Schema snapshot in `schemas/`, and CI fails if the schema changes without a new version and migration (AD-9)
+
+**Given** the Home screen with no Project
+**When** it opens
+**Then** the empty state invites "Nouveau Projet" (UX-DR120); for now "Nouveau Projet" creates a blank Project directly (the wizard arrives in Epic 6) and opens the Editor (FR-1 blank, no sign-up)
+
+**Given** existing Projects
+**When** Home opens
+**Then** Project cards are listed from most to least recently modified, with skeletons while local storage loads (UX-DR118, UX-DR119, UX-DR136); click or Enter opens a Project
+
+**Given** a Project card menu (button, right-click or Shift+F10)
+**When** the user renames, duplicates or deletes
+**Then** rename happens in place; duplicate creates a copy with new id and the same `project.seed` (AD-2); delete shows the toast "Projet supprimé · Annuler" and the Project becomes a tombstone that is permanently removed only when the toast expires (AD-8, FR-52)
+
+**Given** any change to a Project
+**When** 1 s passes without another change
+**Then** the Project is saved to the single Dexie database, and never later than 5 s after the change (NFR-5, FR-53)
+**And** closing the tab or crashing then reopening restores the last saved state without any recovery dialog (FR-53); a flush runs on `pagehide` (AD-8)
+
+**Given** the first Project creation
+**When** it is saved
+**Then** `navigator.storage.persist()` is requested once (AD-8)
+
+### Story 1.4: Editor shell with Commands and undo/redo
+
+As a creator,
+I want a clear editor with my Project settings and reliable undo,
+So that I can work confidently and reverse any mistake.
+
+**Acceptance Criteria:**
+
+**Given** an opened Project
+**When** the Editor renders at 1366×768
+**Then** it shows the top bar (breadcrumb "Projets / {nom}", save status, Output Format menu, undo/redo, search slot, Presentation and Export slots disabled, menu), the labelled tool rail with the Select tool, the Map area and the properties panel, with no essential panel hidden and no horizontal scroll (UX-DR30, UX-DR31, UX-DR33, UX-DR127, UX-DR159, NFR-8); the Timeline area is present but collapsed and empty until Epic 3
+**And** while the Project loads, the opening state shows skeletons and "Ouverture…" (UX-DR128)
+
+**Given** nothing is selected
+**When** the properties panel shows Project settings
+**Then** the user can edit the Project name, Output Format (16:9 · 9:16 · 1:1 segmented control) and Map language (FR/EN), with advanced settings behind "plus d'options" (UX-DR35, UX-DR53, UX-DR34, NFR-9)
+
+**Given** the Command system in `src/core/commands`
+**When** the user changes any Project setting
+**Then** a pure Command produces the new document and its inverse, `revision` increases, and the change is autosaved (AD-3)
+**And** Ctrl+Z / Ctrl+Shift+Z (and Ctrl+Y) undo and redo over multiple levels, undo also increments `revision`, the history is not persisted across reloads, and a continuous gesture (e.g. typing the name) produces a single undo entry on commit (UX-DR114, FR-55, AD-3)
+
+**Given** the save status observable
+**When** a save is pending, done or failed
+**Then** the top bar shows "Enregistrement…", "Enregistré" or an error state; no toast appears on routine autosave, and Ctrl+S flushes and shows "Projet sauvegardé" (UX-DR137, UX-DR115, AD-8)
+
+**Given** the settings menu
+**When** the user opens Settings
+**Then** a tabbed dialog offers Appearance, Language and Storage (space used, persistence status, reminder to export Project Files) (UX-DR134, UX-DR67)
+
+**Given** a phone or tablet (coarse pointer and narrow viewport) or a browser without WebGL2, IndexedDB or Web Locks
+**When** OPENMAP opens
+**Then** the "conçu pour ordinateur" page or an unsupported-browser message is shown instead of the app (UX-DR135, UX-DR148, AD-19, NFR-4)
+
+### Story 1.5: Local data pipeline for Basemaps and historical borders
+
+As the builder of OPENMAP,
+I want a repeatable script that turns open datasets into versioned map files with their licences,
+So that the app can show historical maps without any third-party service.
+
+**Acceptance Criteria:**
+
+**Given** Natural Earth (public domain) source files
+**When** `pipeline/` builds the stylized Basemap data
+**Then** it produces a versioned tileset `natural-earth-v1.pmtiles` (coastlines, land, rivers, lakes, relief shading, populated places for labels) with no modern roads, and four MapLibre styles (parchment, dark, light, relief) using the DESIGN.md `map-*` tokens, plus self-generated glyphs from the OFL fonts (AD-17, AD-18, UX-DR3, UX-DR4)
+
+**Given** Cliopatria (CC BY 4.0)
+**When** the pipeline builds GeoEntities
+**Then** it outputs `/library/v1/geo/...` files of whole polygons with the dataset's stable entity ids, validity ranges and a simplification level fixed for this version (AD-12), in a format chosen and documented by this story (Deferred item of the spine)
+
+**Given** every produced dataset
+**When** it is written
+**Then** it carries `{source, licence, attribution, creditRequired}` metadata (AD-17)
+**And** no NC, ODbL or share-alike source is used; the run fails if a source's declared licence is not in the allowlist
+
+**Given** development mode
+**When** the app starts with `npm run dev`
+**Then** tiles and Library data are served locally from the pipeline output (e.g. through `pmtiles serve` or the Vite dev server) at the same versioned paths as the future data origin, so no code changes when Epic 7 moves them to the VPS (AD-18)
+**And** the pipeline is re-runnable and documented in plain French (commands, disk size produced)
+
+### Story 1.6: Display the stylized Basemap and the output frame
+
+As a creator,
+I want to see and explore a beautiful historical-style map and switch its style,
+So that I can start composing my story on it.
+
+**Acceptance Criteria:**
+
+**Given** a Project
+**When** the Editor opens
+**Then** `evaluate(project, t, ctx)` returns a Scene containing the Basemap state and camera, and `src/render` draws the Basemap with MapLibre GL JS (≥ 6.9.1, `fadeDuration: 0`) plus a `@deck.gl/maplibre` `MapLibreOverlay` ready for Project layers (AD-1, AD-6)
+**And** a spike documented in the story's dev notes compares interleaved and overlaid modes with a test layer under Basemap labels and records the chosen mode (ARCH-10)
+
+**Given** the Map
+**When** the user drags, scrolls or uses the keyboard
+**Then** the edit camera pans and zooms freely; this camera is UI state and never enters the Project (AD-1, UX-DR109)
+
+**Given** Project settings → Basemap
+**When** the user picks parchment, dark, light or relief in the basemap-picker
+**Then** the Basemap changes at once through an undoable Command, no Project element is changed, and the Map looks identical whatever the UI theme (FR-5 stylized, UX-DR58, UX-DR101)
+**And** brightness, saturation and tint sliders with "Rétablir les réglages du Fond" are present with the DESIGN.md ranges (FR-5)
+
+**Given** the Output Format 16:9, 9:16 or 1:1
+**When** the Map is shown
+**Then** the output frame (1920×1080, 1080×1920 or 1080×1080 at reference scale) is visible by dimming the area outside it, with no decorative border, and no chrome covers the frame (AD-23, UX-DR103, UX-DR105)
+
+**Given** tiles still loading
+**When** the Map renders
+**Then** the plain land colour of the active Basemap shows until tiles arrive, and editing is never blocked (UX-DR106)
+
+### Story 1.7: Reference date and historical GeoEntities
+
+As a creator,
+I want to set the date of my map and see the countries and empires of that time,
+So that my map is historically grounded.
+
+**Acceptance Criteria:**
+
+**Given** `src/core/dates`
+**When** a HistoricalDate is created
+**Then** it uses astronomical years (1 BCE = 0, 52 BCE = -51), optional month and day, with compare and locale formatting ("52 av. J.-C." / "52 BC") based on `project.mapLocale`; unit tests cover BCE, year 0 and year-only precision (AD-13, AD-25)
+
+**Given** Project settings
+**When** the user enters a reference date (year precision, BCE allowed)
+**Then** the Map shows the GeoEntities valid at that date as neutral Territories, using the Project's pinned dataset version (FR-6, AD-12)
+**And** invalid input shows an inline error and keeps the previous date (UX-DR147)
+
+**Given** no exact data state at that date
+**When** the Map loads
+**Then** the nearest valid state is used and the nearest-data chip shows the real date of the data (FR-6, UX-DR59)
+
+**Given** a Project with Territories built on GeoEntities (from Epic 2 on)
+**When** the user changes the reference date
+**Then** a confirmation explains the consequence, and GeoEntities that no longer exist are converted into DrawnZones in the same undoable Command (FR-6)
+**And** reference date and step date labels are always distinct in the UI (UX-DR88)
+
+**Given** GeoEntity data used by the Project
+**When** it is fetched the first time
+**Then** `src/library` stores it in the Dexie Library cache and later reads come from there (AD-27)
+
+### Story 1.8: Search for a place
+
+As a creator,
+I want to type a place name and jump to it,
+So that I find my Region in seconds.
+
+**Acceptance Criteria:**
+
+**Given** the search field in the top bar (shortcut `/`)
+**When** the user types at least 2 characters of a country, city or GeoEntity name
+**Then** matching results from Library data (Natural Earth populated places and GeoEntities valid at the reference date) are listed, keyboard-navigable (UX-DR62, FR-8)
+**And** no geocoding API or third-party service is called (AD-16)
+
+**Given** a result
+**When** the user picks it
+**Then** the edit camera centres on it and a GeoEntity result is selected (UX-DR62)
+
+**Given** no match
+**When** the list is empty
+**Then** a short helpful empty message is shown in the UI language (UX-DR146)
+
+### Story 1.9: Sources, licences and map credit
+
+As a creator,
+I want to see where the map data comes from and have the right credit on my map,
+So that I respect licences without having to research them.
+
+**Acceptance Criteria:**
+
+**Given** the Project uses a Basemap and datasets
+**When** the user opens "Sources" (Project settings)
+**Then** each source is listed with its licence and attribution, built from the metadata of AD-17 (FR-10)
+
+**Given** a drawn source with `creditRequired`
+**When** the Scene is evaluated
+**Then** the evaluator emits the credit line built from every source actually drawn, rendered by deck.gl in the credit band at the chosen corner (default bottom-right) and prominence (Discreet / Legible) stored in `project.credit` (AD-17, AD-24, UX-DR108)
+**And** a required credit cannot be hidden; an optional credit can (FR-10)
+
+**Given** a French UI and an English `mapLocale`
+**When** the credit is displayed
+**Then** its text follows the source's required wording, independent of the UI language (AD-20)
+
+### Story 1.10: One editing tab per Project
+
+As a creator,
+I want OPENMAP to protect my Project when I open it in two tabs,
+So that one tab never overwrites the other's work.
+
+**Acceptance Criteria:**
+
+**Given** a Project opened in tab A
+**When** the same Project opens in tab B
+**Then** tab A holds the Web Locks lock `openmap:project:<id>` and tab B opens read-only with the banner "Ce Projet est ouvert dans un autre onglet. Vous le consultez en lecture seule." and "Reprendre ici"; editing tools and panel fields are disabled, viewing stays possible (AD-15, UX-DR139)
+**And** any Command dispatched in tab B is rejected by the dispatcher, not only hidden (AD-3)
+
+**Given** tab B read-only
+**When** the user clicks "Reprendre ici"
+**Then** tab A flushes its save, clears its undo stack and becomes read-only with "Ce Projet est maintenant modifié dans un autre onglet."; tab B reloads the document from IndexedDB, starts with an empty undo stack and becomes the editor (AD-15)
+
+**Given** the lock holder saves
+**When** a save completes
+**Then** read-only tabs refresh to the saved revision (AD-15)
+
+**Given** the holder tab closes or crashes
+**When** the read-only tab detects it
+**Then** the banner says so and keeps "Reprendre ici" without taking over automatically (AD-15)
+
+**Given** every save
+**When** it is written
+**Then** it carries the tab's `lockEpoch` and is refused if a newer epoch has written (AD-8)
+
+**Given** Home in another tab
+**When** a Project is locked elsewhere
+**Then** its card shows "Ouvert dans un autre onglet" and delete, rename and duplicate are refused (AD-15)
+
+### Story 1.11: Warn when local storage is at risk
+
+As a creator,
+I want to be warned if my browser might delete my Projects,
+So that I can protect my work in time.
+
+**Acceptance Criteria:**
+
+**Given** persistent storage was refused or the quota is near its limit
+**When** Home or the Editor opens
+**Then** a `banner-warning` explains the risk in plain language ("Stockage presque plein. Exportez un Fichier projet pour ne rien perdre."), can be dismissed for the session, and reappears in every new session while the condition lasts (UX-DR138, FR-53)
+**And** until Epic 7 delivers Project File export, the banner's action links to Settings → Storage
+
+**Given** Settings → Storage
+**When** it opens
+**Then** it shows space used, persistence status and the reminder to export Project Files (UX-DR134)
+
+**Given** a save fails (quota exceeded)
+**When** the error occurs
+**Then** the save status shows the error, an error toast stays until closed, and no data already saved is lost (UX-DR137, UX-DR152)
