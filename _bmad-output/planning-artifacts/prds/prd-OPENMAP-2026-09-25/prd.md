@@ -138,7 +138,7 @@ Tout élément issu d'un Template peut être modifié, déplacé ou supprimé.
 
 **Description :** La Carte repose sur un Fond (stylisé ou satellite) et sur les Entités géographiques valides à la Date de référence du Projet. La géographie ne change pas au fil des Étapes : c'est l'utilisateur qui fait évoluer les Territoires. L'échelle v1 couvre le stratégique (pays, empires) et l'opérationnel (provinces, fronts, poches, villes). Réalise UJ-1 à UJ-4.
 
-#### FR-5 : Choisir le Fond de carte [P0]
+#### FR-5 : Choisir le Fond de carte [P0 stylisés, P1 satellite]
 L'utilisateur peut choisir un Fond stylisé (parchemin par défaut, sombre, clair, relief) ou satellite, et en changer à tout moment.
 - Changer de Fond ne modifie ni ne supprime aucun élément du Projet.
 - La luminosité, la saturation et une teinte du Fond sont réglables, pour que des Territoires semi-transparents restent lisibles sur le satellite.
@@ -295,8 +295,8 @@ En P0, une Légende minimale non éditable (Factions présentes et leur couleur)
 L'utilisateur peut placer un Compteur, lui donner une valeur par Étape, une orientation libre et une Faction ; la valeur s'anime entre deux Étapes. Réalise UJ-1.
 - Un Compteur peut être ancré à un Territoire : il reste alors au centre de sa surface quand elle change.
 
-#### FR-37 : Horodatage [P1]
-L'utilisateur peut afficher un Horodatage qui défile en continu entre deux Dates d'Étape, à la granularité choisie (jour, mois ou année). Réalise UJ-1.
+#### FR-37 : Horodatage [P0 simple, P1 défilement]
+En P0, l'Horodatage affiche la Date d'Étape de l'Étape courante (sans défilement), au format choisi. En P1, l'utilisateur peut afficher un Horodatage qui défile en continu entre deux Dates d'Étape, à la granularité choisie (jour, mois ou année). Réalise UJ-1.
 - Formats : AAAA-MM-JJ, JJ mois AAAA, année seule, ou libellé libre par Étape (ex. « Été 1944 »), qui remplace alors le défilement.
 - Les dates avant notre ère s'affichent au format choisi (ex. « 52 av. J.-C. »).
 
@@ -459,10 +459,10 @@ Aucune en v1 : l'outil est gratuit et sans filigrane (`[HYPOTHÈSE]`), la priori
 Trois niveaux, pour un développeur seul. La **tranche P0** est la version de validation à montrer aux créateurs avant d'aller plus loin (§12, R1).
 
 ### 10.1 P0 — tranche de validation
-Couvre UJ-1 et UJ-2 de bout en bout dans une forme simple : assistant et Templates (4.1), Fonds stylisés et satellite, Date de référence, recherche, attribution (FR-5, 6, 8, 10), Kits de Faction avec Sous-factions et Bibliothèque (FR-12 à 15), Territoires, conquête au pinceau, peinture libre, Relations et Ligne de front, motifs (FR-18 à 23, 25), Flèches et Jetons (FR-28, 30), textes (FR-34), transitions, Étapes, lecture, Signature organique, persistance (FR-39 à 42, 45), Presets caméra et cadrage manuel (FR-46, 47), import d'images (FR-48), export vidéo (FR-50), Légende minimale non éditable (voir FR-35), gestion des Projets, sauvegarde, Fichier projet, annulation, modes, télémétrie (FR-52 à 55, 57, 58).
+Couvre UJ-1 et UJ-2 de bout en bout dans une forme simple : assistant et Templates (4.1), Fonds stylisés, Date de référence, recherche, attribution (FR-5, 6, 8, 10), Kits de Faction avec Sous-factions et Bibliothèque (FR-12 à 15), Territoires, conquête au pinceau, peinture libre, Relations et Ligne de front, motifs (FR-18 à 23, 25), Flèches et Jetons (FR-28, 30), textes (FR-34), transitions, Étapes, lecture, Signature organique, persistance (FR-39 à 42, 45), Presets caméra et cadrage manuel (FR-46, 47), import d'images (FR-48), export vidéo (FR-50), Légende minimale non éditable (voir FR-35), Horodatage simple (FR-37, date d'Étape sans défilement), gestion des Projets, sauvegarde, Fichier projet, annulation, modes, télémétrie (FR-52 à 55, 57, 58).
 
 ### 10.2 P1 — lancement public
-Subdivisions (FR-7), couches et libellés (FR-9), correction des données (FR-11), Kits personnels (FR-16), remplissage par drapeau (FR-17), Poches (FR-24), Séries de Jetons (FR-31), Icônes d'événement (FR-32), Légende (FR-35), Compteurs (FR-36), Horodatage continu (FR-37), Actes (FR-43), carte personnelle en fond (FR-49), export image (FR-51), Calques (FR-56).
+Fond satellite (FR-5), Subdivisions (FR-7), couches et libellés (FR-9), correction des données (FR-11), Kits personnels (FR-16), remplissage par drapeau (FR-17), Poches (FR-24), Séries de Jetons (FR-31), Icônes d'événement (FR-32), Légende (FR-35), Compteurs (FR-36), Horodatage qui défile (FR-37), Actes (FR-43), carte personnelle en fond (FR-49), export image (FR-51), Calques (FR-56).
 
 ### 10.3 P2 — après le lancement
 Zones d'annotation (FR-26), Traces de front (FR-27), Catégories de flèche (FR-29), Séries liées aux Compteurs (FR-31), mise en évidence (FR-33), texte courbe (FR-34), échelle et rose des vents (FR-38), Effets d'ambiance (FR-44), flou de mouvement (FR-46).
