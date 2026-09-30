@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [step-01-validate-prerequisites, step-02-design-epics]
+stepsCompleted: [step-01-validate-prerequisites, step-02-design-epics, step-03-create-stories]
 inputDocuments:
   - prds/prd-OPENMAP-2026-09-25/prd.md
   - prds/prd-OPENMAP-2026-09-25/addendum.md
@@ -705,6 +705,14 @@ So that AI coding agents cannot silently break the architecture.
 **Then** it executes typecheck, oxlint, dependency-cruiser, licence check, Vitest and Playwright (one smoke test that the page loads), and Cloudflare Pages deploys `main` only if CI passes; branch previews are enabled (ARCH-2)
 **And** a `README` section explains in plain French how to run the app and the checks locally
 
+**Given** the scaffold
+**When** it is created
+**Then** `npx shadcn init` is run explicitly with Tailwind 4, and Node.js 24 LTS is pinned (`.nvmrc` and `engines`) (ARCH-1)
+
+**Given** a redeploy while a tab is open
+**When** a lazily loaded chunk fails to load
+**Then** the app flushes pending saves and reloads once (AD-19)
+
 ### Story 1.2: Visual identity, themes and languages
 
 As a creator,
@@ -745,7 +753,7 @@ So that every later feature changes Projects the same safe, undoable way.
 
 **Given** the core model
 **When** a blank Project is created
-**Then** it is a document with a nanoid `id`, `schemaVersion` 1, a generated `project.seed`, `revision` 0, `referenceDate` defaulting to year 1900, the parchment Basemap, `outputFormat` 16:9, `mapLocale` equal to the current UI language, one initial Step (Step 0, hidden from the UI until the Timeline arrives in Epic 3) and empty Factions/members (AD-2, AD-4, AD-9, AD-12, AD-25)
+**Then** it is a document with a nanoid `id`, `schemaVersion` 1, a generated `project.seed`, `revision` 0, `referenceDate` defaulting to year 1900, the parchment Basemap, `outputFormat` 16:9, `mapLocale` equal to the current UI language, one initial Step (Step 0, hidden from the UI until the Timeline arrives in Epic 3), one default Layer per element kind (Territories, Arrows, Tokens, Texts, Images) in `project.layers` (AD-24) and empty Factions/members (AD-2, AD-4, AD-9, AD-12, AD-25)
 **And** the Zod schema of v1 is committed as a JSON Schema snapshot in `schemas/`, and CI fails if the schema changes without a new version and migration (AD-9)
 
 **Given** `src/core/commands`
@@ -795,6 +803,15 @@ So that my work is never lost and I need no account.
 **When** it is saved
 **Then** `navigator.storage.persist()` is requested once (AD-8)
 
+**Given** Projects in IndexedDB
+**When** one is loaded
+**Then** `migrate` then validation run on this load path too; a document newer than the app opens read-only (AD-9)
+**And** a Dexie `versionchange` event makes open tabs flush and reload (AD-9)
+
+**Given** media no longer referenced by any Project or Personal Kit
+**When** a Project is permanently deleted
+**Then** those media blobs are garbage-collected (AD-8)
+
 ### Story 1.5: Editor shell with undo/redo
 
 As a creator,
@@ -829,6 +846,11 @@ So that I can work confidently and reverse any mistake.
 **When** OPENMAP opens
 **Then** the "conçu pour ordinateur" page or an unsupported-browser message is shown instead of the app (UX-DR135, UX-DR148, AD-19, NFR-4)
 
+**Given** the scene area
+**When** the Editor renders
+**Then** a 36 px tool options bar sits above the Map (never over it), showing the current Step reminder on the left, the active tool's options, contextual links, and the read-only Output Format label on the right (UX-DR32, UX-DR105)
+**And** Settings and the unsupported-browser gate reuse the dialog and banner components (UX-DR66, UX-DR67)
+
 ### Story 1.6: Keyboard and accessibility foundation
 
 As a creator,
@@ -848,7 +870,7 @@ So that I work fast and nobody is left out.
 
 **Given** Alt+1..Alt+6 (digit row, no Shift)
 **When** pressed
-**Then** focus jumps to top bar, tool rail, Map, properties panel, Timeline and drawer respectively; collisions with Chrome/Edge on Windows are checked and documented (UX-DR113)
+**Then** focus jumps to top bar, tool rail, options bar, Map, properties panel and Timeline respectively, each a named ARIA region; F6 is not used; collisions with Chrome/Edge on Windows are checked and documented (UX-DR113)
 
 **Given** every chrome control
 **When** navigated with the keyboard
@@ -915,6 +937,14 @@ So that I can start composing my story on it.
 **When** the Map renders
 **Then** the plain land colour of the active Basemap shows until tiles arrive, and editing is never blocked (UX-DR106)
 
+**Given** the Scene
+**When** it is rendered
+**Then** every drawn item carries a `z` in the fixed bands of AD-24 (Basemap, personal map background, Project Layers in document order, place labels, screen overlays, credit), so later element types slot in without changing the renderer (AD-24)
+
+**Given** Map text and symbol sizes
+**When** anything is drawn on the Map
+**Then** sizes use the map typography tokens in export pixels for a 1080 px short side and scale on screen by (frame short side / 1080), while chrome never scales; e.g. a 562×316 frame shows a 56 px label at about 16 px (UX-DR21, AD-23)
+
 ### Story 1.9: Reference date and historical GeoEntities
 
 As a creator,
@@ -936,10 +966,9 @@ So that my map is historically grounded.
 **When** the Map loads
 **Then** the nearest valid state is used and the nearest-data chip shows the real date of the data (FR-6, UX-DR59)
 
-**Given** a Project with Territories built on GeoEntities (from Epic 2 on)
-**When** the user changes the reference date
-**Then** a confirmation explains the consequence, and GeoEntities that no longer exist are converted into DrawnZones in the same undoable Command (FR-6)
-**And** reference date and step date labels are always distinct in the UI (UX-DR88)
+**Given** the reference date is changed
+**When** the change is confirmed
+**Then** it is one undoable Command, and reference date and step date labels are always distinct in the UI (UX-DR88)
 
 **Given** GeoEntity data used by the Project
 **When** it is fetched the first time
@@ -982,12 +1011,16 @@ So that I respect licences without having to research them.
 
 **Given** a drawn source with `creditRequired`
 **When** the Scene is evaluated
-**Then** the evaluator emits the credit line built from every source actually drawn, rendered by deck.gl in the credit band at the chosen corner (default bottom-right) and prominence (Discreet / Legible) stored in `project.credit` (AD-17, AD-24, UX-DR108)
+**Then** the evaluator emits the credit line built from every source actually drawn, rendered by deck.gl in the credit band at the chosen corner (default bottom-left) and prominence (Discreet / Legible) stored in `project.credit` (AD-17, AD-24, UX-DR108)
 **And** a required credit cannot be hidden; an optional credit can (FR-10)
 
 **Given** a French UI and an English `mapLocale`
 **When** the credit is displayed
 **Then** its text follows the source's required wording, independent of the UI language (AD-20)
+
+**Given** Map text sizes
+**When** this element is drawn
+**Then** it uses the map typography tokens of UX-DR21 scaled per AD-23 (UX-DR21)
 
 ### Story 1.12: One editing tab per Project
 
@@ -1043,6 +1076,14 @@ So that I can protect my work in time.
 **When** the error occurs
 **Then** the save status shows the error, an error toast stays until closed, and no data already saved is lost (UX-DR137, UX-DR152)
 
+**Given** the browser goes offline
+**When** OPENMAP is open
+**Then** a global banner says "Hors ligne. Vos modifications sont enregistrées sur cet appareil ; les fonds de carte et la Bibliothèque non encore chargés ne s'afficheront pas." and editing continues (UX-DR141)
+
+**Given** a Project whose referenced Library data is unavailable
+**When** it opens
+**Then** a "données référencées indisponibles" banner is shown and the document is left untouched (AD-27)
+
 ---
 
 ## Epic 2: Color the map with Factions
@@ -1078,6 +1119,18 @@ So that my map gets correct colours and emblems without design work.
 **When** Factions exist
 **Then** they are listed with colour swatch and name, and can be renamed, reordered and deleted through undoable Commands (AD-3)
 
+**Given** a Faction selected in the Editor
+**When** the user clicks a Kit in the drawer
+**Then** "Appliquer à {Faction}" replaces that Faction's Kit copy in one undoable Command (FR-13, FR-15)
+
+**Given** Library Emblems and Kits
+**When** shown in the drawer or used in the Project
+**Then** their source and licence are visible and appear in the Sources list (FR-10)
+
+**Given** the Library cannot be loaded (offline or data origin unreachable)
+**When** the drawer opens
+**Then** an error state explains it with "Réessayer"; already cached Kits stay usable (AD-27, UX-DR141)
+
 ### Story 2.2: Edit a FactionKit
 
 As a creator,
@@ -1095,9 +1148,9 @@ So that every element of that Faction updates everywhere at once.
 **Then** it applies immediately to every element of that Faction on every Step, as one undoable Command (FR-12, AD-3)
 **And** a continuous colour drag previews live and commits a single Command on release (AD-3)
 
-**Given** a fill colour too close to another Faction's colour or to the Basemap land colour
-**When** it is chosen
-**Then** the colour guardrail of DESIGN.md warns without blocking (UX-DR15)
+**Given** a Kit fill or stroke colour
+**When** its CIEDE2000 distance to the UI `accent` or `accent-dark` is below 10
+**Then** a non-blocking warning shows under the colour field (never a toast), recomputed on every change (UX-DR15)
 
 **Given** an imported Emblem image (PNG, JPG, SVG)
 **When** it is added to the Kit
@@ -1158,6 +1211,10 @@ So that I can build who controls what.
 **When** the user pans and zooms on the reference machine (see Overview)
 **Then** the Map stays at 30 fps or more; the measurement is recorded in the story's dev notes (NFR-2)
 
+**Given** a Project without Factions
+**When** the user opens the Territory or Conquest tool or the faction-picker
+**Then** the empty state "Ajoutez une Faction pour colorer des Territoires." offers "Ajouter une Faction", which opens the Library on the Kits tab (UX-DR146)
+
 ### Story 2.5: Draw a zone
 
 As a creator,
@@ -1178,6 +1235,10 @@ So that I can show areas that don't follow country borders (landings, occupied z
 **Given** a DrawnZone over a GeoEntity or another DrawnZone
 **When** coverage is derived
 **Then** the DrawnZone wins over the GeoEntity, and between DrawnZones the higher stored `z` wins; "Mettre au premier plan / à l'arrière-plan" changes `z` (AD-22, PRD §4.0)
+
+**Given** a Project with Territories built on GeoEntities
+**When** the user changes the reference date
+**Then** a confirmation explains the consequence, and GeoEntities that no longer exist at the new date are converted into DrawnZones with the same owner in the same undoable Command (FR-6)
 
 ### Story 2.6: Conquest brush and free paint
 
@@ -1266,6 +1327,10 @@ So that my map is readable as soon as it is coloured.
 **When** the frame changes
 **Then** the Legend stays anchored to the same corner (FR-50, AD-14)
 
+**Given** Map text sizes
+**When** this element is drawn
+**Then** it uses the map typography tokens of UX-DR21 scaled per AD-23 (UX-DR21)
+
 ---
 
 ## Epic 3: Animate history over time
@@ -1304,6 +1369,10 @@ So that I can tell my story state by state.
 **When** the Timeline renders
 **Then** transition blocks are hatched and sized to their duration on the ruler (UX-DR78)
 
+**Given** a Project with a single Step
+**When** the Timeline shows
+**Then** an empty state invites to add a Step with "+ Étape" (UX-DR146)
+
 ### Story 3.2: Per-Step editing, scope and element existence
 
 As a creator,
@@ -1317,9 +1386,9 @@ So that I only edit what actually changes.
 **Then** only `track[N]` is written; Steps after N without their own value inherit it; Steps before N are unchanged (FR-0, AD-4, UX-DR85)
 **And** a per-Step own-value marker shows on the thumbnails where the selected element has its own value (UX-DR77)
 
-**Given** the change toast
-**When** the user chooses "Appliquer à toutes les Étapes"
-**Then** the value becomes the element's default and its track is cleared, in one Command; the toast says "Appliqué aux 5 Étapes · Annuler" (FR-0, AD-4, EXPERIENCE)
+**Given** a change just made while the element stays selected
+**When** the user clicks the link "Appliquer à toutes les Étapes" shown under the modified field (or in the options bar for on-Map edits)
+**Then** the value becomes the element's default and its track is cleared, in one Command undone by one Ctrl+Z; the toast says "Appliqué aux 5 Étapes · Annuler" (FR-0, AD-4, UX-DR85)
 
 **Given** the playhead inside a transition
 **When** the user edits
@@ -1432,6 +1501,10 @@ So that the camera tells the story as much as the map.
 **Then** the framing intent is saved as geographic bounds plus bearing and pitch, never `{center, zoom}`, and resolved for `ctx.frame` by the evaluator (AD-23)
 **And** changing the Output Format recomputes frames so they contain the same elements (FR-50, AD-23)
 
+**Given** an Output Format change
+**When** framings are recomputed
+**Then** the toast "Cadrages recalculés pour 9:16 · Annuler" appears and one Ctrl+Z restores the previous format (UX-DR63)
+
 ### Story 3.7: Manual framing
 
 As a creator,
@@ -1469,6 +1542,14 @@ So that viewers always know when the action happens.
 **When** the transition plays
 **Then** the date switches with the new Step (no day-by-day scrolling in P0; scrolling arrives in Epic 9)
 
+**Given** Map text sizes
+**When** this element is drawn
+**Then** it uses the map typography tokens of UX-DR21 scaled per AD-23 (UX-DR21)
+
+**Given** an Output Format change
+**When** the frame changes
+**Then** the DateDisplay stay anchored to the same frame edge (FR-50, AD-14)
+
 ### Story 3.9: Presentation mode
 
 As a creator,
@@ -1497,6 +1578,10 @@ So that I can judge the final result before exporting.
 **Given** Step thumbnails
 **When** a Step changes
 **Then** its thumbnail is re-rendered at the start of its hold through the same pipeline, waiting on `render.ready` (AD-21, AD-26)
+
+**Given** Presentation mode
+**When** it plays
+**Then** the floating controls bar (play/pause, timecode, progress, "Quitter la présentation") fades 2 s after the last mouse move, returns on move or Tab, never appears in export, and at the end playback stops on the last frame with "Rejouer" (UX-DR129)
 
 ---
 
@@ -1558,6 +1643,10 @@ So that I get a clean video for my editing software.
 **Given** a Step range export
 **When** it runs
 **Then** it covers exactly `[start_a, end_b)` (AD-21)
+
+**Given** an encoding or rendering error
+**When** export fails
+**Then** the dialog shows an error state in plain language with "Réessayer" and returns to the settings; nothing partial is downloaded (UX-DR132, UX-DR152)
 
 ### Story 4.3: Missing tiles and offline during export
 
@@ -1683,6 +1772,14 @@ So that I can show forces and manoeuvres.
 **When** the Timeline plays on the reference machine
 **Then** preview stays at 30 fps or more; the measurement is recorded in the dev notes (NFR-2)
 
+**Given** Map text sizes
+**When** this element is drawn
+**Then** it uses the map typography tokens of UX-DR21 scaled per AD-23 (UX-DR21)
+
+**Given** automatic framing
+**When** a Step creates or moves UnitTokens
+**Then** they are included in the framed area (FR-46)
+
 ### Story 5.3: Texts
 
 As a creator,
@@ -1709,6 +1806,14 @@ So that I can name places, people and events on my map.
 **Then** they appear on the Text track with clips and sub-rows (UX-DR79, UX-DR80)
 **And** curved text along a path is not offered in P0 (P2, Epic 11)
 
+**Given** Map text sizes
+**When** this element is drawn
+**Then** it uses the map typography tokens of UX-DR21 scaled per AD-23 (UX-DR21)
+
+**Given** an Output Format change
+**When** the frame changes
+**Then** frame-anchored Texts stay anchored to the same frame edge (FR-50, AD-14)
+
 ### Story 5.4: Import images
 
 As a creator,
@@ -1733,6 +1838,10 @@ So that I can add portraits, logos or my own symbols.
 **Given** privacy rules
 **When** an image is imported
 **Then** it never leaves the machine (NFR-6)
+
+**Given** the EventIcon feature
+**When** the user imports an image
+**Then** "Utiliser comme Icône d'événement" is not offered in P0; it arrives with EventIcons in Epic 9 (FR-48, FR-32)
 
 ---
 
@@ -1789,6 +1898,11 @@ So that I find a starting point that matches my topic.
 **When** the gallery cannot load
 **Then** a clear message offers "Projet vierge" instead (UX-DR141)
 
+**Given** Home
+**When** the user chooses "Nouveau Projet"
+**Then** the wizard shell opens: at most 5 screens with a progress indicator (Template, Reference date, Region, Factions), Back/Next, every screen skippable while keeping the Template's values, and "Projet vierge" on screen 1; screens 2–4 show "Passer" until Stories 6.5–6.6 fill them (FR-2, UX-DR122)
+**And** a failure to load wizard data shows an error state with "Réessayer" and "Projet vierge" (UX-DR122)
+
 ### Story 6.4: Create a Project from a Template
 
 As a creator,
@@ -1806,9 +1920,9 @@ So that I get a head start without being locked in.
 **When** the user edits it
 **Then** every element (suggested Arrows, pre-filled Steps, Kits, Relations) can be modified, moved or deleted; nothing is read-only (FR-4)
 
-**Given** Home
-**When** the user chooses "Nouveau Projet"
-**Then** the wizard opens (replacing the direct blank creation of Story 1.4), with "Projet vierge" still available on its first screen (FR-1)
+**Given** the wizard shell of Story 6.3
+**When** the user picks a Template and finishes
+**Then** the Project is created from it and opens in the Editor; this replaces the direct blank creation of Story 1.4 (FR-1)
 
 ### Story 6.5: Wizard: reference date and Region
 
@@ -1817,10 +1931,6 @@ I want the wizard to ask me the date and the Region of my story,
 So that the map is set up for my topic in a few clicks.
 
 **Acceptance Criteria:**
-
-**Given** the wizard shell
-**When** it opens
-**Then** it shows at most 5 screens with a progress indicator (Template, Reference date, Region, Factions), Back/Next, and every screen can be skipped, keeping the Template's values (FR-2, UX-DR122)
 
 **Given** screen 2 "Date de référence"
 **When** the user types a date (year precision, BCE allowed)
@@ -1853,6 +1963,10 @@ So that I see my first animation within 2 minutes.
 **Given** a first-time creator on the reference machine
 **When** they go from Home to the animated Map through the wizard
 **Then** it takes under 2 minutes in a moderated test with the default Template choices (NFR-7) `[HYP]`
+
+**Given** the "Projet vierge" path of the wizard
+**When** the wizard ends
+**Then** the Project gets the chosen reference date, Region framing and Factions, two Steps are created, and the Factions' Territories around the Region are pre-assigned at Step 1 with one Territory change at Step 2 suggested and editable, so that FR-2 still yields an animation (FR-2) `[ASSUMPTION]`
 
 ### Story 6.7: Official starter content
 
@@ -1946,7 +2060,7 @@ So that usage data never goes to a third party.
 
 **Given** the Umami database
 **When** a week passes
-**Then** an off-VPS backup copy is made (e.g. to the owner's PC) and its restore procedure is documented in plain French (ARCH-19)
+**Then** an off-VPS backup copy of the Umami database and of the pipeline source data is made (e.g. to the owner's PC) and its restore procedure is documented in plain French (ARCH-19)
 
 **Given** server secrets
 **When** they are configured
@@ -1976,6 +2090,10 @@ So that my privacy is respected.
 **Given** Settings → Confidentialité
 **When** the user revokes consent
 **Then** sending stops immediately and the `installId` is deleted; the tab explains what is and is not sent (FR-58, UX-DR134)
+
+**Given** a Cloudflare Pages preview deployment
+**When** it runs
+**Then** telemetry is disabled regardless of consent (Structural Seed: preview environment)
 
 ### Story 7.5: Going live safely
 
