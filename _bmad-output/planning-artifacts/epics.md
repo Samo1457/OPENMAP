@@ -14,7 +14,9 @@ language: en
 
 ## Overview
 
-This document provides the complete epic and story breakdown for OPENMAP, decomposing the requirements from the PRD, the UX design contract (DESIGN.md + EXPERIENCE.md) and the architecture spine into implementable stories. Precedence: PRD for scope, architecture spine for technique (AD ids), UX for behaviour and look. Vocabulary follows the spine's English glossary (Étape = Step, Carte = Map…).
+This document provides the complete epic and story breakdown for OPENMAP, decomposing the requirements from the PRD, the UX design contract (DESIGN.md + EXPERIENCE.md) and the architecture spine into implementable stories. **Reference machine (NFR-2, NFR-3, NFR-7):** the owner's Lenovo LOQ 15IRH8 (Intel Core i5, 16 GB RAM) with Chrome forced onto the **integrated Intel GPU** (Windows Settings → Graphics → Chrome → "Power saving"), approximating the PRD's integrated-GPU class; measurements are also noted on the RTX 4060 for comparison, and at least one validation creator's machine is measured in Story 7.6.
+
+Precedence: PRD for scope, architecture spine for technique (AD ids), UX for behaviour and look. Vocabulary follows the spine's English glossary (Étape = Step, Carte = Map…).
 
 ## Requirements Inventory
 
@@ -671,7 +673,7 @@ Fog of war, conquest bar, FrontTraces, ArrowCategories, highlight, curved text, 
 
 A creator opens OPENMAP on their PC, creates a blank Project, sees a stylized Basemap with the GeoEntities valid at the chosen reference date, searches for a place and sees the data sources. The Project saves itself continuously, supports undo/redo and is safe across tabs; the UI works in light/dark and French/English. Everything runs locally (no VPS until Epic 7).
 
-**Cross-cutting rule for every story from 1.4 on:** every Project change goes through a Command with an inverse (AD-3); no animation outside the evaluator (AD-1); no forbidden globals in `src/core` (AD-2); UI strings only through i18n keys (AD-20).
+**Cross-cutting rules for every story from 1.5 on:** every Project change goes through a Command with an inverse (AD-3); no animation outside the evaluator (AD-1); no forbidden globals in `src/core` (AD-2); UI strings only through i18n keys (AD-20); keyboard and accessibility Definition of Done from Story 1.6.
 
 ### Story 1.1: Project scaffold and quality guardrails
 
@@ -733,11 +735,11 @@ So that OPENMAP feels calm, trustworthy and readable in my language.
 **When** contrast is measured
 **Then** WCAG 2.2 AA ratios hold in both themes (UX-DR153) and a visible focus ring appears on keyboard focus (UX-DR27)
 
-### Story 1.3: Home: create and manage my Projects locally
+### Story 1.3: Core Project model, Commands and undo engine
 
-As a creator,
-I want to create a blank Project and find all my Projects when I reopen OPENMAP,
-So that my work is never lost and I need no account.
+As the builder of OPENMAP,
+I want the Project document and its Command system built and tested before any screen,
+So that every later feature changes Projects the same safe, undoable way.
 
 **Acceptance Criteria:**
 
@@ -745,6 +747,32 @@ So that my work is never lost and I need no account.
 **When** a blank Project is created
 **Then** it is a document with a nanoid `id`, `schemaVersion` 1, a generated `project.seed`, `revision` 0, `referenceDate` defaulting to year 1900, the parchment Basemap, `outputFormat` 16:9, `mapLocale` equal to the current UI language, one initial Step (Step 0, hidden from the UI until the Timeline arrives in Epic 3) and empty Factions/members (AD-2, AD-4, AD-9, AD-12, AD-25)
 **And** the Zod schema of v1 is committed as a JSON Schema snapshot in `schemas/`, and CI fails if the schema changes without a new version and migration (AD-9)
+
+**Given** `src/core/commands`
+**When** a Command `{type, payload}` is applied
+**Then** `apply(project, command)` is pure, returns the new immutable document (Immer) and its inverse, and never performs I/O (AD-3)
+**And** `project.revision` increases on every applied Command, undo and redo included, and never goes backwards (AD-3)
+
+**Given** the undo engine
+**When** Commands are applied, undone and redone over many levels
+**Then** unit tests prove that apply → undo restores a deep-equal document (except `revision`), redo reapplies, a new Command clears the redo stack, and a compound Command is a single undo entry (AD-3, FR-55)
+**And** the undo stack lives only in memory and exposes a `clear()` used later on lock loss (AD-3, AD-15)
+
+**Given** a dispatcher
+**When** a Command is dispatched without edit permission (read-only flag)
+**Then** it is rejected with a `DomainError` and the document is unchanged (AD-3)
+
+**Given** the first Commands
+**When** this story is done
+**Then** Project-level Commands exist for rename, Output Format, Map language, Basemap and reference date, each with an inverse and a unit test; later stories add their own Commands the same way
+
+### Story 1.4: Home: create and manage my Projects locally
+
+As a creator,
+I want to create a blank Project and find all my Projects when I reopen OPENMAP,
+So that my work is never lost and I need no account.
+
+**Acceptance Criteria:**
 
 **Given** the Home screen with no Project
 **When** it opens
@@ -767,7 +795,7 @@ So that my work is never lost and I need no account.
 **When** it is saved
 **Then** `navigator.storage.persist()` is requested once (AD-8)
 
-### Story 1.4: Editor shell with Commands and undo/redo
+### Story 1.5: Editor shell with undo/redo
 
 As a creator,
 I want a clear editor with my Project settings and reliable undo,
@@ -784,10 +812,10 @@ So that I can work confidently and reverse any mistake.
 **When** the properties panel shows Project settings
 **Then** the user can edit the Project name, Output Format (16:9 · 9:16 · 1:1 segmented control) and Map language (FR/EN), with advanced settings behind "plus d'options" (UX-DR35, UX-DR53, UX-DR34, NFR-9)
 
-**Given** the Command system in `src/core/commands`
+**Given** the Command system of Story 1.3
 **When** the user changes any Project setting
-**Then** a pure Command produces the new document and its inverse, `revision` increases, and the change is autosaved (AD-3)
-**And** Ctrl+Z / Ctrl+Shift+Z (and Ctrl+Y) undo and redo over multiple levels, undo also increments `revision`, the history is not persisted across reloads, and a continuous gesture (e.g. typing the name) produces a single undo entry on commit (UX-DR114, FR-55, AD-3)
+**Then** the change is dispatched as a Command and autosaved (AD-3)
+**And** Ctrl+Z / Ctrl+Shift+Z (and Ctrl+Y) and the top-bar buttons undo and redo over multiple levels, the history is not persisted across reloads, and a continuous gesture (e.g. typing the name) produces a single undo entry on commit (UX-DR114, FR-55, AD-3)
 
 **Given** the save status observable
 **When** a save is pending, done or failed
@@ -801,7 +829,37 @@ So that I can work confidently and reverse any mistake.
 **When** OPENMAP opens
 **Then** the "conçu pour ordinateur" page or an unsupported-browser message is shown instead of the app (UX-DR135, UX-DR148, AD-19, NFR-4)
 
-### Story 1.5: Local data pipeline for Basemaps and historical borders
+### Story 1.6: Keyboard and accessibility foundation
+
+As a creator,
+I want to drive the editor from the keyboard and use it with assistive technologies,
+So that I work fast and nobody is left out.
+
+**Acceptance Criteria:**
+
+**Given** a central shortcut registry in `src/ui`
+**When** shortcuts are defined
+**Then** single-letter tool keys follow the typed character (AZERTY and QWERTY), context priority is "most specific wins", and inside a focused text field all single-letter keys, Space and arrows go to the field (UX-DR110, UX-DR111)
+**And** `?` opens a shortcuts help overlay listing every active shortcut in the UI language
+
+**Given** the Escape key
+**When** pressed repeatedly
+**Then** it does one thing per press in this order: close menu or popover → close dialog (never during an export render) → cancel the drawing or pending selection → close the drawer → clear the selection → return to the Select tool; in Presentation mode it returns to the Editor (UX-DR112)
+
+**Given** Alt+1..Alt+6 (digit row, no Shift)
+**When** pressed
+**Then** focus jumps to top bar, tool rail, Map, properties panel, Timeline and drawer respectively; collisions with Chrome/Edge on Windows are checked and documented (UX-DR113)
+
+**Given** every chrome control
+**When** navigated with the keyboard
+**Then** tab order follows visual order, focus is always visible, every action has a pointer alternative (no hover-only access), tooltips show name and shortcut (UX-DR154, UX-DR155, UX-DR64, UX-DR116)
+**And** screen-reader semantics follow UX-DR156 (named regions, `aria-pressed` tools, live region for announcements), no information is conveyed by colour alone (UX-DR158), and `prefers-reduced-motion` disables non-essential chrome animation without affecting the Map or export (UX-DR157)
+
+**Given** this story
+**When** it is done
+**Then** a Definition of Done rule applies to every later story that adds a tool, panel or dialog: it registers its shortcuts in the registry, is fully keyboard-operable, announces its state changes to screen readers, and passes an automated accessibility check (axe) in the Playwright suite
+
+### Story 1.7: Local data pipeline for Basemaps and historical borders
 
 As the builder of OPENMAP,
 I want a repeatable script that turns open datasets into versioned map files with their licences,
@@ -827,7 +885,7 @@ So that the app can show historical maps without any third-party service.
 **Then** tiles and Library data are served locally from the pipeline output (e.g. through `pmtiles serve` or the Vite dev server) at the same versioned paths as the future data origin, so no code changes when Epic 7 moves them to the VPS (AD-18)
 **And** the pipeline is re-runnable and documented in plain French (commands, disk size produced)
 
-### Story 1.6: Display the stylized Basemap and the output frame
+### Story 1.8: Display the stylized Basemap and the output frame
 
 As a creator,
 I want to see and explore a beautiful historical-style map and switch its style,
@@ -857,7 +915,7 @@ So that I can start composing my story on it.
 **When** the Map renders
 **Then** the plain land colour of the active Basemap shows until tiles arrive, and editing is never blocked (UX-DR106)
 
-### Story 1.7: Reference date and historical GeoEntities
+### Story 1.9: Reference date and historical GeoEntities
 
 As a creator,
 I want to set the date of my map and see the countries and empires of that time,
@@ -887,7 +945,7 @@ So that my map is historically grounded.
 **When** it is fetched the first time
 **Then** `src/library` stores it in the Dexie Library cache and later reads come from there (AD-27)
 
-### Story 1.8: Search for a place
+### Story 1.10: Search for a place
 
 As a creator,
 I want to type a place name and jump to it,
@@ -910,7 +968,7 @@ So that I find my Region in seconds.
 **When** the list is empty
 **Then** a short helpful empty message is shown in the UI language (UX-DR146)
 
-### Story 1.9: Sources, licences and map credit
+### Story 1.11: Sources, licences and map credit
 
 As a creator,
 I want to see where the map data comes from and have the right credit on my map,
@@ -931,7 +989,7 @@ So that I respect licences without having to research them.
 **When** the credit is displayed
 **Then** its text follows the source's required wording, independent of the UI language (AD-20)
 
-### Story 1.10: One editing tab per Project
+### Story 1.12: One editing tab per Project
 
 As a creator,
 I want OPENMAP to protect my Project when I open it in two tabs,
@@ -964,7 +1022,7 @@ So that one tab never overwrites the other's work.
 **When** a Project is locked elsewhere
 **Then** its card shows "Ouvert dans un autre onglet" and delete, rename and duplicate are refused (AD-15)
 
-### Story 1.11: Warn when local storage is at risk
+### Story 1.13: Warn when local storage is at risk
 
 As a creator,
 I want to be warned if my browser might delete my Projects,
@@ -1097,7 +1155,7 @@ So that I can build who controls what.
 **Then** the panel "Territoire" shows its Faction and style fields, addressed as `(factionId, stepId)` (UX-DR37, AD-22)
 
 **Given** a project with 200 Territories
-**When** the user pans and zooms on the reference machine (4 cores, 16 GB, Intel Iris Xe class)
+**When** the user pans and zooms on the reference machine (see Overview)
 **Then** the Map stays at 30 fps or more; the measurement is recorded in the story's dev notes (NFR-2)
 
 ### Story 2.5: Draw a zone
@@ -1682,11 +1740,11 @@ So that I can add portraits, logos or my own symbols.
 
 The creator follows the wizard (Template, reference date, Region, Factions) and gets an already animated Map in under 2 minutes, or browses the Template gallery. The builder gets a workflow to author and publish official Templates with the OPENMAP editor itself, starting as soon as Epic 3 is done.
 
-### Story 6.1: Project File container and Template publishing workflow
+### Story 6.1: Project File container
 
 As the builder of OPENMAP,
-I want to turn a Project I made in the editor into an official Template and publish it to the Library,
-So that official content is produced with the product itself.
+I want one reliable file format for Projects,
+So that Templates, backups and transfers all share it.
 
 **Acceptance Criteria:**
 
@@ -1694,6 +1752,14 @@ So that official content is produced with the product itself.
 **When** a Project is serialized
 **Then** it produces the `.openmap` ZIP container of AD-10 (`manifest.json` with `format`, `schemaVersion`, app version and pinned Library versions; `project.json`; `media/<sha256>.<ext>` with licence records), and parsing runs `migrate` then Zod validation (AD-9, AD-10)
 **And** round-trip tests prove serialize → parse gives a deep-equal document (FR-54 foundation; the user-facing export/import UI arrives in Epic 7)
+
+### Story 6.2: Template authoring and publishing workflow
+
+As the builder of OPENMAP,
+I want to turn a Project I made in the editor into an official Template and publish it to the Library,
+So that official content is produced with the product itself.
+
+**Acceptance Criteria:**
 
 **Given** a hidden builder action (enabled only in development builds)
 **When** the builder exports the current Project as a Template
@@ -1703,7 +1769,7 @@ So that official content is produced with the product itself.
 **When** the pipeline runs
 **Then** they are published under `/library/v<n>/templates/` with an index for the gallery, and publishing fails if any Emblem or media inside lacks a verified licence record (AD-17, AD-18, PRD §5)
 
-### Story 6.2: Browse the Template gallery
+### Story 6.3: Browse the Template gallery
 
 As a creator,
 I want to browse Templates by Era, type and keyword,
@@ -1723,7 +1789,7 @@ So that I find a starting point that matches my topic.
 **When** the gallery cannot load
 **Then** a clear message offers "Projet vierge" instead (UX-DR141)
 
-### Story 6.3: Create a Project from a Template
+### Story 6.4: Create a Project from a Template
 
 As a creator,
 I want to start a Project from a Template and change anything in it,
@@ -1742,9 +1808,9 @@ So that I get a head start without being locked in.
 
 **Given** Home
 **When** the user chooses "Nouveau Projet"
-**Then** the wizard opens (replacing the direct blank creation of Story 1.3), with "Projet vierge" still available on its first screen (FR-1)
+**Then** the wizard opens (replacing the direct blank creation of Story 1.4), with "Projet vierge" still available on its first screen (FR-1)
 
-### Story 6.4: Wizard: reference date and Region
+### Story 6.5: Wizard: reference date and Region
 
 As a creator,
 I want the wizard to ask me the date and the Region of my story,
@@ -1762,13 +1828,13 @@ So that the map is set up for my topic in a few clicks.
 
 **Given** screen 3 "Région"
 **When** the user types a place or picks on a small map
-**Then** the Region sets the initial framing of the Project using the search of Story 1.8 (UX-DR125, FR-8)
+**Then** the Region sets the initial framing of the Project using the search of Story 1.10 (UX-DR125, FR-8)
 
 **Given** wizard choices
 **When** they are applied
 **Then** they become ordinary Commands on the instantiated Project, undoable afterwards in the Editor (AD-28, AD-3)
 
-### Story 6.5: Wizard: Factions and the ready-to-play result
+### Story 6.6: Wizard: Factions and the ready-to-play result
 
 As a creator,
 I want to pick the Factions to highlight and land on a map that already plays,
@@ -1788,7 +1854,7 @@ So that I see my first animation within 2 minutes.
 **When** they go from Home to the animated Map through the wizard
 **Then** it takes under 2 minutes in a moderated test with the default Template choices (NFR-7) `[HYP]`
 
-### Story 6.6: Official starter content
+### Story 6.7: Official starter content
 
 As a creator,
 I want a first set of good Templates and Kits across Eras,
@@ -1798,7 +1864,7 @@ So that I can test OPENMAP on topics I care about.
 
 **Given** the P0 validation
 **When** content is published
-**Then** at least 2 Templates per Era (Antiquité, Moyen Âge, Temps modernes, Ère contemporaine) and the Kits of their Factions are available, each authored with the editor and published through Story 6.1 (PRD §5 threshold) `[HYP on volume]`
+**Then** at least 2 Templates per Era (Antiquité, Moyen Âge, Temps modernes, Ère contemporaine) and the Kits of their Factions are available, each authored with the editor and published through Story 6.2 (PRD §5 threshold) `[HYP on volume]`
 **And** the Ère contemporaine set includes a "siège de ville" Template usable for UJ-1 (Pocket as a morphing DrawnZone, DateDisplay on) and an "Expansion d'empire" Template for UJ-2
 
 **Given** every Template and Kit
@@ -1836,7 +1902,7 @@ So that my work is backed up and portable.
 **When** it is imported
 **Then** it opens read-only with a message inviting to update the app, and is never written (AD-9)
 
-**Given** the storage banner of Story 1.11
+**Given** the storage banner of Story 1.13
 **When** it shows
 **Then** its action is now "Exporter le Fichier projet" (FR-53, UX-DR138)
 
@@ -1864,7 +1930,7 @@ So that every creator gets fast maps at no extra cost.
 
 **Given** production builds of the app
 **When** they point to the data origin
-**Then** no code change is needed compared to development paths (Story 1.5), and the production build fails if a non-OPENMAP tile URL is configured (AD-18)
+**Then** no code change is needed compared to development paths (Story 1.7), and the production build fails if a non-OPENMAP tile URL is configured (AD-18)
 
 ### Story 7.3: Self-hosted Umami
 
@@ -1939,3 +2005,25 @@ So that creators can use it and I sleep well.
 **Given** the hosting budget
 **When** any paid Cloudflare product would be enabled
 **Then** a billing alert is set first, and total spend beyond the VPS stays within 20 EUR/month unless a new decision is recorded (AD-18, PRD §8)
+
+### Story 7.6: P0 validation session with creators
+
+As the owner of OPENMAP,
+I want to watch 3–5 real creators use the P0 on a topic of their choice and decide what comes next,
+So that P1 is built on evidence, not on guesses.
+
+**Acceptance Criteria:**
+
+**Given** the P0 is live (Stories 7.1–7.5 done)
+**When** the validation is prepared
+**Then** 3–5 geopolitical or history content creators are recruited, each chooses a real topic, and a short observation guide is written in plain French (tasks, what to observe, no leading help) (PRD §12)
+
+**Given** each session
+**When** the creator works on their topic
+**Then** the owner notes where they get stuck, what they customize (Kits, Templates, Organic Signature), time to first animation and first export (NFR-7, SM-2), and whether they would use OPENMAP for a real video instead of their current method
+**And** at least one session measures preview smoothness and export time on the creator's own machine (NFR-2, NFR-3)
+
+**Given** all sessions are done
+**When** results are reviewed
+**Then** the go/no-go rule is applied: if at least 2 creators say they would use it for a real video, P1 planning starts (detail Epics 8–10); otherwise differentiation (R2) is revisited first, e.g. with `bmad-correct-course` (PRD §12, Q9) `[HYP on threshold]`
+**And** findings are written to a short validation report stored in `_bmad-output/` and feed the detailing of the P1 epics
