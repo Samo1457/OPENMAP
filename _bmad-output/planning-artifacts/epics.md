@@ -1439,3 +1439,125 @@ So that I can judge the final result before exporting.
 **Given** Step thumbnails
 **When** a Step changes
 **Then** its thumbnail is re-rendered at the start of its hold through the same pipeline, waiting on `render.ready` (AD-21, AD-26)
+
+---
+
+## Epic 4: Export the video
+
+The creator exports an MP4 identical to what they saw, with progress, cancel and the locked credit, and gets it ready for their editing software. This epic also installs the preview-vs-export golden test that every later story must keep green.
+
+### Story 4.1: Export dialog and capability check
+
+As a creator,
+I want a simple export dialog that tells me upfront if my browser can export,
+So that I never wait for a render that cannot work.
+
+**Acceptance Criteria:**
+
+**Given** the Editor
+**When** the user clicks "Exporter"
+**Then** the export dialog (560 px) opens on the Video tab with: range (whole Timeline or a range of Steps), frame rate (30 or 60 fps), the Project's Output Format shown (1920×1080, 1080×1920 or 1080×1080), and the credit settings (UX-DR130, FR-50, AD-23)
+**And** the Image tab is visible but marked as coming later (P1, FR-51)
+
+**Given** a required credit
+**When** the dialog shows credit settings
+**Then** the locked credit control lets the user choose only the corner and prominence (Discrète / Lisible), explains briefly why it is required, and exposes "Crédit obligatoire, verrouillé" to screen readers (UX-DR131, AD-17, FR-10)
+
+**Given** the dialog opens
+**When** `VideoEncoder.isConfigSupported` fails for the exact width, height, fps and bitrate (H.264)
+**Then** a `banner-warning` reads "Ce navigateur ne peut pas encoder de vidéo. Ouvrez OPENMAP dans Chrome ou Edge.", "Exporter" is disabled and the settings remain viewable (UX-DR142, AD-7, AD-19, NFR-4)
+
+**Given** the export settings
+**When** the user changes them
+**Then** they are not Project Commands and do not enter the undo history, except `project.credit` corner/prominence, which is a Command (AD-3, AD-17)
+
+### Story 4.2: Frame-by-frame rendering and MP4 encoding
+
+As a creator,
+I want OPENMAP to render my Timeline frame by frame into an MP4,
+So that I get a clean video for my editing software.
+
+**Acceptance Criteria:**
+
+**Given** "Exporter" is clicked
+**When** rendering starts
+**Then** a dedicated render instance is created at the exact output frame, frames `i = 0..n` are evaluated at `t = tStart + i / fps`, each frame awaits `render.ready(scene)` before capture, and frames are encoded through Mediabunny `CanvasSource` (codec `avc`) into MP4 (AD-7, AD-21, AD-23, AD-26)
+**And** the edit-affordance overlay (selection, handles) never appears in the video (AD-6), and there is no watermark (FR-50)
+
+**Given** rendering in progress
+**When** the dialog shows it
+**Then** settings are frozen, a progress bar shows percentage, time left and current Step ("Environ 25 s restantes · Étape 7 sur 10"), the Editor is blocked, and only "Annuler" interrupts it (UX-DR132, UX-DR69)
+**And** closing the tab triggers the browser's native leave warning (EXPERIENCE)
+
+**Given** "Annuler"
+**When** it is clicked during rendering
+**Then** rendering stops, nothing is saved, and the dialog returns to its settings (UX-DR144, FR-50)
+
+**Given** the reference machine and a 60 s Timeline at 1080p/30
+**When** it is exported
+**Then** export completes in 3 minutes or less; the measured time is recorded in the dev notes (NFR-3) `[HYP]`
+
+**Given** a Step range export
+**When** it runs
+**Then** it covers exactly `[start_a, end_b)` (AD-21)
+
+### Story 4.3: Missing tiles and offline during export
+
+As a creator,
+I want export to wait for the map to load and tell me clearly if it can't,
+So that I never get a video with holes by surprise.
+
+**Acceptance Criteria:**
+
+**Given** a frame whose tiles, fonts or media are still loading
+**When** export waits
+**Then** progress shows "Chargement des tuiles…" (AD-26, UX-DR143)
+
+**Given** 20 s without any new resource arriving
+**When** the timeout elapses
+**Then** rendering pauses with the warning "Certaines tuiles de la Carte n'ont pas pu être chargées (Étapes 3 à 5). Si vous continuez, ces zones garderont le fond uni du Fond." and the choices "Continuer" / "Annuler" (AD-7, UX-DR143) `[ASSUMPTION: 20 s]`
+**And** "Continuer" fills the missing tiles with the active Basemap's plain land colour; "Annuler" returns to the settings without saving anything
+
+**Given** the browser is offline
+**When** export starts
+**Then** the same warning appears immediately (UX-DR141, UX-DR143)
+
+### Story 4.4: Export done and download
+
+As a creator,
+I want to get my file easily when the render ends,
+So that I can drop it straight into my editing software.
+
+**Acceptance Criteria:**
+
+**Given** rendering completes
+**When** the dialog shows the done state
+**Then** the MP4 is downloaded with a readable file name (Project name + format + date), the dialog shows "Export terminé", "Afficher le téléchargement" and "Télécharger de nouveau", and the finish is announced politely to screen readers with focus on "Télécharger de nouveau" (UX-DR133, UX-DR156)
+
+**Given** the done state
+**When** the user clicks "Télécharger de nouveau"
+**Then** the same Blob kept in memory is downloaded again without re-rendering, until the dialog closes (AD-7)
+
+**Given** the dialog
+**When** export is finished or cancelled
+**Then** Escape or the cross closes it; during rendering neither does (UX-DR112)
+
+### Story 4.5: Preview-vs-export golden test
+
+As the builder of OPENMAP,
+I want an automated test proving the export matches the preview,
+So that no later feature can silently break the core promise.
+
+**Acceptance Criteria:**
+
+**Given** a fixture Project (Factions, Territories, a conquest over 3 Steps, a camera preset, the DateDisplay and a required credit)
+**When** the Playwright test runs in Chromium
+**Then** it captures the Presentation-mode frame at several `t` values and the frames at the same `t` decoded from the exported MP4, and asserts they match within a documented tolerance for video compression (NFR-1, AD-1, AD-7)
+
+**Given** CI
+**When** any later story changes rendering, the evaluator or a new element type
+**Then** the golden test runs and must pass; later stories extend the fixture with their element type (Definition of Done for Epics 5 and after)
+
+**Given** the determinism rule
+**When** the same Project is exported twice
+**Then** the decoded frames are identical within the same tolerance (FR-42, AD-2)
