@@ -1675,3 +1675,132 @@ So that I can add portraits, logos or my own symbols.
 **Given** privacy rules
 **When** an image is imported
 **Then** it never leaves the machine (NFR-6)
+
+---
+
+## Epic 6: Start in 2 minutes: wizard and Templates
+
+The creator follows the wizard (Template, reference date, Region, Factions) and gets an already animated Map in under 2 minutes, or browses the Template gallery. The builder gets a workflow to author and publish official Templates with the OPENMAP editor itself, starting as soon as Epic 3 is done.
+
+### Story 6.1: Project File container and Template publishing workflow
+
+As the builder of OPENMAP,
+I want to turn a Project I made in the editor into an official Template and publish it to the Library,
+So that official content is produced with the product itself.
+
+**Acceptance Criteria:**
+
+**Given** `src/persistence`
+**When** a Project is serialized
+**Then** it produces the `.openmap` ZIP container of AD-10 (`manifest.json` with `format`, `schemaVersion`, app version and pinned Library versions; `project.json`; `media/<sha256>.<ext>` with licence records), and parsing runs `migrate` then Zod validation (AD-9, AD-10)
+**And** round-trip tests prove serialize → parse gives a deep-equal document (FR-54 foundation; the user-facing export/import UI arrives in Epic 7)
+
+**Given** a hidden builder action (enabled only in development builds)
+**When** the builder exports the current Project as a Template
+**Then** a Template package is written: the Project File plus `template.json` (Era, type among battle / campaign / expansion over time / current geopolitics, Region, reference date, FR and EN titles, thumbnail and short animated preview rendered through the export pipeline) (AD-28, FR-3)
+
+**Given** Template packages in `pipeline/content/templates/`
+**When** the pipeline runs
+**Then** they are published under `/library/v<n>/templates/` with an index for the gallery, and publishing fails if any Emblem or media inside lacks a verified licence record (AD-17, AD-18, PRD §5)
+
+### Story 6.2: Browse the Template gallery
+
+As a creator,
+I want to browse Templates by Era, type and keyword,
+So that I find a starting point that matches my topic.
+
+**Acceptance Criteria:**
+
+**Given** the Templates index
+**When** the gallery shows (wizard screen 1 and the Library drawer Templates tab)
+**Then** each Template shows its thumbnail (animated preview on hover or focus), title in the UI language, Region and reference date (FR-3, UX-DR123, UX-DR60)
+
+**Given** filters
+**When** the user filters by Era (Antiquité, Moyen Âge, Temps modernes, Ère contemporaine), by type, or types a search text
+**Then** the list updates immediately; no match shows an empty state with a way to clear filters (FR-3, UX-DR146)
+
+**Given** the offline state or an unreachable data origin
+**When** the gallery cannot load
+**Then** a clear message offers "Projet vierge" instead (UX-DR141)
+
+### Story 6.3: Create a Project from a Template
+
+As a creator,
+I want to start a Project from a Template and change anything in it,
+So that I get a head start without being locked in.
+
+**Acceptance Criteria:**
+
+**Given** a chosen Template
+**When** the Project is created
+**Then** the Template is migrated, every element, Step, Act, Faction and Kit id is remapped consistently, a new `project.seed` is generated, the Template's pinned data versions are kept, and provenance `{templateId, version}` is recorded (AD-28, AD-2, AD-12, FR-1)
+**And** two Projects created from the same Template animate with different Organic Signature jitter (AD-2)
+
+**Given** a Project from a Template
+**When** the user edits it
+**Then** every element (suggested Arrows, pre-filled Steps, Kits, Relations) can be modified, moved or deleted; nothing is read-only (FR-4)
+
+**Given** Home
+**When** the user chooses "Nouveau Projet"
+**Then** the wizard opens (replacing the direct blank creation of Story 1.3), with "Projet vierge" still available on its first screen (FR-1)
+
+### Story 6.4: Wizard: reference date and Region
+
+As a creator,
+I want the wizard to ask me the date and the Region of my story,
+So that the map is set up for my topic in a few clicks.
+
+**Acceptance Criteria:**
+
+**Given** the wizard shell
+**When** it opens
+**Then** it shows at most 5 screens with a progress indicator (Template, Reference date, Region, Factions), Back/Next, and every screen can be skipped, keeping the Template's values (FR-2, UX-DR122)
+
+**Given** screen 2 "Date de référence"
+**When** the user types a date (year precision, BCE allowed)
+**Then** the value is validated like in Project settings, the nearest-data chip shows the real data date, and invalid input shows an inline error (UX-DR124, UX-DR147, UX-DR59, FR-6)
+
+**Given** screen 3 "Région"
+**When** the user types a place or picks on a small map
+**Then** the Region sets the initial framing of the Project using the search of Story 1.8 (UX-DR125, FR-8)
+
+**Given** wizard choices
+**When** they are applied
+**Then** they become ordinary Commands on the instantiated Project, undoable afterwards in the Editor (AD-28, AD-3)
+
+### Story 6.5: Wizard: Factions and the ready-to-play result
+
+As a creator,
+I want to pick the Factions to highlight and land on a map that already plays,
+So that I see my first animation within 2 minutes.
+
+**Acceptance Criteria:**
+
+**Given** screen 4 "Factions"
+**When** the user picks Factions
+**Then** each chosen Faction receives a copy of its Library Kit if one exists, otherwise a default Kit with a colour distinct from the other Factions of the Project (FR-2, FR-13, UX-DR126)
+
+**Given** the wizard ends
+**When** the Editor opens
+**Then** the Map has at least 2 Steps with at least one Territory change, Kits applied and the minimal Legend visible, and pressing play animates with no other action (FR-2, FR-35 P0)
+
+**Given** a first-time creator on the reference machine
+**When** they go from Home to the animated Map through the wizard
+**Then** it takes under 2 minutes in a moderated test with the default Template choices (NFR-7) `[HYP]`
+
+### Story 6.6: Official starter content
+
+As a creator,
+I want a first set of good Templates and Kits across Eras,
+So that I can test OPENMAP on topics I care about.
+
+**Acceptance Criteria:**
+
+**Given** the P0 validation
+**When** content is published
+**Then** at least 2 Templates per Era (Antiquité, Moyen Âge, Temps modernes, Ère contemporaine) and the Kits of their Factions are available, each authored with the editor and published through Story 6.1 (PRD §5 threshold) `[HYP on volume]`
+**And** the Ère contemporaine set includes a "siège de ville" Template usable for UJ-1 (Pocket as a morphing DrawnZone, DateDisplay on) and an "Expansion d'empire" Template for UJ-2
+
+**Given** every Template and Kit
+**When** it is reviewed
+**Then** it animates correctly, exports through the golden-tested pipeline, respects neutrality on contested territories (follows its source), and carries complete source and licence records (PRD §5, AD-17)
