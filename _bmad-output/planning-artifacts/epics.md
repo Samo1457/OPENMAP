@@ -1804,3 +1804,138 @@ So that I can test OPENMAP on topics I care about.
 **Given** every Template and Kit
 **When** it is reviewed
 **Then** it animates correctly, exports through the golden-tested pipeline, respects neutrality on contested territories (follows its source), and carries complete source and licence records (PRD §5, AD-17)
+
+---
+
+## Epic 7: Safe work, usage measurement and going online
+
+The creator can move a Project to another machine, is protected against storage loss, and chooses whether to share anonymous usage statistics. The builder puts OPENMAP online: data origin on the VPS behind Cloudflare, self-hosted telemetry, hardening, backups and a fixed domain. After this epic, the P0 validation slice can be handed to 3–5 creators.
+
+### Story 7.1: Export and import a Project File
+
+As a creator,
+I want to save a Project as a file and open it on another computer,
+So that my work is backed up and portable.
+
+**Acceptance Criteria:**
+
+**Given** a Project (Editor menu or Project card menu)
+**When** the user chooses "Exporter le Fichier projet"
+**Then** a `.openmap` file is downloaded containing the document, Kits and all imported and Library media, using the container of Story 6.1 (FR-54, AD-10)
+
+**Given** Home
+**When** the user chooses "Importer un Fichier projet" or drops a `.openmap` file anywhere on Home
+**Then** a progress toast "Import de siege-de-marioupol… 45 %" with "Annuler" is shown, the Project is migrated and validated, gets a new local id, and appears at the top of the list; existing Projects are never modified (FR-54, AD-9, AD-10, EXPERIENCE)
+**And** the reimported Project animates identically (same element ids and `project.seed`), verified by an automated test (FR-54, AD-2)
+
+**Given** an invalid or corrupted file
+**When** it is imported
+**Then** the dialog "Ce fichier n'est pas un Fichier projet OPENMAP lisible." is shown and nothing is created (UX-DR145)
+
+**Given** a file whose `schemaVersion` is newer than the app
+**When** it is imported
+**Then** it opens read-only with a message inviting to update the app, and is never written (AD-9)
+
+**Given** the storage banner of Story 1.11
+**When** it shows
+**Then** its action is now "Exporter le Fichier projet" (FR-53, UX-DR138)
+
+### Story 7.2: Data origin on the VPS behind Cloudflare
+
+As the builder of OPENMAP,
+I want tiles and Library data served from my VPS through Cloudflare,
+So that every creator gets fast maps at no extra cost.
+
+**Acceptance Criteria:**
+
+**Given** the Hostinger VPS KVM 2
+**When** `ops/` is applied
+**Then** `pmtiles serve` serves the versioned tilesets as `/<name>-v<n>/{z}/{x}/{y}.mvt` (or `.webp`) with TileJSON, and a reverse proxy with TLS serves `/library/v<n>/…`, all under `data.<domain>` (AD-18, ARCH-16)
+
+**Given** versioned paths
+**When** they are requested
+**Then** the origin sends `Cache-Control: public, max-age=31536000, immutable`, a Cloudflare Cache Rule caches them (including `.mvt` and `.json`), and a repeat request is a cache hit (AD-18)
+**And** CORS allows the production app origin, the project's `*.pages.dev` previews and localhost dev ports only
+
+**Given** a new data version
+**When** the builder runs `ops/publish.sh`
+**Then** it takes a Hostinger snapshot, uploads the new versioned folders without overwriting existing ones, and smoke-tests tile and TileJSON URLs through the proxy; it is the only publish path (ARCH-19, AD-12)
+**And** tiles and data stay within the 70 GB disk budget; zoom caps per tileset are recorded (Deferred item of the spine)
+
+**Given** production builds of the app
+**When** they point to the data origin
+**Then** no code change is needed compared to development paths (Story 1.5), and the production build fails if a non-OPENMAP tile URL is configured (AD-18)
+
+### Story 7.3: Self-hosted Umami
+
+As the builder of OPENMAP,
+I want my own privacy-friendly statistics server,
+So that usage data never goes to a third party.
+
+**Acceptance Criteria:**
+
+**Given** the VPS
+**When** Umami 3.4 with PostgreSQL is deployed with Docker Compose from `ops/`
+**Then** it is reachable only through the data origin at `/api/send` for event ingestion, with session replay, heatmaps and web vitals disabled (AD-16, ARCH-18)
+
+**Given** the Umami database
+**When** a week passes
+**Then** an off-VPS backup copy is made (e.g. to the owner's PC) and its restore procedure is documented in plain French (ARCH-19)
+
+**Given** server secrets
+**When** they are configured
+**Then** they live only in env files on the VPS, never in the repository (ARCH-19)
+
+### Story 7.4: Telemetry consent and event catalogue
+
+As a creator,
+I want to choose freely whether OPENMAP gets anonymous usage statistics,
+So that my privacy is respected.
+
+**Acceptance Criteria:**
+
+**Given** the first launch
+**When** Home opens
+**Then** the consent dialog asks "Aider à améliorer OPENMAP en envoyant des statistiques d'usage anonymes ? Le contenu de vos Projets ne quitte jamais votre ordinateur." with equal Accept and Refuse choices and nothing pre-selected (FR-58, UX-DR121)
+
+**Given** consent refused or not yet given
+**When** the user uses OPENMAP
+**Then** no request reaches the telemetry path (AD-16, FR-58)
+
+**Given** consent given
+**When** tracked actions happen
+**Then** `src/telemetry` posts events directly to `/api/send` from a closed, typed catalogue (e.g. `project_created`, `export_completed`, `feature_used`) with only enumerated or bucketed properties and the boolean flags needed by SM-2..SM-8 (`from_template`, `template_modified`, `organic_signature_on`, `personal_kit_reused`, `data_corrected`), keyed by a random `installId` created at consent (AD-16, FR-58)
+**And** no Umami tracker script is loaded, and no event ever contains free text, names, geometry, media, Project ids or URLs; an automated test enforces the catalogue
+
+**Given** Settings → Confidentialité
+**When** the user revokes consent
+**Then** sending stops immediately and the `installId` is deleted; the tab explains what is and is not sent (FR-58, UX-DR134)
+
+### Story 7.5: Going live safely
+
+As the builder of OPENMAP,
+I want the public site on its final domain with basic security and monitoring,
+So that creators can use it and I sleep well.
+
+**Acceptance Criteria:**
+
+**Given** the domain and trademark check is done
+**When** the app is deployed
+**Then** it is served on its final origin `app.<domain>` from Cloudflare Pages, and this origin is recorded as never to change (AD-18, ARCH-21)
+
+**Given** the production app
+**When** it is served
+**Then** a Content-Security-Policy blocks inline scripts and allows connections only to the app origin and the data origin (AD-16, AD-29)
+
+**Given** the VPS
+**When** it is hardened
+**Then** SSH is key-only, the firewall allows HTTP(S) only from Cloudflare ranges, and automatic security updates are on; a checklist in `ops/` records it (ARCH-19)
+
+**Given** monitoring
+**When** the data origin goes down
+**Then** a free external uptime check alerts the owner (ARCH-19)
+**And** the app keeps editing open Projects and shows the EXPERIENCE fallbacks for missing tiles (UX-DR106, UX-DR141)
+
+**Given** the hosting budget
+**When** any paid Cloudflare product would be enabled
+**Then** a billing alert is set first, and total spend beyond the VPS stays within 20 EUR/month unless a new decision is recorded (AD-18, PRD §8)
