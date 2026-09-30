@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [step-01-validate-prerequisites, step-02-design-epics, step-03-create-stories]
+stepsCompleted: [step-01-validate-prerequisites, step-02-design-epics, step-03-create-stories, step-04-final-validation]
 inputDocuments:
   - prds/prd-OPENMAP-2026-09-25/prd.md
   - prds/prd-OPENMAP-2026-09-25/addendum.md
@@ -673,7 +673,7 @@ Fog of war, conquest bar, FrontTraces, ArrowCategories, highlight, curved text, 
 
 A creator opens OPENMAP on their PC, creates a blank Project, sees a stylized Basemap with the GeoEntities valid at the chosen reference date, searches for a place and sees the data sources. The Project saves itself continuously, supports undo/redo and is safe across tabs; the UI works in light/dark and French/English. Everything runs locally (no VPS until Epic 7).
 
-**Cross-cutting rules for every story from 1.5 on:** every Project change goes through a Command with an inverse (AD-3); no animation outside the evaluator (AD-1); no forbidden globals in `src/core` (AD-2); UI strings only through i18n keys (AD-20); keyboard and accessibility Definition of Done from Story 1.6.
+**Cross-cutting rules for every story from 1.5 on:** every Project change goes through a Command with an inverse (AD-3); no animation outside the evaluator (AD-1); no forbidden globals in `src/core` (AD-2); UI strings only through i18n keys (AD-20); keyboard and accessibility Definition of Done from Story 1.7.
 
 ### Story 1.1: Project scaffold and quality guardrails
 
@@ -838,6 +838,18 @@ So that I can work confidently and reverse any mistake.
 **When** a save is pending, done or failed
 **Then** the top bar shows "Enregistrement…", "Enregistré" or an error state; no toast appears on routine autosave, and Ctrl+S flushes and shows "Projet sauvegardé" (UX-DR137, UX-DR115, AD-8)
 
+**Given** the scene area
+**When** the Editor renders
+**Then** a 36 px tool options bar sits above the Map (never over it), showing the current Step reminder on the left, the active tool's options, contextual links, and the read-only Output Format label on the right (UX-DR32, UX-DR105)
+
+### Story 1.6: Settings dialog and browser gate
+
+As a creator,
+I want app-wide settings and a clear message when my device or browser can't run OPENMAP,
+So that I can set OPENMAP up my way and never hit a broken screen.
+
+**Acceptance Criteria:**
+
 **Given** the settings menu
 **When** the user opens Settings
 **Then** a tabbed dialog offers Appearance, Language and Storage (space used, persistence status, reminder to export Project Files) (UX-DR134, UX-DR67)
@@ -846,12 +858,11 @@ So that I can work confidently and reverse any mistake.
 **When** OPENMAP opens
 **Then** the "conçu pour ordinateur" page or an unsupported-browser message is shown instead of the app (UX-DR135, UX-DR148, AD-19, NFR-4)
 
-**Given** the scene area
-**When** the Editor renders
-**Then** a 36 px tool options bar sits above the Map (never over it), showing the current Step reminder on the left, the active tool's options, contextual links, and the read-only Output Format label on the right (UX-DR32, UX-DR105)
-**And** Settings and the unsupported-browser gate reuse the dialog and banner components (UX-DR66, UX-DR67)
+**Given** Settings and the unsupported-browser gate
+**When** they render
+**Then** they reuse the dialog and banner components (UX-DR66, UX-DR67)
 
-### Story 1.6: Keyboard and accessibility foundation
+### Story 1.7: Keyboard and accessibility foundation
 
 As a creator,
 I want to drive the editor from the keyboard and use it with assistive technologies,
@@ -881,21 +892,17 @@ So that I work fast and nobody is left out.
 **When** it is done
 **Then** a Definition of Done rule applies to every later story that adds a tool, panel or dialog: it registers its shortcuts in the registry, is fully keyboard-operable, announces its state changes to screen readers, and passes an automated accessibility check (axe) in the Playwright suite
 
-### Story 1.7: Local data pipeline for Basemaps and historical borders
+### Story 1.8: Basemap data pipeline (Natural Earth)
 
 As the builder of OPENMAP,
-I want a repeatable script that turns open datasets into versioned map files with their licences,
-So that the app can show historical maps without any third-party service.
+I want a repeatable script that turns Natural Earth into versioned Basemap files with their licences,
+So that the app can show stylized maps without any third-party service.
 
 **Acceptance Criteria:**
 
 **Given** Natural Earth (public domain) source files
 **When** `pipeline/` builds the stylized Basemap data
 **Then** it produces a versioned tileset `natural-earth-v1.pmtiles` (coastlines, land, rivers, lakes, relief shading, populated places for labels) with no modern roads, and four MapLibre styles (parchment, dark, light, relief) using the DESIGN.md `map-*` tokens, plus self-generated glyphs from the OFL fonts (AD-17, AD-18, UX-DR3, UX-DR4)
-
-**Given** Cliopatria (CC BY 4.0)
-**When** the pipeline builds GeoEntities
-**Then** it outputs `/library/v1/geo/...` files of whole polygons with the dataset's stable entity ids, validity ranges and a simplification level fixed for this version (AD-12), in a format chosen and documented by this story (Deferred item of the spine)
 
 **Given** every produced dataset
 **When** it is written
@@ -907,7 +914,29 @@ So that the app can show historical maps without any third-party service.
 **Then** tiles and Library data are served locally from the pipeline output (e.g. through `pmtiles serve` or the Vite dev server) at the same versioned paths as the future data origin, so no code changes when Epic 7 moves them to the VPS (AD-18)
 **And** the pipeline is re-runnable and documented in plain French (commands, disk size produced)
 
-### Story 1.8: Display the stylized Basemap and the output frame
+### Story 1.9: Historical borders pipeline (Cliopatria)
+
+As the builder of OPENMAP,
+I want a repeatable script that turns Cliopatria into versioned historical GeoEntities,
+So that the Map can show the countries and empires of any date.
+
+**Acceptance Criteria:**
+
+**Given** Cliopatria (CC BY 4.0)
+**When** the pipeline builds GeoEntities
+**Then** it outputs `/library/v1/geo/...` files of whole polygons with the dataset's stable entity ids, validity ranges and a simplification level fixed for this version (AD-12), in a format chosen and documented by this story (Deferred item of the spine)
+
+**Given** every produced dataset
+**When** it is written
+**Then** it carries `{source, licence, attribution, creditRequired}` metadata (AD-17)
+**And** no NC, ODbL or share-alike source is used; the run fails if a source's declared licence is not in the allowlist
+
+**Given** development mode
+**When** the app starts
+**Then** the GeoEntity files are served locally at `/library/v1/geo/…`, the same path as the future data origin (AD-18)
+**And** the pipeline documents in plain French the dataset version, simplification level and disk size produced
+
+### Story 1.10: Display the stylized Basemap and the output frame
 
 As a creator,
 I want to see and explore a beautiful historical-style map and switch its style,
@@ -945,7 +974,7 @@ So that I can start composing my story on it.
 **When** anything is drawn on the Map
 **Then** sizes use the map typography tokens in export pixels for a 1080 px short side and scale on screen by (frame short side / 1080), while chrome never scales; e.g. a 562×316 frame shows a 56 px label at about 16 px (UX-DR21, AD-23)
 
-### Story 1.9: Reference date and historical GeoEntities
+### Story 1.11: Reference date and historical GeoEntities
 
 As a creator,
 I want to set the date of my map and see the countries and empires of that time,
@@ -974,7 +1003,7 @@ So that my map is historically grounded.
 **When** it is fetched the first time
 **Then** `src/library` stores it in the Dexie Library cache and later reads come from there (AD-27)
 
-### Story 1.10: Search for a place
+### Story 1.12: Search for a place
 
 As a creator,
 I want to type a place name and jump to it,
@@ -997,7 +1026,7 @@ So that I find my Region in seconds.
 **When** the list is empty
 **Then** a short helpful empty message is shown in the UI language (UX-DR146)
 
-### Story 1.11: Sources, licences and map credit
+### Story 1.13: Sources, licences and map credit
 
 As a creator,
 I want to see where the map data comes from and have the right credit on my map,
@@ -1022,7 +1051,7 @@ So that I respect licences without having to research them.
 **When** this element is drawn
 **Then** it uses the map typography tokens of UX-DR21 scaled per AD-23 (UX-DR21)
 
-### Story 1.12: One editing tab per Project
+### Story 1.14: One editing tab per Project
 
 As a creator,
 I want OPENMAP to protect my Project when I open it in two tabs,
@@ -1055,7 +1084,7 @@ So that one tab never overwrites the other's work.
 **When** a Project is locked elsewhere
 **Then** its card shows "Ouvert dans un autre onglet" and delete, rename and duplicate are refused (AD-15)
 
-### Story 1.13: Warn when local storage is at risk
+### Story 1.15: Warn when local storage is at risk
 
 As a creator,
 I want to be warned if my browser might delete my Projects,
@@ -1180,7 +1209,7 @@ So that vassals or armies stay visually related to their parent.
 **When** no Relation override exists
 **Then** they are allied by default (FR-14, FR-22)
 
-### Story 2.4: Assign GeoEntities to a Faction
+### Story 2.4: Territories from GeoEntities: assign, compute and draw
 
 As a creator,
 I want to click countries or empires and give them to a Faction,
@@ -1195,17 +1224,12 @@ So that I can build who controls what.
 **Given** the Select tool (`V`)
 **When** the user clicks a GeoEntity (Shift+click or rectangle for several)
 **Then** the panel "Entité géographique" (or "5 Entités") opens on the faction-picker; clicking a Faction swatch assigns all selected GeoEntities, "Neutre" removes them from any Territory (UX-DR36, UX-DR55, UX-DR89, UX-DR99)
-**And** the same assignment is available from the context menu "Assigner à" and from the Territory tool (`T`) in Entities mode for chained clicks (UX-DR70, UX-DR90, UX-DR99)
 **And** a toast "5 Entités assignées à OTAN · Annuler" appears and one Ctrl+Z undoes the whole assignment (UX-DR115, AD-3)
 
 **Given** assigned GeoEntities
 **When** the Map is evaluated
 **Then** `derive.coverage()` produces the partition and deck.gl draws each Territory filled and outlined with its Faction's resolved Kit; neutral Territories use the neutral style (AD-5, AD-6, AD-22)
 **And** selection highlights use ink + halo, never the UI accent (UX-DR100, UX-DR102)
-
-**Given** a double-click on a Territory surface
-**When** it is selected
-**Then** the panel "Territoire" shows its Faction and style fields, addressed as `(factionId, stepId)` (UX-DR37, AD-22)
 
 **Given** a project with 200 Territories
 **When** the user pans and zooms on the reference machine (see Overview)
@@ -1215,7 +1239,23 @@ So that I can build who controls what.
 **When** the user opens the Territory or Conquest tool or the faction-picker
 **Then** the empty state "Ajoutez une Faction pour colorer des Territoires." offers "Ajouter une Faction", which opens the Library on the Kits tab (UX-DR146)
 
-### Story 2.5: Draw a zone
+### Story 2.5: More ways to assign, and the Territory panel
+
+As a creator,
+I want to assign from a context menu or by chaining clicks, and to inspect a Territory,
+So that colouring a large map stays fast.
+
+**Acceptance Criteria:**
+
+**Given** one or more selected GeoEntities
+**When** the user uses the context menu (right-click, Menu key or Shift+F10) or the Territory tool (`T`) in Entities mode
+**Then** the same assignment is available from the context menu "Assigner à" and from the Territory tool (`T`) in Entities mode for chained clicks (UX-DR70, UX-DR90, UX-DR99)
+
+**Given** a double-click on a Territory surface
+**When** it is selected
+**Then** the panel "Territoire" shows its Faction and style fields, addressed as `(factionId, stepId)` (UX-DR37, AD-22)
+
+### Story 2.6: Draw a zone
 
 As a creator,
 I want to draw a zone freehand or point by point,
@@ -1240,7 +1280,7 @@ So that I can show areas that don't follow country borders (landings, occupied z
 **When** the user changes the reference date
 **Then** a confirmation explains the consequence, and GeoEntities that no longer exist at the new date are converted into DrawnZones with the same owner in the same undoable Command (FR-6)
 
-### Story 2.6: Conquest brush and free paint
+### Story 2.7: Conquest brush and free paint
 
 As a creator,
 I want to pick an attacking Faction and paint what it conquers,
@@ -1261,7 +1301,7 @@ So that building a conquest is as fast as colouring.
 **When** conquest starts
 **Then** the tool suggests free paint (FR-7 message, P0 wording) (UX-DR91)
 
-### Story 2.7: Relations and automatic FrontLines
+### Story 2.8: Relations and automatic FrontLines
 
 As a creator,
 I want FrontLines to appear by themselves between Factions at war,
@@ -1285,7 +1325,7 @@ So that I never trace a front by hand.
 **When** the user selects it
 **Then** the panel "Ligne de front" offers style settings and hiding it for this pair; Project settings offer hiding all FrontLines (FR-23, UX-DR39)
 
-### Story 2.8: Fill patterns and neutral style
+### Story 2.9: Fill patterns and neutral style
 
 As a creator,
 I want to fill Territories solid, semi-transparent or hatched,
@@ -1306,7 +1346,7 @@ So that I can express status such as withdrawal, occupation or alliance tiers.
 **When** it is rendered on each stylized Basemap
 **Then** patterns and outlines stay legible and the Map is identical in light and dark UI themes (UX-DR101, UX-DR107)
 
-### Story 2.9: Minimal Legend
+### Story 2.10: Minimal Legend
 
 As a creator,
 I want a small Legend listing my Factions and their colours to appear automatically,
@@ -1424,21 +1464,17 @@ So that I can see my animation exactly as it will be exported.
 **When** the lint and a unit test scan the code
 **Then** no forbidden animation API is used (AD-1)
 
-### Story 3.4: Territory transitions
+### Story 3.4: Fade and sweep transitions and zone morphing
 
 As a creator,
-I want conquered land to spread from the front, fade or sweep in,
-So that changes of control read like a story.
+I want changes of control to fade or sweep in and drawn zones to morph,
+So that changes read like a story.
 
 **Acceptance Criteria:**
 
 **Given** a Step where GeoEntities or DrawnZones change owner
 **When** its transition plays
-**Then** the transition chosen in the Step panel applies: propagation (default), fade or sweep (FR-39)
-
-**Given** propagation
-**When** the changed area touches the attacker's previous Territory
-**Then** it spreads from the adjacent FrontLine; otherwise from a point the user can place, or from the centre of the area (FR-39)
+**Then** the transition chosen in the Step panel applies: fade or sweep, and propagation once Story 3.5 is done (FR-39)
 
 **Given** a DrawnZone whose points differ between two Steps
 **When** the transition plays
@@ -1452,7 +1488,27 @@ So that changes of control read like a story.
 **When** it is evaluated twice
 **Then** the Scene is deep-equal (AD-2)
 
-### Story 3.5: Organic Signature
+### Story 3.5: Propagation from the front
+
+As a creator,
+I want conquered land to spread from the front line,
+So that a conquest looks like an advance, not a colour swap.
+
+**Acceptance Criteria:**
+
+**Given** propagation
+**When** the changed area touches the attacker's previous Territory
+**Then** it spreads from the adjacent FrontLine; otherwise from a point the user can place, or from the centre of the area (FR-39)
+
+**Given** a new Step
+**When** it is created
+**Then** propagation is its default Territory transition (FR-39)
+
+**Given** the same Project and `t`
+**When** a propagation frame is evaluated twice
+**Then** the Scene is deep-equal (AD-2)
+
+### Story 3.6: Organic Signature
 
 As a creator,
 I want animations to have a subtle hand-made feel by default,
@@ -1480,7 +1536,7 @@ So that my map looks personal without any effort.
 **When** frames at identical `t` are compared
 **Then** they are identical (determinism unit test on the Scene) (FR-42, AD-2)
 
-### Story 3.6: Camera presets and automatic framing
+### Story 3.7: Camera presets and automatic framing
 
 As a creator,
 I want to choose how the camera moves at each Step,
@@ -1505,7 +1561,7 @@ So that the camera tells the story as much as the map.
 **When** framings are recomputed
 **Then** the toast "Cadrages recalculés pour 9:16 · Annuler" appears and one Ctrl+Z restores the previous format (UX-DR63)
 
-### Story 3.7: Manual framing
+### Story 3.8: Manual framing
 
 As a creator,
 I want to set the camera myself for a Step,
@@ -1521,7 +1577,7 @@ So that I control exactly what the viewer sees.
 **When** the Output Format changes
 **Then** the same geographic area stays inside the new frame (AD-23)
 
-### Story 3.8: Simple DateDisplay
+### Story 3.9: Simple DateDisplay
 
 As a creator,
 I want the date of the current Step shown large on my map,
@@ -1550,7 +1606,7 @@ So that viewers always know when the action happens.
 **When** the frame changes
 **Then** the DateDisplay stay anchored to the same frame edge (FR-50, AD-14)
 
-### Story 3.9: Presentation mode
+### Story 3.10: Presentation mode
 
 As a creator,
 I want to watch my map full screen exactly as it will be exported,
@@ -1715,7 +1771,27 @@ So that no later feature can silently break the core promise.
 
 The creator draws offensive Arrows that draw themselves, places and moves UnitTokens, writes animated titles and annotations, and imports their own images. Every story in this epic extends the golden test fixture of Story 4.5 with its element type and keeps it green (Definition of Done).
 
-### Story 5.1: Movement Arrows
+### Story 5.1: Timeline element tracks
+
+As a creator,
+I want Timeline lanes where each Arrow, Token and Text appears as a clip,
+So that I can see and adjust when each element exists.
+
+**Acceptance Criteria:**
+
+**Given** the Timeline
+**When** element tracks are built
+**Then** Arrows, Tokens and Text tracks exist as 26 px lanes with 20 px clips in their track colours; a clip spans an element's existence range, overlapping clips go to automatic sub-rows, and dragging a clip's edges changes the element's Step range through one Command (UX-DR79, UX-DR80, UX-DR13, FR-45, AD-3)
+
+**Given** a track with no element
+**When** the Timeline renders
+**Then** the lane shows its label and stays empty; tracks are keyboard-operable and announced per the Story 1.7 rule
+
+**Given** the track component
+**When** it is tested
+**Then** it is covered with a test element type in Vitest and Playwright, so Stories 5.2–5.4 only plug their element kind in
+
+### Story 5.2: Movement Arrows
 
 As a creator,
 I want to draw curved offensive Arrows that draw themselves during a Step,
@@ -1738,13 +1814,13 @@ So that viewers see who attacks where.
 
 **Given** the Timeline
 **When** Arrows exist
-**Then** the Arrows track shows one clip per Arrow spanning its existence, overlapping clips go to automatic sub-rows, and dragging a clip's edges changes its Step range (UX-DR79, UX-DR80, UX-DR13, FR-45)
+**Then** Arrows appear on the Arrows track of Story 5.1 (UX-DR79, UX-DR80, UX-DR13, FR-45)
 
 **Given** automatic framing
 **When** a Step creates or changes Arrows
 **Then** they are included in the framed area (FR-46)
 
-### Story 5.2: UnitTokens
+### Story 5.3: UnitTokens
 
 As a creator,
 I want to place unit markers and move them between Steps,
@@ -1780,7 +1856,7 @@ So that I can show forces and manoeuvres.
 **When** a Step creates or moves UnitTokens
 **Then** they are included in the framed area (FR-46)
 
-### Story 5.3: Texts
+### Story 5.4: Texts
 
 As a creator,
 I want to add titles, labels and annotations that appear with a typing animation,
@@ -1814,7 +1890,7 @@ So that I can name places, people and events on my map.
 **When** the frame changes
 **Then** frame-anchored Texts stay anchored to the same frame edge (FR-50, AD-14)
 
-### Story 5.4: Import images
+### Story 5.5: Import images
 
 As a creator,
 I want to bring my own images onto the map,
@@ -1938,7 +2014,7 @@ So that the map is set up for my topic in a few clicks.
 
 **Given** screen 3 "Région"
 **When** the user types a place or picks on a small map
-**Then** the Region sets the initial framing of the Project using the search of Story 1.10 (UX-DR125, FR-8)
+**Then** the Region sets the initial framing of the Project using the search of Story 1.12 (UX-DR125, FR-8)
 
 **Given** wizard choices
 **When** they are applied
@@ -2016,7 +2092,7 @@ So that my work is backed up and portable.
 **When** it is imported
 **Then** it opens read-only with a message inviting to update the app, and is never written (AD-9)
 
-**Given** the storage banner of Story 1.13
+**Given** the storage banner of Story 1.15
 **When** it shows
 **Then** its action is now "Exporter le Fichier projet" (FR-53, UX-DR138)
 
@@ -2044,7 +2120,7 @@ So that every creator gets fast maps at no extra cost.
 
 **Given** production builds of the app
 **When** they point to the data origin
-**Then** no code change is needed compared to development paths (Story 1.7), and the production build fails if a non-OPENMAP tile URL is configured (AD-18)
+**Then** no code change is needed compared to development paths (Story 1.8), and the production build fails if a non-OPENMAP tile URL is configured (AD-18)
 
 ### Story 7.3: Self-hosted Umami
 
