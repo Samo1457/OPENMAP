@@ -1,0 +1,127 @@
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created, ready for development
+#   - in-progress: Developer actively working on implementation
+#   - review: Implementation complete, ready for review
+#   - done: Story completed
+
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+
+# Action Item Status:
+#   - open: Committed during a retrospective, not yet addressed
+#   - in-progress: Actively being worked on
+#   - done: Completed
+
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when its first story starts (via build's sprint sync)
+# - Stories can be worked in parallel if team capacity allows
+# - Developer typically creates the next story after the previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+# - Retrospective appends its action items to action_items; the status view surfaces open ones
+generated: 09-30-2026 08:56
+last_updated: 09-30-2026 08:56
+project: OPENMAP
+project_key: NOKEY
+tracking_system: file-system
+story_location: _bmad-output/implementation-artifacts
+development_status:
+  epic-1: backlog
+  1-1-project-scaffold-and-quality-guardrails: backlog
+  1-2-visual-identity-themes-and-languages: backlog
+  1-3-core-project-model-commands-and-undo-engine: backlog
+  1-4-home-create-and-manage-my-projects-locally: backlog
+  1-5-editor-shell-with-undo-redo: backlog
+  1-6-settings-dialog-and-browser-gate: backlog
+  1-7-keyboard-and-accessibility-foundation: backlog
+  1-8-basemap-data-pipeline-natural-earth: backlog
+  1-9-historical-borders-pipeline-cliopatria: backlog
+  1-10-display-the-stylized-basemap-and-the-output-frame: backlog
+  1-11-reference-date-and-historical-geoentities: backlog
+  1-12-search-for-a-place: backlog
+  1-13-sources-licences-and-map-credit: backlog
+  1-14-one-editing-tab-per-project: backlog
+  1-15-warn-when-local-storage-is-at-risk: backlog
+  epic-1-retrospective: optional
+
+  epic-2: backlog
+  2-1-add-factions-from-the-library-of-kits: backlog
+  2-2-edit-a-factionkit: backlog
+  2-3-subfactions-that-inherit-their-parent-s-style: backlog
+  2-4-territories-from-geoentities-assign-compute-and-draw: backlog
+  2-5-more-ways-to-assign-and-the-territory-panel: backlog
+  2-6-draw-a-zone: backlog
+  2-7-conquest-brush-and-free-paint: backlog
+  2-8-relations-and-automatic-frontlines: backlog
+  2-9-fill-patterns-and-neutral-style: backlog
+  2-10-minimal-legend: backlog
+  epic-2-retrospective: optional
+
+  epic-3: backlog
+  3-1-timeline-and-step-management: backlog
+  3-2-per-step-editing-scope-and-element-existence: backlog
+  3-3-playback-and-scrubbing: backlog
+  3-4-fade-and-sweep-transitions-and-zone-morphing: backlog
+  3-5-propagation-from-the-front: backlog
+  3-6-organic-signature: backlog
+  3-7-camera-presets-and-automatic-framing: backlog
+  3-8-manual-framing: backlog
+  3-9-simple-datedisplay: backlog
+  3-10-presentation-mode: backlog
+  epic-3-retrospective: optional
+
+  epic-4: backlog
+  4-1-export-dialog-and-capability-check: backlog
+  4-2-frame-by-frame-rendering-and-mp4-encoding: backlog
+  4-3-missing-tiles-and-offline-during-export: backlog
+  4-4-export-done-and-download: backlog
+  4-5-preview-vs-export-golden-test: backlog
+  epic-4-retrospective: optional
+
+  epic-5: backlog
+  5-1-timeline-element-tracks: backlog
+  5-2-movement-arrows: backlog
+  5-3-unittokens: backlog
+  5-4-texts: backlog
+  5-5-import-images: backlog
+  epic-5-retrospective: optional
+
+  epic-6: backlog
+  6-1-project-file-container: backlog
+  6-2-template-authoring-and-publishing-workflow: backlog
+  6-3-browse-the-template-gallery: backlog
+  6-4-create-a-project-from-a-template: backlog
+  6-5-wizard-reference-date-and-region: backlog
+  6-6-wizard-factions-and-the-ready-to-play-result: backlog
+  6-7-official-starter-content: backlog
+  epic-6-retrospective: optional
+
+  epic-7: backlog
+  7-1-export-and-import-a-project-file: backlog
+  7-2-data-origin-on-the-vps-behind-cloudflare: backlog
+  7-3-self-hosted-umami: backlog
+  7-4-telemetry-consent-and-event-catalogue: backlog
+  7-5-going-live-safely: backlog
+  7-6-p0-validation-session-with-creators: backlog
+  epic-7-retrospective: optional
+
+  epic-8: backlog
+  epic-8-retrospective: optional
+
+  epic-9: backlog
+  epic-9-retrospective: optional
+
+  epic-10: backlog
+  epic-10-retrospective: optional
+
+  epic-11: backlog
+  epic-11-retrospective: optional

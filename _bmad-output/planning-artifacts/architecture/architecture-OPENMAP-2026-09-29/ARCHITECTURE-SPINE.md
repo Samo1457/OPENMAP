@@ -366,7 +366,7 @@ openmap/
 - **GeoEntity file format and chunking** (GeoJSON vs FlatGeobuf, per-Region split). AD-12 already fixes whole polygons, pinned simplification and identity; decide in the first Territory epic.
 - **Per-tileset max zoom** within the ≤ 70 GB VPS budget. Decide in the Basemap pipeline epic; city-level satellite for current-events Regions takes priority over global depth.
 - **`pipeline/` tooling** (tile building and simplification tools). Decide in the pipeline epic, under AD-17 licence rules, with versions verified at that time.
-- **EOX Sentinel-2 cloudless 2016 acquisition** (official download vs. harvesting allowed by the service terms). If neither is allowed, P0 ships without satellite and falls back to the dark Basemap (FR-5). The 2016 imagery predates recent events (e.g. Mariupol 2022 appears intact).
+- **EOX Sentinel-2 cloudless 2016 acquisition** (official download vs. harvesting allowed by the service terms). Satellite moved to P1 (Epic 8, owner decision 2026-09-30); if neither is allowed, the satellite Basemap is dropped and the dark Basemap stays the fallback (FR-5). The 2016 imagery predates recent events (e.g. Mariupol 2022 appears intact).
 - **Evaluation/derivation in a Web Worker.** Only if NFR-2 fails on the reference machine; AD-1 keeps the evaluator pure, so it can move without changing contracts.
 - **Offline reopening (service worker / PWA).** v1 offline means continuing an open session; AD-27 keeps Project data local already.
 - **Moving from Cloudflare Pages to Workers static assets** (Cloudflare's current recommendation for new projects). Possible at any time without changing the origin (AD-18).
