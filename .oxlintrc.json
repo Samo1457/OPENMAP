@@ -1,0 +1,185 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": [
+    "typescript",
+    "unicorn",
+    "oxc",
+    "react",
+    "vitest"
+  ],
+  "categories": {
+    "correctness": "error"
+  },
+  "env": {
+    "browser": true,
+    "es2024": true
+  },
+  "ignorePatterns": [
+    "dist/**",
+    "tests/guardrails/fixtures/**",
+    "playwright-report/**",
+    "test-results/**"
+  ],
+  "rules": {
+    "vitest/valid-expect": [
+      "error",
+      {
+        "maxArgs": 2
+      }
+    ],
+    "no-restricted-properties": [
+      "error",
+      {
+        "property": "flyTo",
+        "message": "AD-1: MapLibre-driven animation is banned; the evaluator computes the camera and renderers apply it with jumpTo."
+      },
+      {
+        "property": "easeTo",
+        "message": "AD-1: MapLibre-driven animation is banned; the evaluator computes the camera and renderers apply it with jumpTo."
+      },
+      {
+        "property": "panTo",
+        "message": "AD-1: MapLibre-driven animation is banned; the evaluator computes the camera and renderers apply it with jumpTo."
+      },
+      {
+        "property": "panBy",
+        "message": "AD-1: MapLibre-driven animation is banned; the evaluator computes the camera and renderers apply it with jumpTo."
+      },
+      {
+        "property": "zoomTo",
+        "message": "AD-1: MapLibre-driven animation is banned; the evaluator computes the camera and renderers apply it with jumpTo."
+      },
+      {
+        "property": "zoomIn",
+        "message": "AD-1: MapLibre-driven animation is banned; the evaluator computes the camera and renderers apply it with jumpTo."
+      },
+      {
+        "property": "zoomOut",
+        "message": "AD-1: MapLibre-driven animation is banned; the evaluator computes the camera and renderers apply it with jumpTo."
+      },
+      {
+        "property": "rotateTo",
+        "message": "AD-1: MapLibre-driven animation is banned; the evaluator computes the camera and renderers apply it with jumpTo."
+      },
+      {
+        "property": "resetNorth",
+        "message": "AD-1: MapLibre-driven animation is banned; the evaluator computes the camera and renderers apply it with jumpTo."
+      },
+      {
+        "property": "resetNorthPitch",
+        "message": "AD-1: MapLibre-driven animation is banned; the evaluator computes the camera and renderers apply it with jumpTo."
+      },
+      {
+        "property": "snapToNorth",
+        "message": "AD-1: MapLibre-driven animation is banned; the evaluator computes the camera and renderers apply it with jumpTo."
+      },
+      {
+        "property": "fitBounds",
+        "message": "AD-1: MapLibre-driven animation is banned; the evaluator computes the camera and renderers apply it with jumpTo."
+      },
+      {
+        "property": "fitScreenCoordinates",
+        "message": "AD-1: MapLibre-driven animation is banned; the evaluator computes the camera and renderers apply it with jumpTo."
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": [
+        "src/core/**"
+      ],
+      "rules": {
+        "no-restricted-globals": [
+          "error",
+          {
+            "name": "Date",
+            "message": "AD-2: no clock in src/core (Date.now, new Date()); pass time in, and use HistoricalDate (AD-13) for historical dates."
+          },
+          {
+            "name": "performance",
+            "message": "AD-2: no clock in src/core (performance.now); pass time in as an argument."
+          },
+          {
+            "name": "crypto",
+            "message": "AD-2: no ambient randomness in src/core (crypto.getRandomValues); use rng(seed) from src/core/random."
+          }
+        ],
+        "no-restricted-properties": [
+          "error",
+          {
+            "object": "Math",
+            "property": "random",
+            "message": "AD-2: no ambient randomness in src/core; use rng(seed) from src/core/random."
+          },
+          {
+            "object": "globalThis",
+            "property": "Date",
+            "message": "AD-2: no clock in src/core (Date.now, new Date()); pass time in, and use HistoricalDate (AD-13) for historical dates."
+          },
+          {
+            "object": "globalThis",
+            "property": "performance",
+            "message": "AD-2: no clock in src/core (performance.now); pass time in as an argument."
+          },
+          {
+            "object": "globalThis",
+            "property": "crypto",
+            "message": "AD-2: no ambient randomness in src/core (crypto.getRandomValues); use rng(seed) from src/core/random."
+          },
+          {
+            "property": "flyTo",
+            "message": "AD-1: MapLibre-driven animation is banned; the evaluator computes the camera and renderers apply it with jumpTo."
+          },
+          {
+            "property": "easeTo",
+            "message": "AD-1: MapLibre-driven animation is banned; the evaluator computes the camera and renderers apply it with jumpTo."
+          },
+          {
+            "property": "panTo",
+            "message": "AD-1: MapLibre-driven animation is banned; the evaluator computes the camera and renderers apply it with jumpTo."
+          },
+          {
+            "property": "panBy",
+            "message": "AD-1: MapLibre-driven animation is banned; the evaluator computes the camera and renderers apply it with jumpTo."
+          },
+          {
+            "property": "zoomTo",
+            "message": "AD-1: MapLibre-driven animation is banned; the evaluator computes the camera and renderers apply it with jumpTo."
+          },
+          {
+            "property": "zoomIn",
+            "message": "AD-1: MapLibre-driven animation is banned; the evaluator computes the camera and renderers apply it with jumpTo."
+          },
+          {
+            "property": "zoomOut",
+            "message": "AD-1: MapLibre-driven animation is banned; the evaluator computes the camera and renderers apply it with jumpTo."
+          },
+          {
+            "property": "rotateTo",
+            "message": "AD-1: MapLibre-driven animation is banned; the evaluator computes the camera and renderers apply it with jumpTo."
+          },
+          {
+            "property": "resetNorth",
+            "message": "AD-1: MapLibre-driven animation is banned; the evaluator computes the camera and renderers apply it with jumpTo."
+          },
+          {
+            "property": "resetNorthPitch",
+            "message": "AD-1: MapLibre-driven animation is banned; the evaluator computes the camera and renderers apply it with jumpTo."
+          },
+          {
+            "property": "snapToNorth",
+            "message": "AD-1: MapLibre-driven animation is banned; the evaluator computes the camera and renderers apply it with jumpTo."
+          },
+          {
+            "property": "fitBounds",
+            "message": "AD-1: MapLibre-driven animation is banned; the evaluator computes the camera and renderers apply it with jumpTo."
+          },
+          {
+            "property": "fitScreenCoordinates",
+            "message": "AD-1: MapLibre-driven animation is banned; the evaluator computes the camera and renderers apply it with jumpTo."
+          }
+        ]
+      }
+    }
+  ]
+}

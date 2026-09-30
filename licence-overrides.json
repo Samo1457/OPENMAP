@@ -1,0 +1,39 @@
+{
+  "overrides": [
+    {
+      "package": "lightningcss",
+      "licence": "MPL-2.0",
+      "reason": "Build-time CSS transformer required by Vite 8 and Tailwind 4 (spine Stack); used unmodified from npm and never shipped in the app bundle. MPL-2.0 permits unmodified use (AD-17)."
+    },
+    {
+      "package": "lightningcss-*",
+      "licence": "MPL-2.0",
+      "reason": "Platform-specific native binary of lightningcss (see above); unmodified, build-time only, not shipped."
+    },
+    {
+      "package": "argparse",
+      "licence": "Python-2.0",
+      "reason": "Permissive PSF licence (no copyleft). Dev-only: js-yaml dependency of the shadcn CLI (cosmiconfig); not shipped."
+    },
+    {
+      "package": "caniuse-lite",
+      "licence": "CC-BY-4.0",
+      "reason": "Browser-support data table (attribution-only, no share-alike). Dev-only: browserslist dependency of the shadcn CLI; not shipped."
+    },
+    {
+      "package": "spdx-exceptions",
+      "licence": "CC-BY-3.0",
+      "reason": "SPDX exception list (attribution-only data). Dev-only: used by license-checker-rseidelsohn itself; not shipped."
+    },
+    {
+      "package": "spdx-license-ids",
+      "licence": "CC0-1.0",
+      "reason": "SPDX licence id list, public-domain dedication. Dev-only: used by license-checker-rseidelsohn itself; not shipped."
+    },
+    {
+      "package": "spdx-ranges",
+      "licence": "(MIT AND CC-BY-3.0)",
+      "reason": "SPDX licence ranges (MIT code, attribution-only data). Dev-only: used by license-checker-rseidelsohn itself; not shipped."
+    }
+  ]
+}

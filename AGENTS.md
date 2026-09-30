@@ -23,7 +23,11 @@ Browser editor for animated historical/geopolitical maps, exported as video. Gre
 
 ## Running and verifying
 
-- TODO until Story 1.1 lands: run/test/lint commands come from the Vite `react-ts` scaffold on Node.js 24 LTS; refresh this block right after Story 1.1.
+- Node.js 24 LTS (`.nvmrc`); in the sandbox the default `node` is 22, so prefix commands with `PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH` (install with `. /opt/nvm/nvm.sh && nvm install 24` if missing).
+- `npm ci`, then `npm run dev` (http://localhost:5173). `npm run check` runs everything CI runs, in order: `typecheck`, `lint` (oxlint), `depcruise`, `licences`, `test` (Vitest), `build`, `e2e` (Playwright, starts the dev server itself).
+- Locally, do not run `playwright install`: set `PLAYWRIGHT_CHROMIUM_EXECUTABLE=/opt/pw-browsers/chromium`.
+- Every new guardrail gets a violating fixture under `tests/guardrails/fixtures/` asserted in `tests/guardrails/guardrails.test.ts`; fixtures are ignored by the normal lint/typecheck/depcruise runs.
+- A new dependency whose licence fails `npm run licences` needs a reviewed entry (`package`, `licence`, `reason`) in `licence-overrides.json`, never a weaker allowlist.
 - From Story 4.5 on, keep the preview-vs-export golden test green and extend its fixture for every new element type.
 
 ## Conventions that differ from defaults
