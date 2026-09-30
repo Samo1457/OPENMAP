@@ -1207,3 +1207,235 @@ So that my map is readable as soon as it is coloured.
 **Given** a change of Output Format
 **When** the frame changes
 **Then** the Legend stays anchored to the same corner (FR-50, AD-14)
+
+---
+
+## Epic 3: Animate history over time
+
+The creator builds Steps, watches conquests animate with the Organic Signature, plays and scrubs the Timeline, chooses camera moves, shows the step date on screen and switches to Presentation mode. This epic makes Step 0 visible and turns the single-Step Project of Epics 1–2 into a Timeline without migrating data (AD-4).
+
+**Rule introduced by this epic:** every time-dependent value is computed by `evaluate(project, t, ctx)` using `locate(project, t)` (AD-1, AD-21); stories never add their own timers or tweens.
+
+### Story 3.1: Timeline and Step management
+
+As a creator,
+I want to add, duplicate, reorder and delete Steps on a Timeline,
+So that I can tell my story state by state.
+
+**Acceptance Criteria:**
+
+**Given** the Editor
+**When** the Timeline is shown
+**Then** it sits at the bottom with a default height of 200 px, can be collapsed and expanded, and shows its header, ruler, playhead and one thumbnail per Step labelled with its step date (UX-DR71–UX-DR74, UX-DR76, UX-DR161, UX-DR159)
+**And** the Project's existing Step 0 appears as the first Step with the data coloured in Epic 2 intact (AD-4)
+
+**Given** "+ Étape" or Ctrl+D on a selected Step
+**When** a Step is added or duplicated
+**Then** the new Step starts from the previous Step's state (it has no own values), gets a step date after the previous one, a default transition and hold duration, and is inserted right after (FR-40, FR-0, AD-4, UX-DR81)
+
+**Given** Steps
+**When** the user reorders them by drag or keyboard, or deletes one
+**Then** reorder and delete are single undoable Commands; deleting shows "Étape 1463 supprimée · Annuler" with no dialog; later Steps then inherit from the previous Step; existence ranges are repaired by `repairRanges` (FR-40, AD-4, UX-DR82, EXPERIENCE "Supprimer une Étape")
+
+**Given** a selected Step thumbnail
+**When** the Step panel shows
+**Then** it edits the step date (HistoricalDate, BCE allowed), the transition duration and the hold duration, stored as integer milliseconds (UX-DR48, AD-13, AD-21)
+**And** the reference date and the step date are labelled distinctly (UX-DR88)
+
+**Given** transitions between Steps
+**When** the Timeline renders
+**Then** transition blocks are hatched and sized to their duration on the ruler (UX-DR78)
+
+### Story 3.2: Per-Step editing, scope and element existence
+
+As a creator,
+I want a change made at a Step to carry forward until I change it again,
+So that I only edit what actually changes.
+
+**Acceptance Criteria:**
+
+**Given** a current Step N
+**When** the user changes any Step-varying property (owner of a GeoEntity, DrawnZone points, later: Token position, Counter value)
+**Then** only `track[N]` is written; Steps after N without their own value inherit it; Steps before N are unchanged (FR-0, AD-4, UX-DR85)
+**And** a per-Step own-value marker shows on the thumbnails where the selected element has its own value (UX-DR77)
+
+**Given** the change toast
+**When** the user chooses "Appliquer à toutes les Étapes"
+**Then** the value becomes the element's default and its track is cleared, in one Command; the toast says "Appliqué aux 5 Étapes · Annuler" (FR-0, AD-4, EXPERIENCE)
+
+**Given** the playhead inside a transition
+**When** the user edits
+**Then** the edit applies to the Step being arrived at, as specified in UX-DR84 (current Step = `locate(t).stepId`, AD-21, UX-DR83)
+
+**Given** an element
+**When** the user limits it to a range of Steps
+**Then** its existence `{fromStep, untilStep?}` is set by Step id; by default an element persists to the end (FR-45, UX-DR86)
+**And** deleting or reordering Steps keeps ranges valid as defined by `repairRanges` (AD-4)
+
+### Story 3.3: Playback and scrubbing
+
+As a creator,
+I want to play my Timeline and jump to any instant,
+So that I can see my animation exactly as it will be exported.
+
+**Acceptance Criteria:**
+
+**Given** `locate(project, t)` in `src/core/timeline`
+**When** unit tests run
+**Then** they confirm the time model: Step k spans `[start_k, start_k + transition_k + hold_k)`, Step 0 starts at 0, a Step owns its incoming transition, `u` goes from 0 to 1 over the transition, and a Step-range covers `[start_a, end_b)` (AD-21)
+
+**Given** the Timeline
+**When** the user presses Space or the play button
+**Then** playback runs from the playhead at the chosen speed (0.5×, 1×, 2×) and pauses on Space; the frame shown at any time is `evaluate(project, t, ctx)` (FR-41, AD-1)
+
+**Given** the playhead
+**When** the user drags it or clicks the ruler
+**Then** the Map shows exactly the Scene at that `t`, the same one export will produce (FR-41, NFR-1)
+**And** the playhead is a slider with `aria-valuetext` like "00:08,4, Étape 1463, Conquête de la Bosnie" (UX-DR156)
+
+**Given** no Map animation is ever driven by MapLibre or CSS
+**When** the lint and a unit test scan the code
+**Then** no forbidden animation API is used (AD-1)
+
+### Story 3.4: Territory transitions
+
+As a creator,
+I want conquered land to spread from the front, fade or sweep in,
+So that changes of control read like a story.
+
+**Acceptance Criteria:**
+
+**Given** a Step where GeoEntities or DrawnZones change owner
+**When** its transition plays
+**Then** the transition chosen in the Step panel applies: propagation (default), fade or sweep (FR-39)
+
+**Given** propagation
+**When** the changed area touches the attacker's previous Territory
+**Then** it spreads from the adjacent FrontLine; otherwise from a point the user can place, or from the centre of the area (FR-39)
+
+**Given** a DrawnZone whose points differ between two Steps
+**When** the transition plays
+**Then** its shape morphs continuously as a function of `u` (FR-19, AD-21)
+
+**Given** the FrontLine
+**When** Territories change during a transition
+**Then** the FrontLine is derived from the coverage at each evaluated `t`, so it moves with the conquest (AD-5, AD-22)
+
+**Given** the same Project and `t`
+**When** it is evaluated twice
+**Then** the Scene is deep-equal (AD-2)
+
+### Story 3.5: Organic Signature
+
+As a creator,
+I want animations to have a subtle hand-made feel by default,
+So that my map looks personal without any effort.
+
+**Acceptance Criteria:**
+
+**Given** the Organic Signature level "légère" (default)
+**When** movements and appearances animate
+**Then** they overshoot their final position by 5 to 15 % of their amplitude before settling, and no animation is linear (FR-42) `[HYP: bounds to calibrate]`
+
+**Given** Territory borders
+**When** drawn with the signature on
+**Then** they deviate from their path by at most 0.3 % of the frame width (≈ 6 px at 1080p), with jitter seeded by `hash(project.seed, element.id, "border-jitter")` (FR-42, AD-2)
+
+**Given** a Territory changing Faction
+**When** its transition starts
+**Then** it pulses for 250–400 ms before switching (FR-42)
+
+**Given** levels off / légère / marquée
+**When** set on the Project and overridden per Kit
+**Then** the Kit override wins; for an animation involving two Factions, the incoming owner's Kit applies; at "désactivée" there is no overshoot, jitter or pulse (FR-42, AD-11)
+
+**Given** two plays of the same Project
+**When** frames at identical `t` are compared
+**Then** they are identical (determinism unit test on the Scene) (FR-42, AD-2)
+
+### Story 3.6: Camera presets and automatic framing
+
+As a creator,
+I want to choose how the camera moves at each Step,
+So that the camera tells the story as much as the map.
+
+**Acceptance Criteria:**
+
+**Given** a Step
+**When** the user chooses a CameraPreset in the Step panel
+**Then** top-down, fly-to, orbit, sweep, bounce and automatic framing (default) are available, and the movement lasts the Step's transition duration (FR-46, UX-DR56)
+
+**Given** automatic framing
+**When** a Step changes Territories (later also Arrows and Tokens)
+**Then** the frame contains the changed elements with a 10 % margin; if nothing changes, the camera keeps the previous frame (FR-46, AD-5)
+
+**Given** any preset
+**When** it is stored
+**Then** the framing intent is saved as geographic bounds plus bearing and pitch, never `{center, zoom}`, and resolved for `ctx.frame` by the evaluator (AD-23)
+**And** changing the Output Format recomputes frames so they contain the same elements (FR-50, AD-23)
+
+### Story 3.7: Manual framing
+
+As a creator,
+I want to set the camera myself for a Step,
+So that I control exactly what the viewer sees.
+
+**Acceptance Criteria:**
+
+**Given** a Step
+**When** the user chooses "Cadrage manuel" and adjusts position, zoom and rotation on the Map, then confirms
+**Then** the framing is stored as bounds + bearing (+ pitch) for that Step and replaces the preset (FR-47, AD-23, UX-DR56)
+
+**Given** a manual framing
+**When** the Output Format changes
+**Then** the same geographic area stays inside the new frame (AD-23)
+
+### Story 3.8: Simple DateDisplay
+
+As a creator,
+I want the date of the current Step shown large on my map,
+So that viewers always know when the action happens.
+
+**Acceptance Criteria:**
+
+**Given** Project settings
+**When** the user turns the DateDisplay on
+**Then** the Scene shows the step date of the current Step in the screen-overlay band, anchored to a chosen frame edge (FR-37 P0 part, AD-14, AD-24)
+
+**Given** formats YYYY-MM-DD, "JJ mois AAAA", year only, or a free label per Step (e.g. "Été 1944")
+**When** a format is chosen
+**Then** the date is formatted by `src/core/format` with `project.mapLocale`, BCE dates read "52 av. J.-C." or "52 BC", and a free label replaces the date for its Step (FR-37, AD-13, AD-25)
+**And** switching the UI language does not change the displayed date (AD-20, AD-25)
+
+**Given** a Step change during playback
+**When** the transition plays
+**Then** the date switches with the new Step (no day-by-day scrolling in P0; scrolling arrives in Epic 9)
+
+### Story 3.9: Presentation mode
+
+As a creator,
+I want to watch my map full screen exactly as it will be exported,
+So that I can judge the final result before exporting.
+
+**Acceptance Criteria:**
+
+**Given** the Editor
+**When** the user presses `P` or "Présentation"
+**Then** the Map plays full screen with the Timeline camera, rendering the exact output frame letterboxed in the window (FR-57, AD-23, UX-DR129, UX-DR162)
+
+**Given** Presentation start
+**When** resources are loading
+**Then** a black screen with "Chargement de la Carte…" waits on `render.ready(scene)` for the first seconds, at most 10 s, then plays (AD-26, UX-DR129)
+**And** `render.ready` covers tiles, glyphs, fonts, media and geodata and reports failures per Step; it is the barrier later reused by export and thumbnails (AD-26)
+
+**Given** fullscreen refused by the browser
+**When** Presentation starts
+**Then** it runs in the window with the toast "Plein écran refusé par le navigateur. La présentation reste dans la fenêtre." (EXPERIENCE)
+
+**Given** Presentation mode
+**When** the user presses Escape
+**Then** it returns to the Editor at the same playhead position (UX-DR112)
+
+**Given** Step thumbnails
+**When** a Step changes
+**Then** its thumbnail is re-rendered at the start of its hold through the same pipeline, waiting on `render.ready` (AD-21, AD-26)
