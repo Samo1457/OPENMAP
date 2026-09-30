@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [step-01-validate-prerequisites]
+stepsCompleted: [step-01-validate-prerequisites, step-02-design-epics]
 inputDocuments:
   - prds/prd-OPENMAP-2026-09-25/prd.md
   - prds/prd-OPENMAP-2026-09-25/addendum.md
@@ -33,7 +33,7 @@ This document provides the complete epic and story breakdown for OPENMAP, decomp
 
 **4.2 Basemaps and geography**
 
-- FR-5 [P0]: User can choose a stylized Basemap (parchment default, dark, light, relief) or satellite, and switch at any time. Switching modifies/deletes no Project element. Basemap brightness, saturation and a tint are adjustable (so semi-transparent Territories stay readable on satellite). Satellite = EOX Sentinel-2 cloudless mosaic, 2016 vintage (CC BY 4.0), hosted by OPENMAP; imagery predates later events (e.g. 2022 destruction). If satellite cannot be served, tool falls back to the dark Basemap and tells the user. Stylized Basemaps built from Natural Earth (public domain): coasts, rivers, lakes, relief, no modern roads.
+- FR-5 [P0 stylized / P1 satellite]: User can choose a stylized Basemap (parchment default, dark, light, relief) or satellite, and switch at any time. Switching modifies/deletes no Project element. Basemap brightness, saturation and a tint are adjustable (so semi-transparent Territories stay readable on satellite). Satellite = EOX Sentinel-2 cloudless mosaic, 2016 vintage (CC BY 4.0), hosted by OPENMAP; imagery predates later events (e.g. 2022 destruction). If satellite cannot be served, tool falls back to the dark Basemap and tells the user. Stylized Basemaps built from Natural Earth (public domain): coasts, rivers, lakes, relief, no modern roads.
 - FR-6 [P0]: User sets the Project reference date (in wizard or later); the Map shows GeoEntities valid at that date. Accepts BCE dates, year precision. If data has no exact state at that date, the nearest valid state is used and the actual data date is displayed. Changing the reference date mid-Project requires confirmation; Territories built on GeoEntities that no longer exist at the new date are converted to DrawnZones.
 - FR-7 [P1]: User can select subdivisions (provinces) where data contains them `[HYP: in v1 mostly Contemporary Era; elsewhere conquest via political entities, free paint FR-21 or split FR-11]`. When no subdivision exists for the Region + reference date, the tool says so and offers free paint or splitting.
 - FR-8 [P0]: User can search a country, city or GeoEntity by name; the edit camera centers on it.
@@ -77,7 +77,7 @@ This document provides the complete epic and story breakdown for OPENMAP, decomp
 - FR-34 [P0]: User can add titles, labels and annotations with free font, size, outline, frame and position. By default a text appears with a kinetic typography animation (per character or per word) timed to its Step transition. [P2 sub-item] Curved text along a path (rivers, regions).
 - FR-35 [P1] (with P0 minimal part): P0 = a minimal non-editable Legend (Factions present and their colors), required by FR-2. P1 = tool auto-generates a Legend from Factions, fill patterns, ArrowCategories, AnnotationZones and UnitToken types present; user can hide it, move it, rename entries and add lines. Adding a Faction to the Project adds it to the Legend with no manual action.
 - FR-36 [P1]: User can place a Counter with a per-Step value, free orientation and a Faction; the value animates between Steps. A Counter can be anchored to a Territory, staying at the center of its area as it changes.
-- FR-37 [P1]: User can show a DateDisplay that scrolls continuously between two step dates at the chosen granularity (day, month or year). Formats: YYYY-MM-DD, DD month YYYY, year only, or a free per-Step label (e.g. "Summer 1944") which replaces scrolling. BCE dates render in the chosen format (e.g. "52 BC" / "52 av. J.-C.").
+- FR-37 [P0 simple / P1 scrolling]: P0 = the DateDisplay shows the current Step's step date (no scrolling) in the chosen format. P1 = user can show a DateDisplay that scrolls continuously between two step dates at the chosen granularity (day, month or year). Formats: YYYY-MM-DD, DD month YYYY, year only, or a free per-Step label (e.g. "Summer 1944") which replaces scrolling. BCE dates render in the chosen format (e.g. "52 BC" / "52 av. J.-C.").
 - FR-38 [P2]: User can display a graphic scale bar (km/miles) and a compass rose.
 
 **4.7 Timeline and animation**
@@ -557,8 +557,110 @@ UX-DR163: Enforce Do/Don't as review checklist: single accent; flat surfaces; sh
 
 ### FR Coverage Map
 
-{{requirements_coverage_map}}
+FR-0: Epic 3 - Step state model (forward inheritance, edit scope, existence, ownership)
+FR-1: Epic 1 (blank Project) + Epic 6 (from a Template) - Create a Project without an account
+FR-2: Epic 6 - Setup wizard
+FR-3: Epic 6 - Browse Templates
+FR-4: Epic 6 - Templates fully editable
+FR-5: Epic 1 (stylized Basemaps) + Epic 8 (satellite, P1) - Choose the Basemap
+FR-6: Epic 1 - Reference date
+FR-7: Epic 10 - Subdivisions (P1)
+FR-8: Epic 1 - Place search
+FR-9: Epic 10 - Geographic layers and labels (P1)
+FR-10: Epic 1 - Source attribution (credit locking completed in Epic 4)
+FR-11: Epic 10 - Correct data in a Project (P1)
+FR-12: Epic 2 - Create and edit a FactionKit
+FR-13: Epic 2 - Apply a Kit
+FR-14: Epic 2 - SubFactions
+FR-15: Epic 2 - Library of Kits
+FR-16: Epic 10 - Personal Kits (P1)
+FR-17: Epic 10 - Flag fill (P1)
+FR-18: Epic 2 - Select GeoEntities
+FR-19: Epic 2 - Draw a DrawnZone (deformation over Steps in Epic 3)
+FR-20: Epic 2 - Conquest brush
+FR-21: Epic 2 - Free paint
+FR-22: Epic 2 - Relations between Factions
+FR-23: Epic 2 - FrontLine
+FR-24: Epic 9 - Pockets (P1)
+FR-25: Epic 2 - Fill patterns
+FR-26: Epic 11 - AnnotationZones (P2)
+FR-27: Epic 11 - FrontTraces (P2)
+FR-28: Epic 5 - Movement Arrows
+FR-29: Epic 11 - ArrowCategories (P2)
+FR-30: Epic 5 - UnitTokens
+FR-31: Epic 9 - TokenSeries (P1); Counter link in Epic 11 (P2)
+FR-32: Epic 9 - EventIcons (P1)
+FR-33: Epic 11 - Highlight (P2)
+FR-34: Epic 5 - Texts; curved text in Epic 11 (P2)
+FR-35: Epic 2 (minimal P0 Legend) + Epic 10 (full Legend, P1)
+FR-36: Epic 9 - Counters (P1)
+FR-37: Epic 3 (simple P0 DateDisplay) + Epic 9 (scrolling, P1)
+FR-38: Epic 11 - Scale and compass (P2)
+FR-39: Epic 3 - Territory transitions
+FR-40: Epic 3 - Manage Steps
+FR-41: Epic 3 - Playback and scrubbing
+FR-42: Epic 3 - Organic Signature
+FR-43: Epic 10 - Acts (P1)
+FR-44: Epic 11 - AmbientEffects (P2)
+FR-45: Epic 3 - Element persistence ranges
+FR-46: Epic 3 - CameraPresets; motion blur in Epic 11 (P2)
+FR-47: Epic 3 - Manual framing
+FR-48: Epic 5 - Import images
+FR-49: Epic 10 - Personal map background (P1)
+FR-50: Epic 4 - Video export
+FR-51: Epic 10 - Image export (P1)
+FR-52: Epic 1 - Projects list
+FR-53: Epic 1 - Autosave (storage banners completed in Epic 7)
+FR-54: Epic 7 - Project File
+FR-55: Epic 1 - Undo / redo (each later story adds its Commands)
+FR-56: Epic 10 - Layers (P1)
+FR-57: Epic 3 - Edit and Presentation modes
+FR-58: Epic 7 - Anonymous telemetry
 
 ## Epic List
 
-{{epics_list}}
+### Epic 1: Open OPENMAP and lay down a historical map [P0]
+A creator opens OPENMAP on their PC, creates a blank Project, sees a stylized Basemap (parchment, dark, light, relief) with the GeoEntities valid at the chosen reference date, searches for a place and sees the data sources. The Project saves itself continuously, supports undo/redo, is safe across two tabs, and the UI works in light/dark and French/English. Includes the technical foundation (scaffold, CI, core engine skeleton, local data pipeline). Everything runs locally: no VPS yet.
+**FRs covered:** FR-1 (blank), FR-5 (stylized), FR-6, FR-8, FR-10, FR-52, FR-53, FR-55
+
+### Epic 2: Color the map with Factions [P0]
+The creator adds Factions from the Library Kits, creates SubFactions, assigns GeoEntities, draws zones, conquers with the brush, paints freely, sets Relations, and sees FrontLines appear by themselves between Factions in conflict, with fill patterns and a minimal Legend.
+**FRs covered:** FR-12, FR-13, FR-14, FR-15, FR-18, FR-19, FR-20, FR-21, FR-22, FR-23, FR-25, FR-35 (P0 part)
+
+### Epic 3: Animate history over time [P0]
+The creator builds Steps, watches conquests animate with the Organic Signature, plays and scrubs the Timeline, picks CameraPresets or manual framing, shows the step date on screen and switches to Presentation mode.
+**FRs covered:** FR-0, FR-37 (P0 part), FR-39, FR-40, FR-41, FR-42, FR-45, FR-46, FR-47, FR-57
+
+### Epic 4: Export the video [P0]
+The creator exports an MP4 (16:9, 9:16 or 1:1, 1080p, 30 or 60 fps) identical to the preview, with progress, cancel and the locked credit. A preview-vs-export golden test is introduced and required by every later story.
+**FRs covered:** FR-50
+
+### Epic 5: Tell the story with Arrows, UnitTokens, Texts and images [P0]
+The creator draws offensive Arrows that draw themselves, places and moves UnitTokens, writes animated titles and annotations, and imports their own images.
+**FRs covered:** FR-28, FR-30, FR-34, FR-48
+
+### Epic 6: Start in 2 minutes: wizard and Templates [P0]
+The creator follows the wizard (Template, reference date, Region, Factions) and gets an already animated Map; browses and filters Templates. Includes the Template/Kit authoring and publishing workflow (first Templates are produced with the editor from the end of Epic 3).
+**FRs covered:** FR-1 (from Template), FR-2, FR-3, FR-4
+
+### Epic 7: Safe work, usage measurement and going online [P0]
+The creator exports and re-imports a Project File on another machine and is warned when local storage is at risk; opts in or out of anonymous telemetry. Includes putting OPENMAP online: VPS data origin behind Cloudflare, Umami, hardening, backups, monitoring, fixed domain.
+**FRs covered:** FR-54, FR-58
+
+### Epic 8: Satellite Basemap [P1]
+The creator switches to the EOX 2016 satellite Basemap, adjusts brightness/saturation/tint, with fallback to the dark Basemap when unavailable.
+**FRs covered:** FR-5 (satellite)
+
+### Epic 9: Current-events and campaign maps [P1]
+Pockets that tighten, TokenSeries along the front, Counters, a DateDisplay that scrolls, EventIcons (planes, explosions, portraits).
+**FRs covered:** FR-24, FR-31, FR-32, FR-36, FR-37 (scrolling)
+
+### Epic 10: Educational maps and personal identity [P1]
+Full editable Legend, labels and layers, Layers panel, flag fill, Personal Kits, subdivisions, data correction, Acts, personal map background, PNG/JPG image export.
+**FRs covered:** FR-7, FR-9, FR-11, FR-16, FR-17, FR-35 (full), FR-43, FR-49, FR-51, FR-56
+
+### Epic 11: Effects and polish [P2]
+Fog of war, conquest bar, FrontTraces, ArrowCategories, highlight, curved text, scale and compass, motion blur.
+**FRs covered:** FR-26, FR-27, FR-29, FR-31 (Counter link), FR-33, FR-34 (curved), FR-38, FR-44, FR-46 (motion blur)
+
+**Sequencing notes:** P1/P2 epics stay coarse and are detailed after the P0 validation with 3–5 creators. Official Templates/Kits are produced with the editor as soon as Epic 3 is done.
