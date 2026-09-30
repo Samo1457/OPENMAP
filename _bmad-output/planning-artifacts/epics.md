@@ -1561,3 +1561,117 @@ So that no later feature can silently break the core promise.
 **Given** the determinism rule
 **When** the same Project is exported twice
 **Then** the decoded frames are identical within the same tolerance (FR-42, AD-2)
+
+---
+
+## Epic 5: Tell the story with Arrows, UnitTokens, Texts and images
+
+The creator draws offensive Arrows that draw themselves, places and moves UnitTokens, writes animated titles and annotations, and imports their own images. Every story in this epic extends the golden test fixture of Story 4.5 with its element type and keeps it green (Definition of Done).
+
+### Story 5.1: Movement Arrows
+
+As a creator,
+I want to draw curved offensive Arrows that draw themselves during a Step,
+So that viewers see who attacks where.
+
+**Acceptance Criteria:**
+
+**Given** the Arrow tool (`F`)
+**When** the user clicks points on the Map then double-clicks or presses Enter
+**Then** a curved Arrow is created through those `[lon, lat]` points, in the style of the selected Faction (width, head shape from its Kit); Backspace removes the last point, Escape cancels (FR-28, UX-DR92, UX-DR117, AD-14)
+
+**Given** an Arrow created at Step N
+**When** Step N's transition plays
+**Then** the Arrow draws itself along its path as a function of `u`, with the Organic Signature easing (FR-28, AD-21, FR-42)
+**And** it persists on later Steps unless limited to a range (FR-45)
+
+**Given** a selected Arrow
+**When** the Arrow panel shows
+**Then** Faction, width (including very wide for breakthroughs) and advanced style fields are editable, and point handles can be dragged, each change being one Command (UX-DR40, AD-3)
+
+**Given** the Timeline
+**When** Arrows exist
+**Then** the Arrows track shows one clip per Arrow spanning its existence, overlapping clips go to automatic sub-rows, and dragging a clip's edges changes its Step range (UX-DR79, UX-DR80, UX-DR13, FR-45)
+
+**Given** automatic framing
+**When** a Step creates or changes Arrows
+**Then** they are included in the framed area (FR-46)
+
+### Story 5.2: UnitTokens
+
+As a creator,
+I want to place unit markers and move them between Steps,
+So that I can show forces and manoeuvres.
+
+**Acceptance Criteria:**
+
+**Given** the Token tool (`J`)
+**When** the user clicks the Map
+**Then** a UnitToken of the selected Faction is placed, with a shape among simplified NATO symbol, two-colour square, round flag badge and mini-flag, and an optional label that can be framed (e.g. "7 C.", "Gal Bradley") (FR-30, UX-DR93, UX-DR41)
+
+**Given** a UnitToken moved or rotated at Step N
+**When** the transition into Step N plays
+**Then** it glides and pivots from its previous state to the new one, as a function of `u`, with the Organic Signature (FR-30, AD-4, AD-21)
+
+**Given** the flag badge or mini-flag shapes
+**When** drawn
+**Then** they use the Faction's Emblem from the media store (reduced variant at small sizes) (AD-29, FR-12)
+
+**Given** the Timeline
+**When** UnitTokens exist
+**Then** they appear on the Tokens track with clips and sub-rows like Arrows (UX-DR79, UX-DR80)
+
+**Given** a project with 50 UnitTokens and 200 Territories
+**When** the Timeline plays on the reference machine
+**Then** preview stays at 30 fps or more; the measurement is recorded in the dev notes (NFR-2)
+
+### Story 5.3: Texts
+
+As a creator,
+I want to add titles, labels and annotations that appear with a typing animation,
+So that I can name places, people and events on my map.
+
+**Acceptance Criteria:**
+
+**Given** the Text tool (`X`)
+**When** the user clicks the Map or the frame and types
+**Then** a Text is created either anchored to a Map position (`[lon, lat]`) or to the frame (edge/corner + offset in reference pixels), with font, size, outline, frame and position editable in the Text panel (FR-34, UX-DR95, UX-DR43, AD-14)
+**And** while the text field has focus, single-letter shortcuts, Space and arrows are inactive (EXPERIENCE text-field focus rule)
+
+**Given** a Text created at Step N
+**When** Step N's transition plays
+**Then** it appears with a typing animation (by character or by word, chosen in the panel) timed on the transition (FR-34, AD-21)
+
+**Given** a Text
+**When** the UI language changes
+**Then** its content never changes: Map text is Project data (AD-20)
+
+**Given** the Timeline
+**When** Texts exist
+**Then** they appear on the Text track with clips and sub-rows (UX-DR79, UX-DR80)
+**And** curved text along a path is not offered in P0 (P2, Epic 11)
+
+### Story 5.4: Import images
+
+As a creator,
+I want to bring my own images onto the map,
+So that I can add portraits, logos or my own symbols.
+
+**Acceptance Criteria:**
+
+**Given** the Import tool (`I`), the file picker, or a drag-and-drop onto the Map
+**When** the user imports a PNG, JPG or SVG
+**Then** the image is stored once in the media store by SHA-256 (SVGs sanitized first: scripts, external references and event handlers removed) and placed as a positionable Image element (FR-48, UX-DR98, AD-8, AD-29)
+**And** an unsupported or unreadable file shows a clear error and nothing is added (UX-DR145)
+
+**Given** an imported image
+**When** the user chooses "Utiliser comme Emblème" on a Faction
+**Then** the Kit references the image hash as its Emblem (FR-48, FR-12)
+
+**Given** a selected Image element
+**When** the Image panel shows
+**Then** position, size, rotation and opacity are editable, and it belongs to a Layer and existence range like any element (UX-DR47, AD-24, FR-45)
+
+**Given** privacy rules
+**When** an image is imported
+**Then** it never leaves the machine (NFR-6)
