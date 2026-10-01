@@ -92,6 +92,8 @@ context:
 
 ## Spec Change Log
 
+- 2026-10-01, owner decision after delivery (triage rows 3 and 5): the once-only reload became a cooldown. A tab reloads again on a chunk failure when the last automatic reload is at least `RELOAD_COOLDOWN_MS` (5 min) old, so a later redeploy in a long-lived tab recovers while a broken deploy still cannot loop faster than once per 5 min. This supersedes the frozen matrix row "second failure in same session does not reload again". The owner also approved the lightningcss MPL-2.0 exception; AGENTS.md policy now names it.
+
 ## Review Triage Log
 
 | # | Source | Finding | Verdict | Evidence / route |

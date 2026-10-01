@@ -8,6 +8,7 @@ import './index.css'
 installChunkReload({
   target: window,
   storage: () => window.sessionStorage,
+  now: () => Date.now(),
   flush: flushPendingSaves,
   reload: () => window.location.reload(),
 })
