@@ -2,7 +2,8 @@
 title: 'Story 1.5: Editor shell with undo/redo'
 type: 'feature'
 created: '2026-10-01'
-status: 'draft'
+status: 'in-progress'
+baseline_commit: '72f5d7fa644e8cd2f7a4e3b36b3e401045f38b62'
 route: 'dispatch'
 review_loop_iteration: 0
 context:
@@ -38,20 +39,18 @@ context:
 | Ctrl+S | any state | browser dialog prevented, flush, toast "Projet sauvegardé" only if the save succeeded | failure → error state, no success toast |
 | Newer document | `schemaVersion` 2 | shell renders read-only with the info banner | N/A |
 
+**Decisions (owner accepted all recommended defaults):**
+- Step reminder in the options bar: left empty until the Timeline (Epic 3); the right side shows « 16:9 · 1920 × 1080 ».
+- Map language is an essential setting (visible with name and format). The « Plus d'options » row is built and tested but hidden while a panel has no advanced setting.
+- New strings: « Langue de la carte » / "Map language"; « Rechercher un lieu » / "Search for a place"; tooltips « Annuler · Ctrl+Z », « Rétablir · Ctrl+Maj+Z » / "Undo · Ctrl+Z", "Redo · Ctrl+Shift+Z"; disabled Présentation/Exporter tooltip « Bientôt disponible » / "Coming soon".
+- The temporary « Réglages » moves into the « ⋯ » menu of the top bar (Home keeps its button); Story 1.6 replaces it with the dialog.
+- Save failure: « Non enregistré » in the top bar plus the persistent error toast from Story 1.4; the storage banner waits for Story 1.15.
+- Ctrl+Z inside a text field undoes the typing, not the Project.
+- The name is edited in the panel only; the breadcrumb shows it.
+- No toast on undo/redo; screen readers hear « Annulé » / « Rétabli ».
+- Full spec kept (~1,800 tokens).
+
 </frozen-after-approval>
-
-## Open Questions
-
-Each has a recommended default; answer "OK" to accept all or override by number.
-
-1. Step reminder in the options bar: left empty until the Timeline (Epic 3); the right side shows « 16:9 · 1920 × 1080 ».
-2. Map language is an essential setting (visible with name and format). The « Plus d'options » row is built and tested but hidden while a panel has no advanced setting.
-3. New strings: « Langue de la carte » / "Map language"; « Rechercher un lieu » / "Search for a place"; tooltips « Annuler · Ctrl+Z », « Rétablir · Ctrl+Maj+Z » / "Undo · Ctrl+Z", "Redo · Ctrl+Shift+Z"; disabled Présentation/Exporter tooltip « Bientôt disponible » / "Coming soon".
-4. The temporary « Réglages » moves into the « ⋯ » menu of the top bar (Home keeps its button); Story 1.6 replaces it with the dialog.
-5. Save failure: « Non enregistré » in the top bar plus the persistent error toast from Story 1.4; the storage banner waits for Story 1.15.
-6. Ctrl+Z inside a text field undoes the typing, not the Project.
-7. The name is edited in the panel only; the breadcrumb shows it.
-8. No toast on undo/redo; screen readers hear « Annulé » / « Rétabli ».
 
 ## Code Map
 
