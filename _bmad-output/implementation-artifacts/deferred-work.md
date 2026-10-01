@@ -25,3 +25,6 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-1-2-visual-identity-themes-and-languages.md`
   summary: Complete the UX-DR8 disabled pattern (text-disabled colour, disabled SegmentedControl, DOM test) with the first disabled control.
   evidence: control-disabled sets opacity and cursor only; no disabled control exists yet.
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-3-core-project-model-commands-and-undo-engine.md`
+  summary: Add a committed corpus of valid and invalid Project documents run through `validate`, so refinement-only schema changes (day-in-month, unique ids, name rules) also fail CI.
+  evidence: The JSON Schema snapshot cannot express Zod refinements, so AD-9's drift check misses them.

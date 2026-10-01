@@ -8,6 +8,7 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { afterAll, describe, expect, it } from 'vitest'
 import { checkPackages, classifyLicence, parseOverrides } from '../../scripts/check-licences.mjs'
+import { readSnapshot, schemaSnapshotIssues } from './schema-check'
 
 const ROOT = resolve(import.meta.dirname, '../..')
 const FIXTURES = join(ROOT, 'tests/guardrails/fixtures')
@@ -105,13 +106,14 @@ describe('dependency-cruiser layer rules', () => {
     ['adapter-imports-adapter-internal', 'adapter-imports-other-adapter-index-only'],
     ['adapter-imports-ui', 'adapters-no-ui'],
     ['ui-imports-adapter-internal', 'ui-imports-adapter-index-only'],
+    ['ui-imports-core-testing', 'core-testing-only-from-tests'],
   ])('%s fails with rule %s', (fixture, rule) => {
     const result = depcruise(fixture)
     expect(result.status, result.output).not.toBe(0)
     expect(result.output).toContain(rule)
   })
 
-  it.each(['adapter-imports-adapter-index', 'core-imports-core', 'core-test-imports-vitest'])('%s passes', (fixture) => {
+  it.each(['adapter-imports-adapter-index', 'core-imports-core', 'core-test-imports-vitest', 'core-test-imports-core-testing'])('%s passes', (fixture) => {
     const result = depcruise(fixture)
     expect(result.status, result.output).toBe(0)
   })
@@ -232,5 +234,53 @@ describe('licence check (AD-17)', () => {
       const result = project('CC-BY-4.0', [{ package: 'copyleft-lib', licence: 'CC-BY-4.0', reason: '' }])
       expect(result.status).not.toBe(0)
     })
+  })
+})
+
+describe('schema snapshot check (AD-9)', () => {
+  const SCHEMA_FIXTURES = join(FIXTURES, 'schema')
+  const committedV1 = readSnapshot(join(ROOT, 'schemas/project-v1.schema.json'))
+
+  it('the committed v1 snapshot passes the check it is compared against below', () => {
+    expect(schemaSnapshotIssues({ dir: join(ROOT, 'schemas'), currentVersion: 1, schema: committedV1, migrationVersions: [] })).toEqual([])
+  })
+
+  it('drifted: a v1 snapshot that differs from the v1 schema fails with instructions', () => {
+    const issues = schemaSnapshotIssues({
+      dir: join(SCHEMA_FIXTURES, 'drifted'),
+      currentVersion: 1,
+      schema: committedV1,
+      migrationVersions: [],
+    })
+    expect(issues).toHaveLength(1)
+    expect(issues[0]).toContain('bump CURRENT_SCHEMA_VERSION to 2')
+    expect(issues[0]).toContain('npm run schema:snapshot')
+  })
+
+  it('ignores formatting and line endings: only the parsed JSON counts', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'openmap-schema-'))
+    workDirs.push(dir)
+    writeFileSync(join(dir, 'project-v1.schema.json'), JSON.stringify(committedV1, null, 4).replaceAll('\n', '\r\n'))
+    expect(schemaSnapshotIssues({ dir, currentVersion: 1, schema: committedV1, migrationVersions: [] })).toEqual([])
+  })
+
+  it('missing-migration: a v2 without the v1 snapshot or the v1 → v2 migration, and a stray v3, fail', () => {
+    const dir = join(SCHEMA_FIXTURES, 'missing-migration')
+    const issues = schemaSnapshotIssues({
+      dir,
+      currentVersion: 2,
+      schema: readSnapshot(join(dir, 'project-v2.schema.json')),
+      migrationVersions: [],
+    })
+    expect(issues).toEqual([
+      'project-v1.schema.json is missing: committed snapshots are never deleted (AD-9).',
+      'The v1 → v2 migration is missing (AD-9).',
+      'project-v3.schema.json is newer than CURRENT_SCHEMA_VERSION 2.',
+    ])
+  })
+
+  it('fails when the current version has no snapshot yet', () => {
+    const issues = schemaSnapshotIssues({ dir: join(SCHEMA_FIXTURES, 'drifted'), currentVersion: 2, schema: {}, migrationVersions: [1] })
+    expect(issues).toContain('project-v2.schema.json is missing: run npm run schema:snapshot and commit it.')
   })
 })

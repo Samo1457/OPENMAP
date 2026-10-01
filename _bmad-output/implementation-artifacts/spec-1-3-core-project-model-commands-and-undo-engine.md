@@ -2,7 +2,7 @@
 title: 'Story 1.3: Core Project model, Commands and undo engine'
 type: 'feature'
 created: '2026-10-01'
-status: 'in-progress'
+status: 'done'
 baseline_commit: 'bfe5dd6da8312e8dd4d3c11f75f4bd4c884fcd61'
 route: 'dispatch'
 review_loop_iteration: 0
@@ -61,15 +61,15 @@ context:
 ## Tasks & Acceptance
 
 **Execution:**
-- [ ] `package.json` -- add zod, immer, nanoid pinned; `schema:snapshot` script
-- [ ] `src/core/ids.ts` -- branded ids (`ProjectId`, `StepId`, `LayerId`…), `newId()` (nanoid) for the shell, deterministic id factory for tests
-- [ ] `src/core/result.ts` -- `Result`, `DomainError`, error codes
-- [ ] `src/core/dates/historical-date.ts` -- `HistoricalDate {year, month?, day?}` + validation (day-in-month, year −10000..2100)
-- [ ] `src/core/model/` -- types, Zod schema v1, `createBlankProject({id, seed, name, mapLocale, stepId, layerIds})`, `duplicateProject(project, newId)` (keeps seed)
-- [ ] `src/core/schema/` -- `CURRENT_SCHEMA_VERSION`, `migrate(doc)` registry (v1 identity), `validate`, `schemas/project-v1.schema.json` via `z.toJSONSchema`
-- [ ] `src/core/commands/` -- `apply(project, command)` → `Result<{project, inverse}>`; `SET_PROJECT_NAME`, `SET_OUTPUT_FORMAT`, `SET_MAP_LOCALE`, `SET_BASEMAP`, `SET_BASEMAP_ADJUSTMENTS`, `SET_REFERENCE_DATE`, `BATCH`
-- [ ] `src/core/history/` -- dispatcher: `dispatch`, `undo`, `redo`, `canUndo`, `canRedo`, `clear()`, `setReadOnly`, `reset(project)`, `subscribe(listener)`, `getState()`; depth 100
-- [ ] tests -- one unit test file per Command (apply + inverse), history matrix rows, determinism (same inputs → deep-equal output), snapshot test + migration test + violating fixture in `tests/guardrails/`
+- [x] `package.json` -- add zod, immer, nanoid pinned; `schema:snapshot` script
+- [x] `src/core/ids.ts` -- branded ids (`ProjectId`, `StepId`, `LayerId`…), `newId()` (nanoid) for the shell, deterministic id factory for tests
+- [x] `src/core/result.ts` -- `Result`, `DomainError`, error codes
+- [x] `src/core/dates/historical-date.ts` -- `HistoricalDate {year, month?, day?}` + validation (day-in-month, year −10000..2100)
+- [x] `src/core/model/` -- types, Zod schema v1, `createBlankProject({id, seed, name, mapLocale, stepId, layerIds})`, `duplicateProject(project, newId)` (keeps seed)
+- [x] `src/core/schema/` -- `CURRENT_SCHEMA_VERSION`, `migrate(doc)` registry (v1 identity), `validate`, `schemas/project-v1.schema.json` via `z.toJSONSchema`
+- [x] `src/core/commands/` -- `apply(project, command)` → `Result<{project, inverse}>`; `SET_PROJECT_NAME`, `SET_OUTPUT_FORMAT`, `SET_MAP_LOCALE`, `SET_BASEMAP`, `SET_BASEMAP_ADJUSTMENTS`, `SET_REFERENCE_DATE`, `BATCH`
+- [x] `src/core/history/` -- dispatcher: `dispatch`, `undo`, `redo`, `canUndo`, `canRedo`, `clear()`, `setReadOnly`, `reset(project)`, `subscribe(listener)`, `getState()`; depth 100
+- [x] tests -- one unit test file per Command (apply + inverse), history matrix rows, determinism (same inputs → deep-equal output), snapshot test + migration test + violating fixture in `tests/guardrails/`
 
 **Acceptance Criteria:**
 - Given `npm run check`, when it runs, then typecheck (core without DOM), lint (AD-2 bans), depcruise (core imports only pure libs), licences and all tests pass.
@@ -83,6 +83,42 @@ context:
 
 ## Implementation Notes
 
+- Deps pinned: zod 4.6.5, immer 11.1.18, nanoid 6.0.1 (all MIT).
+- Document shape v1: `{schemaVersion, id, seed, revision, name, mapLocale, outputFormat, referenceDate, map: {basemap: {id, adjustments}, members: {}}, steps: [{id}], layers: [{id, kind, hidden, locked}], factions: []}`. Adjustment overrides are `brightness`, `saturation`, `tintColor` (stored `#RRGGBB` upper-case), `tintIntensity`. Ids and the seed are 21-character nanoid strings.
+- `apply` validates the Command with Zod, returns `{changed: true, project, inverse}` or `{changed: false, project}` (no-op), and bumps `revision` once per applied Command (a BATCH counts once). Undo/redo go through `apply`, so they bump it too.
+- `SET_BASEMAP_ADJUSTMENTS` replaces the whole override set (`{}` = reset to the Basemap defaults); `SET_BASEMAP` keeps the overrides.
+- `duplicateProject` keeps seed and inner ids, takes the new id and restarts at revision 0; renaming the copy is left to Story 1.4.
+- Schema drift: `tests/guardrails/schema-snapshot.test.ts` compares `schemas/project-v<N>.schema.json` with the generated JSON Schema and checks a snapshot + migration exists for every older version. `npm run schema:snapshot` (vite `ssrLoadModule`) writes the current version's file only if absent and never overwrites a committed one. Zod refinements (day-in-month, unique Step/Layer ids, trimmed name via regex) are not all representable in JSON Schema, so a change to refinement logic alone is not caught by the snapshot.
+- Review fixes: the random `newId` (nanoid) lives in `src/ui/ids.ts`; core only has branded ids, parsers and the deterministic id source. Names are 1–120 code points with no control character. BATCH nesting is capped at 16 (`invalid_payload` beyond), and a BATCH whose members cancel out is a no-op. Listener errors are isolated (`onListenerError`, default async rethrow). Snapshots are compared as parsed JSON; `src/core/testing/` may be imported only by tests (depcruise `core-testing-only-from-tests`).
+- Undo/redo errors: `nothing_to_undo` / `nothing_to_redo` added to `DomainErrorCode` besides `invalid_payload`, `read_only`, `schema_too_new`, `invalid_document`.
+
 ## Spec Change Log
 
+- Review row 7: `newId()` moves out of `src/core` to the shell (AD-2: no ambient randomness in core); core keeps branded id types, parsers and the deterministic test factory.
+
 ## Review Triage Log
+
+| # | Source | Finding | Verdict | Evidence / route |
+|---|--------|---------|---------|------------------|
+| 1 | edge | Date with day and month 0/13 makes `daysInMonth` throw from apply/validate | high | Verified by reviewer; breaks Result contract (matrix row "month 13"). patch |
+| 2 | edge | BATCH whose members cancel out records an entry and bumps revision | medium | Matrix: no-op adds no entry. patch |
+| 3 | edge, blind | Listener that throws or re-dispatches breaks notification order / throws after commit | medium | `publish` iterates live set without isolation. patch |
+| 4 | blind | Project names accept newlines and control characters | medium | Regex checks only ends; breaks cards and file names. patch |
+| 5 | blind, edge | 120-character rule counts UTF-16 units (61 emoji accepted, wrong comment) | low | Direct fix: count code points. patch |
+| 6 | edge, blind | Unbounded BATCH nesting → stack overflow instead of invalid_payload | low | Direct fix: depth cap. patch |
+| 7 | blind | `newId()` (nanoid → crypto) lives in `src/core` | medium | AD-2 forbids ambient randomness in core; move to the shell. patch (spec task wording superseded, logged) |
+| 8 | gap | `loadProject` with v2 / invalid v1 untested | medium | Pre-verified. patch |
+| 9 | gap | Duplicate Step id rule untested | medium | Pre-verified. patch |
+| 10 | gap, blind | Drifted/missing-migration fixtures do not drive their tests | low | Test injects its own text. patch |
+| 11 | edge, blind | Snapshot compared as raw text (CRLF, Zod formatting) | low | Direct fix: structural JSON compare. patch |
+| 12 | blind | `src/core/testing/fixtures.ts` importable by app code | low | Direct depcruise rule. patch |
+| 13 | blind | `HistoricalDate` type not derived from its schema; handler rebuilds fields | low | Direct fix (`z.infer`, use parsed value). patch |
+| 14 | blind | Refinement-only changes escape the snapshot check | medium | Real; needs a validation corpus. defer |
+| 15 | blind | Invalid payload `params.path` empty for leaf Commands | low | UI maps `code` only; rejected |
+| 16 | blind | `params.type` differs between schema and rule failures in BATCH | low | Cosmetic; rejected |
+| 17 | edge | Revision overflow at MAX_SAFE_INTEGER | low | Unreachable in practice; rejected |
+| 18 | edge | Missing snapshot directory throws | low | Loud failure; rejected |
+| 19 | edge | Deterministic id counter overflow | low | Test-only helper; rejected |
+| 20 | edge | Same listener subscribed twice is deduped | low | Not a supported use; rejected |
+| 21 | blind | Status mismatch, 1.2 flipped to done, decisions in frozen block | false | Workflow sync at present step; owner accepted 1.2; decisions belong in frozen block |
+| 22 | blind | Assorted coverage gaps (reset read-only, property test…) | low | No named harm beyond rows 8–9; rejected |

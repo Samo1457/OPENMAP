@@ -15,6 +15,7 @@
     "depcruise": "depcruise src --config .dependency-cruiser.cjs",
     "licences": "node scripts/check-licences.mjs",
     "test": "vitest run",
+    "schema:snapshot": "node scripts/schema-snapshot.mjs",
     "e2e": "playwright test",
     "check": "npm run typecheck && npm run lint && npm run depcruise && npm run licences && npm run test && npm run build && npm run e2e"
   },
@@ -24,11 +25,14 @@
     "clsx": "2.1.1",
     "dexie": "4.4.6",
     "i18next": "26.4.2",
+    "immer": "11.1.18",
+    "nanoid": "6.0.1",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "react-i18next": "17.0.15",
     "tailwind-merge": "3.7.0",
-    "tw-animate-css": "1.4.0"
+    "tw-animate-css": "1.4.0",
+    "zod": "4.6.5"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",

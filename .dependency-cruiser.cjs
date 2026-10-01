@@ -46,6 +46,13 @@ module.exports = {
       },
     },
     {
+      name: 'core-testing-only-from-tests',
+      comment: 'src/core/testing holds test fixtures: only *.test.ts files (and tests/) may import it, never app code.',
+      severity: 'error',
+      from: { pathNot: ['\\.test\\.ts$', '^tests/', '^src/core/testing/'] },
+      to: { path: '^src/core/testing/' },
+    },
+    {
       name: 'adapter-imports-other-adapter-index-only',
       comment: 'An adapter imports another adapter only through its index.ts.',
       severity: 'error',
