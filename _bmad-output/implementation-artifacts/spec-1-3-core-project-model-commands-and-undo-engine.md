@@ -2,7 +2,8 @@
 title: 'Story 1.3: Core Project model, Commands and undo engine'
 type: 'feature'
 created: '2026-10-01'
-status: 'draft'
+status: 'in-progress'
+baseline_commit: 'bfe5dd6da8312e8dd4d3c11f75f4bd4c884fcd61'
 route: 'dispatch'
 review_loop_iteration: 0
 context:
@@ -37,14 +38,14 @@ context:
 | Schema drift | schema edited without new version + snapshot | `npm run test` fails with instructions | N/A |
 | Newer document | `schemaVersion` > current | `migrate` returns `DomainError{code:'schema_too_new'}` | caller opens read-only (Story 1.4) |
 
+**Decisions:**
+- Default name: "Projet sans titre" / "Untitled project" in the UI language at creation; the UI passes it to `createBlankProject` (core has no i18n).
+- Name rules: trimmed, 1–120 characters; an empty (after trim) or longer name is refused with `invalid_payload` and the previous name is kept.
+- Reference-date year range: −10000 to 2100 inclusive, astronomical years (year 0 = 1 BCE).
+- Undo depth: 100 entries; the oldest entry is dropped beyond that.
+- Full spec kept (~1,700 tokens).
+
 </frozen-after-approval>
-
-## Open Questions
-
-1. Default name of a new Project? Options: (a) "Projet sans titre" / "Untitled project" in the UI language at creation (the UI passes it in; core has no i18n) / (b) a numbered name ("Projet 1", "Projet 2"…), which needs the Projects list (Story 1.4).
-2. Name rules? Options: (a) trimmed, 1–120 characters, an empty name is refused and the previous name kept / (b) no limit, empty allowed (cards would show a placeholder).
-3. Reference-date year range? Options: (a) −10000 to 2100 (astronomical years, so year 0 = 1 BCE; covers Cliopatria and near future) / (b) no limit (any integer).
-4. Undo depth? Options: (a) 100 levels, oldest dropped (bounded memory) / (b) unlimited until reload.
 
 ## Code Map
 
@@ -63,11 +64,11 @@ context:
 - [ ] `package.json` -- add zod, immer, nanoid pinned; `schema:snapshot` script
 - [ ] `src/core/ids.ts` -- branded ids (`ProjectId`, `StepId`, `LayerId`…), `newId()` (nanoid) for the shell, deterministic id factory for tests
 - [ ] `src/core/result.ts` -- `Result`, `DomainError`, error codes
-- [ ] `src/core/dates/historical-date.ts` -- `HistoricalDate {year, month?, day?}` + validation (day-in-month, year range per decision)
+- [ ] `src/core/dates/historical-date.ts` -- `HistoricalDate {year, month?, day?}` + validation (day-in-month, year −10000..2100)
 - [ ] `src/core/model/` -- types, Zod schema v1, `createBlankProject({id, seed, name, mapLocale, stepId, layerIds})`, `duplicateProject(project, newId)` (keeps seed)
 - [ ] `src/core/schema/` -- `CURRENT_SCHEMA_VERSION`, `migrate(doc)` registry (v1 identity), `validate`, `schemas/project-v1.schema.json` via `z.toJSONSchema`
 - [ ] `src/core/commands/` -- `apply(project, command)` → `Result<{project, inverse}>`; `SET_PROJECT_NAME`, `SET_OUTPUT_FORMAT`, `SET_MAP_LOCALE`, `SET_BASEMAP`, `SET_BASEMAP_ADJUSTMENTS`, `SET_REFERENCE_DATE`, `BATCH`
-- [ ] `src/core/history/` -- dispatcher: `dispatch`, `undo`, `redo`, `canUndo`, `canRedo`, `clear()`, `setReadOnly`, `reset(project)`, `subscribe(listener)`, `getState()`; depth per decision
+- [ ] `src/core/history/` -- dispatcher: `dispatch`, `undo`, `redo`, `canUndo`, `canRedo`, `clear()`, `setReadOnly`, `reset(project)`, `subscribe(listener)`, `getState()`; depth 100
 - [ ] tests -- one unit test file per Command (apply + inverse), history matrix rows, determinism (same inputs → deep-equal output), snapshot test + migration test + violating fixture in `tests/guardrails/`
 
 **Acceptance Criteria:**
