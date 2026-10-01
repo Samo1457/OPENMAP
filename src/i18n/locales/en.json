@@ -3,6 +3,7 @@
     "name": "OPENMAP"
   },
   "settings": {
+    "title": "Settings",
     "appearance": {
       "label": "Appearance",
       "system": "System",
@@ -14,5 +15,61 @@
       "fr": "Français",
       "en": "English"
     }
+  },
+  "project": {
+    "defaultName": "Untitled Project",
+    "nameField": "Project name"
+  },
+  "home": {
+    "title": "Projects",
+    "newProject": "New Project",
+    "loading": "Loading your Projects…",
+    "loadError": "Your Projects could not be loaded.",
+    "retry": "Retry",
+    "empty": {
+      "title": "No Projects yet.",
+      "text": "Create your first Project to start an animated map."
+    },
+    "card": {
+      "meta": "{{modified}} · {{format}}",
+      "modified": "Modified {{when}}",
+      "unreadable": "Unreadable Project",
+      "menu": "Actions for Project {{name}}",
+      "rename": "Rename",
+      "duplicate": "Duplicate",
+      "delete": "Delete"
+    },
+    "copyName": "{{name}} (copy)",
+    "deleted": "Project deleted",
+    "undo": "Undo",
+    "errors": {
+      "create": "The Project could not be created on this device.",
+      "change": "The change could not be saved on this device.",
+      "detail": "Your saved Projects are unchanged.",
+      "restore": "The Project could not be restored."
+    }
+  },
+  "time": {
+    "justNow": "just now",
+    "minutes": "{{n}} min ago",
+    "hours": "{{n}} h ago",
+    "yesterday": "yesterday",
+    "date": "{{date}}"
+  },
+  "editor": {
+    "breadcrumb": "Breadcrumb",
+    "opening": "Opening…",
+    "rename": "Rename the Project",
+    "newerVersion": "This Project was made with a newer version of OPENMAP. Update the app to edit it.",
+    "notFound": "This Project could not be found on this device.",
+    "unreadable": "This Project could not be read.",
+    "loadError": "This Project could not be opened.",
+    "map": "Map",
+    "saveError": "The latest changes to this Project were not saved on this device.",
+    "renameError": "This name cannot be used. The Project keeps its previous name."
+  },
+  "toast": {
+    "region": "Notifications",
+    "close": "Close notification"
   }
 }

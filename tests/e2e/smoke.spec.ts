@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-test('the app loads the OPENMAP placeholder screen with self-hosted fonts only', async ({ page, baseURL }) => {
+test('the app loads Home with self-hosted fonts only', async ({ page, baseURL }) => {
   const problems: string[] = []
   const foreignRequests: string[] = []
   const fontRequests: string[] = []
@@ -21,7 +21,9 @@ test('the app loads the OPENMAP placeholder screen with self-hosted fonts only',
   await page.waitForLoadState('networkidle')
 
   await expect(page).toHaveTitle('OPENMAP')
-  await expect(page.getByRole('heading', { level: 1, name: 'OPENMAP' })).toBeVisible()
+  await expect(page.getByRole('banner').getByText('OPENMAP')).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'Projects' })).toBeVisible()
+  await page.getByRole('button', { name: 'Settings' }).click()
   await expect(page.getByRole('radiogroup')).toHaveCount(2)
 
   // UX-DR16: Libre Baskerville and Source Sans 3 are served by the app origin.

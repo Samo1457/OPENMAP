@@ -28,3 +28,9 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-1-3-core-project-model-commands-and-undo-engine.md`
   summary: Add a committed corpus of valid and invalid Project documents run through `validate`, so refinement-only schema changes (day-in-month, unique ids, name rules) also fail CI.
   evidence: The JSON Schema snapshot cannot express Zod refinements, so AD-9's drift check misses them.
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-4-home-create-and-manage-my-projects-locally.md`
+  summary: Prevent a Home rename/duplicate from being overwritten by an Editor tab open on the same Project (Story 1.14 lock, or a revision check in saveProject).
+  evidence: Home edits save with the row's current lockEpoch, the same as the open Editor, and saveProject does not compare revisions.
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-4-home-create-and-manage-my-projects-locally.md`
+  summary: List Home cards from the row summary fields instead of loading and validating every whole document; index deletedAt for the start-up purge.
+  evidence: listProjects runs migrate+validate on every document per Home load; cost grows with Map content.

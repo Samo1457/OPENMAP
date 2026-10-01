@@ -3,6 +3,7 @@
     "name": "OPENMAP"
   },
   "settings": {
+    "title": "Réglages",
     "appearance": {
       "label": "Apparence",
       "system": "Système",
@@ -14,5 +15,61 @@
       "fr": "Français",
       "en": "English"
     }
+  },
+  "project": {
+    "defaultName": "Projet sans titre",
+    "nameField": "Nom du Projet"
+  },
+  "home": {
+    "title": "Projets",
+    "newProject": "Nouveau Projet",
+    "loading": "Chargement de vos Projets…",
+    "loadError": "Impossible de charger vos Projets.",
+    "retry": "Réessayer",
+    "empty": {
+      "title": "Aucun Projet pour l'instant.",
+      "text": "Créez votre premier Projet pour commencer une carte animée."
+    },
+    "card": {
+      "meta": "{{modified}} · {{format}}",
+      "modified": "Modifié {{when}}",
+      "unreadable": "Projet illisible",
+      "menu": "Actions du Projet {{name}}",
+      "rename": "Renommer",
+      "duplicate": "Dupliquer",
+      "delete": "Supprimer"
+    },
+    "copyName": "{{name}} (copie)",
+    "deleted": "Projet supprimé",
+    "undo": "Annuler",
+    "errors": {
+      "create": "Le Projet n'a pas pu être créé sur cet appareil.",
+      "change": "La modification n'a pas pu être enregistrée sur cet appareil.",
+      "detail": "Vos Projets enregistrés n'ont pas changé.",
+      "restore": "Le Projet n'a pas pu être restauré."
+    }
+  },
+  "time": {
+    "justNow": "à l'instant",
+    "minutes": "il y a {{n}} min",
+    "hours": "il y a {{n}} h",
+    "yesterday": "hier",
+    "date": "le {{date}}"
+  },
+  "editor": {
+    "breadcrumb": "Fil d'Ariane",
+    "opening": "Ouverture…",
+    "rename": "Renommer le Projet",
+    "newerVersion": "Ce Projet vient d'une version plus récente d'OPENMAP. Mettez l'application à jour pour le modifier.",
+    "notFound": "Ce Projet est introuvable sur cet appareil.",
+    "unreadable": "Ce Projet est illisible.",
+    "loadError": "Impossible d'ouvrir ce Projet.",
+    "map": "Carte",
+    "saveError": "Les dernières modifications de ce Projet n'ont pas été enregistrées sur cet appareil.",
+    "renameError": "Ce nom ne convient pas. Le Projet garde son nom précédent."
+  },
+  "toast": {
+    "region": "Notifications",
+    "close": "Fermer la notification"
   }
 }

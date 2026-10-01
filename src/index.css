@@ -5,3 +5,24 @@
 
 /* Dark theme = `.dark` on <html> (set before paint by public/theme-boot.js, then by ThemeProvider). */
 @custom-variant dark (&:is(.dark *));
+
+/* Skeleton (DESIGN.md `skeleton`): solid blocks pulsing 100 → 60 % opacity over 1.2 s; still under reduced motion. */
+@keyframes om-skeleton-pulse {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.6;
+  }
+}
+
+.om-skeleton {
+  background-color: var(--om-border);
+  animation: om-skeleton-pulse 1.2s ease-in-out infinite alternate;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .om-skeleton {
+    animation: none;
+  }
+}

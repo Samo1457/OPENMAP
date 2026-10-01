@@ -3,11 +3,21 @@ import '@fontsource-variable/source-sans-3'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { i18next, initI18n, readStoredLanguage } from '@/i18n'
-import { flushPendingSaves, getPreference, type ThemePreference } from '@/persistence'
+import {
+  flushPendingSaves,
+  getPreference,
+  installPageLifecycleFlush,
+  purgeExpiredTombstones,
+  setVersionChangeHandler,
+  type ThemePreference,
+} from '@/persistence'
 import App from '@/ui/App'
 import { installChunkReload } from '@/ui/chunk-reload'
 import { ThemeProvider } from '@/ui/theme/ThemeProvider'
 import './index.css'
+
+/** Start-up purge of deleted Projects: only tombstones older than this (AD-8). */
+const TOMBSTONE_PURGE_GRACE_MS = 10 * 60 * 1000
 
 installChunkReload({
   target: window,
@@ -16,6 +26,11 @@ installChunkReload({
   flush: flushPendingSaves,
   reload: () => window.location.reload(),
 })
+
+// AD-8: pending saves are written when the page is hidden or closed.
+installPageLifecycleFlush({ window, document })
+// AD-9: a schema upgrade in another tab flushes, closes the database, then reloads this tab once.
+setVersionChangeHandler(() => window.location.reload())
 
 /** Never let a stuck IndexedDB open delay the first render for long. */
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | undefined> {
@@ -39,6 +54,10 @@ async function start() {
   ])
   await initI18n(language)
   render(theme)
+  // A tab closed before a delete toast expired leaves a tombstone: purge it now (AD-8). The grace
+  // is far longer than the 8 s toast, whose timer pauses on hover and focus, so a delete whose
+  // Undo toast is still shown in another tab is never purged from under it.
+  void purgeExpiredTombstones(TOMBSTONE_PURGE_GRACE_MS)
 }
 
 start().catch(async (error: unknown) => {

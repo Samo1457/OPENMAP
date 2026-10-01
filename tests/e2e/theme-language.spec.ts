@@ -23,6 +23,12 @@ function storedPreference(page: Page, key: string) {
   )
 }
 
+/** Appearance and Language live in the temporary Settings popover of the top bar (Story 1.4). */
+async function openSettings(page: Page, name = 'Settings') {
+  await page.getByRole('button', { name }).click()
+  await expect(page.getByRole('group', { name })).toBeVisible()
+}
+
 const isDark = (page: Page) => page.evaluate(() => document.documentElement.classList.contains('dark'))
 const cssVar = (page: Page, name: string) =>
   page.evaluate((name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim(), name)
@@ -33,6 +39,7 @@ test.describe('theme (UX-DR28, AD-8)', () => {
   test('first launch follows a dark OS before the app renders', async ({ page }) => {
     await page.emulateMedia({ colorScheme: 'dark' })
     await page.goto('/')
+    await openSettings(page)
     await expect(page.getByRole('radio', { name: 'System' })).toHaveAttribute('aria-checked', 'true')
     expect(await isDark(page)).toBe(true)
     await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(17, 22, 28)')
@@ -59,6 +66,7 @@ test.describe('theme (UX-DR28, AD-8)', () => {
     await page.addInitScript(() => Object.defineProperty(window, 'indexedDB', { value: undefined }))
     await page.emulateMedia({ colorScheme: 'dark' })
     await page.goto('/')
+    await openSettings(page)
     await expect(page.getByRole('radio', { name: 'System' })).toHaveAttribute('aria-checked', 'true')
     expect(await isDark(page)).toBe(true)
     await page.getByRole('radio', { name: 'Light' }).click()
@@ -69,7 +77,7 @@ test.describe('theme (UX-DR28, AD-8)', () => {
   test('System follows OS changes without reload', async ({ page }) => {
     await page.emulateMedia({ colorScheme: 'light' })
     await page.goto('/')
-    await expect(page.getByRole('heading', { name: 'OPENMAP' })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1, name: 'Projects' })).toBeVisible()
     expect(await isDark(page)).toBe(false)
     await page.emulateMedia({ colorScheme: 'dark' })
     await expect.poll(() => isDark(page)).toBe(true)
@@ -80,6 +88,7 @@ test.describe('theme (UX-DR28, AD-8)', () => {
   test('Light applies at once, is stored in IndexedDB and survives a reload with a dark OS', async ({ page }) => {
     await page.emulateMedia({ colorScheme: 'dark' })
     await page.goto('/')
+    await openSettings(page)
     await page.getByRole('radio', { name: 'Light' }).click()
     expect(await isDark(page)).toBe(false)
     await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(243, 239, 228)')
@@ -87,12 +96,14 @@ test.describe('theme (UX-DR28, AD-8)', () => {
     expect(await page.evaluate(() => localStorage.length)).toBe(0)
 
     await page.reload()
+    await openSettings(page)
     await expect(page.getByRole('radio', { name: 'Light' })).toHaveAttribute('aria-checked', 'true')
     expect(await isDark(page)).toBe(false)
   })
 
   test('mono-mode tokens are identical in both themes; chrome tokens swap (UX-DR1, UX-DR2)', async ({ page }) => {
     await page.goto('/')
+    await openSettings(page)
     const mono = ['--om-scrim', '--om-canvas-ink', '--om-canvas-halo', '--om-canvas-mask']
     await page.getByRole('radio', { name: 'Light' }).click()
     const light = await Promise.all([...mono, '--om-accent'].map((name) => cssVar(page, name)))
@@ -119,6 +130,7 @@ test.describe('language (UX-DR150, AD-20)', () => {
 
   test('language names carry their own lang (WCAG 3.1.2)', async ({ page }) => {
     await page.goto('/')
+    await openSettings(page, 'Réglages')
     await expect(page.getByRole('radio', { name: 'Français' })).toHaveAttribute('lang', 'fr')
     await expect(page.getByRole('radio', { name: 'English' })).toHaveAttribute('lang', 'en')
   })
@@ -128,6 +140,7 @@ test.describe('language (UX-DR150, AD-20)', () => {
   }) => {
     await page.goto('/')
     await expect(page.locator('html')).toHaveAttribute('lang', 'fr')
+    await openSettings(page, 'Réglages')
     await expect(page.getByText('Apparence')).toBeVisible()
     await expect(page.getByRole('radio', { name: 'Système' })).toBeVisible()
 
@@ -138,12 +151,14 @@ test.describe('language (UX-DR150, AD-20)', () => {
     await expect(page.getByText('Appearance')).toBeVisible()
     await expect(page.getByText('Language', { exact: true })).toBeVisible()
     for (const name of ['System', 'Light', 'Dark']) await expect(page.getByRole('radio', { name })).toBeVisible()
-    await expect(page.getByText(/Apparence|Langue|Système|Clair|Sombre/)).toHaveCount(0)
+    await expect(page.getByText(/Apparence|Langue|Système|Clair|Sombre|Réglages|Projets/)).toHaveCount(0)
+    await expect(page.getByRole('heading', { level: 1, name: 'Projects' })).toBeVisible()
     expect(await page.evaluate(() => (window as unknown as { marker?: boolean }).marker)).toBe(true)
     await expect.poll(() => storedPreference(page, 'language')).toBe('en')
 
     await page.reload()
     await expect(page.locator('html')).toHaveAttribute('lang', 'en')
+    await openSettings(page)
     await expect(page.getByText('Appearance')).toBeVisible()
   })
 })
@@ -154,6 +169,7 @@ test.describe('focus ring (UX-DR27)', () => {
   test('shows on keyboard focus only', async ({ page }) => {
     await page.emulateMedia({ colorScheme: 'light' })
     await page.goto('/')
+    await openSettings(page)
     const system = page.getByRole('radio', { name: 'System' })
     const light = page.getByRole('radio', { name: 'Light' })
 
@@ -175,6 +191,7 @@ test.describe('focus ring (UX-DR27)', () => {
 
   test('arrow keys wrap around; Home and End jump to the ends', async ({ page }) => {
     await page.goto('/')
+    await openSettings(page)
     const radio = (name: string) => page.getByRole('radio', { name })
     await radio('System').focus()
 
@@ -192,12 +209,27 @@ test.describe('focus ring (UX-DR27)', () => {
     await expect(radio('System')).toHaveAttribute('aria-checked', 'true')
   })
 
-  test('Tab reaches each radio group once', async ({ page }) => {
+  test('the Settings popover opens from the keyboard; Tab reaches each radio group once; Escape or leaving it closes it', async ({ page }) => {
     await page.goto('/')
-    await expect(page.getByRole('heading', { name: 'OPENMAP' })).toBeVisible()
-    await page.keyboard.press('Tab')
+    await expect(page.getByRole('heading', { level: 1, name: 'Projects' })).toBeVisible()
+    const settings = page.getByRole('button', { name: 'Settings' })
+    await settings.focus()
+    await expect(settings).toHaveAttribute('aria-expanded', 'false')
+    await page.keyboard.press('Enter')
+    await expect(settings).toHaveAttribute('aria-expanded', 'true')
     await expect(page.getByRole('radio', { name: 'System' })).toBeFocused()
     await page.keyboard.press('Tab')
     await expect(page.getByRole('radio', { name: 'English' })).toBeFocused()
+    await page.keyboard.press('Escape')
+    await expect(page.getByRole('group', { name: 'Settings' })).toHaveCount(0)
+    await expect(settings).toBeFocused()
+
+    // A disclosure, not a dialog: focus leaving the panel closes it.
+    await page.keyboard.press('Enter')
+    await expect(page.getByRole('radio', { name: 'System' })).toBeFocused()
+    await page.keyboard.press('Tab')
+    await page.keyboard.press('Tab')
+    await expect(page.getByRole('group', { name: 'Settings' })).toHaveCount(0)
+    await expect(settings).toHaveAttribute('aria-expanded', 'false')
   })
 })

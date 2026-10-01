@@ -1,21 +1,15 @@
-import { useTranslation } from 'react-i18next'
-import { AppearanceControl } from '@/ui/settings/AppearanceControl'
-import { LanguageControl } from '@/ui/settings/LanguageControl'
+import { ToastProvider } from '@/ui/components/toast'
+import { EditorPlaceholder } from '@/ui/editor/EditorPlaceholder'
+import { HomeScreen } from '@/ui/home/HomeScreen'
+import { useRoute } from '@/ui/routing'
 
-// Temporary placeholder screen (Story 1.2): the Home (1.4), Editor (1.5) and
-// Settings dialog (1.6) replace it.
+// Home (Story 1.4) and the Editor placeholder (the Editor shell arrives in Story 1.5), chosen by
+// the address hash. Toasts live above both, so a delete toast survives opening a Project.
 export default function App() {
-  const { t } = useTranslation()
-
+  const route = useRoute()
   return (
-    <main className="min-h-screen bg-background px-8 py-8">
-      <div className="mx-auto flex max-w-home-max-width flex-col gap-6">
-        <h1 className="type-title-xl text-om-text-primary">{t('app.name')}</h1>
-        <section className="flex w-full max-w-dialog-width-sm flex-col gap-4 border border-om-border bg-om-surface p-6">
-          <AppearanceControl />
-          <LanguageControl />
-        </section>
-      </div>
-    </main>
+    <ToastProvider>
+      {route.kind === 'editor' ? <EditorPlaceholder key={route.projectId} projectId={route.projectId} /> : <HomeScreen />}
+    </ToastProvider>
   )
 }
