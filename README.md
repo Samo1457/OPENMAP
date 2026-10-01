@@ -23,7 +23,7 @@ npm ci
 npm run dev
 ```
 
-Ouvrez l'adresse affichée (par défaut <http://localhost:5173>). Pour l'instant, la page est volontairement vide ; son titre est « OPENMAP ».
+Ouvrez l'adresse affichée (par défaut <http://localhost:5173>). Pour l'instant, la page est un écran provisoire : le titre « OPENMAP » et les réglages Apparence (Système · Clair · Sombre) et Langue (Français · English), enregistrés dans IndexedDB.
 
 ### Les vérifications, une par une
 
@@ -33,9 +33,9 @@ Ouvrez l'adresse affichée (par défaut <http://localhost:5173>). Pour l'instant
 | `npm run lint` | oxlint. Refuse `Math.random`, `Date.now`, `performance.now`, `new Date()` et `crypto.getRandomValues` dans `src/core` (AD-2), et `flyTo` / `easeTo` / `panTo` partout (AD-1). |
 | `npm run depcruise` | dependency-cruiser : les règles de couches. `src/core` n'importe ni React, ni MapLibre, ni deck.gl, ni `src/i18n`, ni un adaptateur ; un adaptateur ou l'UI n'entre dans un autre adaptateur que par son `index.ts`. |
 | `npm run licences` | Les licences de toutes les dépendances (AD-17). Une licence hors de la liste autorisée fait échouer la vérification, sauf si le paquet figure dans `licence-overrides.json` avec une raison. |
-| `npm run test` | Les tests Vitest, dont les tests des garde-fous : chaque règle ci-dessus est confrontée à un exemple fautif (`tests/guardrails/fixtures/`) et doit le refuser. |
+| `npm run test` | Les tests Vitest, dont les tests des garde-fous : chaque règle ci-dessus est confrontée à un exemple fautif (`tests/guardrails/fixtures/`) et doit le refuser. Ils vérifient aussi que chaque clé de traduction existe en `fr` et en `en` (avec la typographie française), que les tokens de `src/ui/theme` reprennent les valeurs de DESIGN.md et que chaque couple de couleurs atteint les contrastes WCAG AA dans les deux thèmes. |
 | `npm run build` | La version de production dans `dist/`. |
-| `npm run e2e` | Le test Playwright : la page se charge, s'appelle « OPENMAP », sans erreur ni requête vers un autre site. Il démarre lui-même le serveur de développement (en CI, il sert la version construite `dist/`). |
+| `npm run e2e` | Les tests Playwright : la page se charge, s'appelle « OPENMAP », sans erreur ni requête vers un autre site (polices comprises) ; le thème suit le système et le choix survit au rechargement ; la langue change sans rechargement ; l'anneau de focus n'apparaît qu'au clavier. Il démarre lui-même le serveur de développement (en CI, il sert la version construite `dist/`). |
 
 Avant le premier `npm run e2e`, installez Chromium pour Playwright : `npx playwright install chromium`. Si un Chromium est déjà installé ailleurs, indiquez son chemin dans la variable `PLAYWRIGHT_CHROMIUM_EXECUTABLE` au lieu de le réinstaller.
 

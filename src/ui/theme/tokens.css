@@ -1,0 +1,389 @@
+/*
+ * OPENMAP design-system layer (DESIGN.md frontmatter, Story 1.2).
+ * Values mirror src/ui/theme/tokens.ts; tokens.test.ts asserts they stay equal.
+ *
+ * - Chrome colours: `--om-<token>` on :root (light) and .dark (dark), UX-DR1.
+ * - Mono-mode colours (`scrim`, `canvas-*`) are declared once and never redefined in .dark, UX-DR2.
+ * - Map colours (`map-*`) are deliberately absent: Map colours come from the Scene, never from CSS (AD-6).
+ * - shadcn variables only point at OPENMAP tokens (DESIGN.md "Correspondance shadcn"), UX-DR5.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* Chrome colours, light theme */
+  --om-background: #F3EFE4;
+  --om-surface: #FBF8F1;
+  --om-surface-raised: #FFFFFF;
+  --om-border: #D8D1C1;
+  --om-border-input: #7D858D;
+  --om-text-primary: #18222D;
+  --om-text-secondary: #46525E;
+  --om-text-muted: #626C77;
+  --om-accent: #1D4163;
+  --om-accent-hover: #132F4A;
+  --om-on-accent: #F7F3EA;
+  --om-selection: #DAE3EC;
+  --om-focus-ring: #2C6391;
+  --om-success: #2B6A4C;
+  --om-warning: #8A5B0E;
+  --om-danger: #A5312F;
+  --om-text-disabled: #99A0A6;
+  --om-progress-track: #D8D1C1;
+  --om-progress-fill: #1D4163;
+  --om-track-arrows: #E3D6D2;
+  --om-track-tokens: #D6E0D5;
+  --om-track-text: #D5DEE8;
+  --om-track-ink: #18222D;
+  --om-playhead: #1D4163;
+  --om-act-rule: #7A8590;
+
+  /* Mono-mode colours: identical in both themes */
+  --om-scrim: #11161C;
+  --om-canvas-ink: #18222D;
+  --om-canvas-halo: #F7F3EA;
+  --om-canvas-mask: #11161C;
+
+  /* Opacities (DESIGN.md components), and the modal scrim built from them (UX-DR8, UX-DR10) */
+  --om-opacity-control-disabled: 0.55;
+  --om-opacity-dialog-scrim: 0.62;
+  --om-opacity-export-frame-mask: 0.55;
+  --om-opacity-presentation-controls: 0.72;
+  --om-dialog-scrim: color-mix(in srgb, var(--om-scrim) calc(var(--om-opacity-dialog-scrim) * 100%), transparent);
+
+  /* Focus ring: 2px surface gap, then 2px focus-ring (UX-DR27) */
+  --om-focus-ring-offset: 2px;
+  --om-focus-ring-width: 2px;
+  --om-focus-ring-shadow:
+    0 0 0 var(--om-focus-ring-offset) var(--om-surface),
+    0 0 0 calc(var(--om-focus-ring-offset) + var(--om-focus-ring-width)) var(--om-focus-ring);
+
+  /* shadcn/ui variables mapped to OPENMAP tokens. Mind the false friend:
+     shadcn `accent` is a hover background (= OPENMAP selection), OPENMAP accent is shadcn `primary`. */
+  --background: var(--om-background);
+  --foreground: var(--om-text-primary);
+  --card: var(--om-surface);
+  --card-foreground: var(--om-text-primary);
+  --popover: var(--om-surface-raised);
+  --popover-foreground: var(--om-text-primary);
+  --primary: var(--om-accent);
+  --primary-foreground: var(--om-on-accent);
+  --secondary: var(--om-surface);
+  --secondary-foreground: var(--om-text-primary);
+  --muted: var(--om-surface);
+  --muted-foreground: var(--om-text-muted);
+  --accent: var(--om-selection);
+  --accent-foreground: var(--om-text-primary);
+  --destructive: var(--om-danger);
+  --border: var(--om-border);
+  --input: var(--om-border-input);
+  --ring: var(--om-focus-ring);
+  --radius: 2px;
+}
+
+.dark {
+  color-scheme: dark;
+
+  /* Chrome colours, dark theme */
+  --om-background: #11161C;
+  --om-surface: #182029;
+  --om-surface-raised: #212B35;
+  --om-border: #324050;
+  --om-border-input: #738292;
+  --om-text-primary: #ECE7DB;
+  --om-text-secondary: #B7BCBF;
+  --om-text-muted: #8E98A3;
+  --om-accent: #8EB6D8;
+  --om-accent-hover: #AACAE5;
+  --om-on-accent: #0D1A26;
+  --om-selection: #1D3448;
+  --om-focus-ring: #C4DCF0;
+  --om-success: #76B894;
+  --om-warning: #D9AC55;
+  --om-danger: #EC7B78;
+  --om-text-disabled: #747B81;
+  --om-progress-track: #324050;
+  --om-progress-fill: #8EB6D8;
+  --om-track-arrows: #3A3A48;
+  --om-track-tokens: #2E4038;
+  --om-track-text: #2A3A4C;
+  --om-track-ink: #E6E4DC;
+  --om-playhead: #8EB6D8;
+  --om-act-rule: #687786;
+}
+
+/* Tailwind theme: only OPENMAP colours, fonts, radii, shadows and spacing (no defaults left). */
+@theme inline {
+  --color-*: initial;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-om-background: var(--om-background);
+  --color-om-surface: var(--om-surface);
+  --color-om-surface-raised: var(--om-surface-raised);
+  --color-om-border: var(--om-border);
+  --color-om-border-input: var(--om-border-input);
+  --color-om-text-primary: var(--om-text-primary);
+  --color-om-text-secondary: var(--om-text-secondary);
+  --color-om-text-muted: var(--om-text-muted);
+  --color-om-accent: var(--om-accent);
+  --color-om-accent-hover: var(--om-accent-hover);
+  --color-om-on-accent: var(--om-on-accent);
+  --color-om-selection: var(--om-selection);
+  --color-om-focus-ring: var(--om-focus-ring);
+  --color-om-success: var(--om-success);
+  --color-om-warning: var(--om-warning);
+  --color-om-danger: var(--om-danger);
+  --color-om-text-disabled: var(--om-text-disabled);
+  --color-om-progress-track: var(--om-progress-track);
+  --color-om-progress-fill: var(--om-progress-fill);
+  --color-om-track-arrows: var(--om-track-arrows);
+  --color-om-track-tokens: var(--om-track-tokens);
+  --color-om-track-text: var(--om-track-text);
+  --color-om-track-ink: var(--om-track-ink);
+  --color-om-playhead: var(--om-playhead);
+  --color-om-act-rule: var(--om-act-rule);
+  --color-om-scrim: var(--om-scrim);
+  --color-om-canvas-ink: var(--om-canvas-ink);
+  --color-om-canvas-halo: var(--om-canvas-halo);
+  --color-om-canvas-mask: var(--om-canvas-mask);
+  --color-om-dialog-scrim: var(--om-dialog-scrim);
+}
+
+@theme static {
+  --font-*: initial;
+  --font-serif: 'Libre Baskerville Variable', 'Libre Baskerville', Baskerville, 'Baskerville Old Face', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Source Sans 3 Variable', 'Source Sans 3', 'Segoe UI', Frutiger, 'Helvetica Neue', Arial, sans-serif;
+
+  /* Radii (UX-DR23): square corners; larger shadcn radii are clamped to md. `rounded-full` stays for slider thumbs and status dots only. */
+  --radius-*: initial;
+  --radius-none: 0px;
+  --radius-xs: 2px;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 4px;
+  --radius-xl: 4px;
+  --radius-2xl: 4px;
+  --radius-3xl: 4px;
+  --radius-4xl: 4px;
+
+  /* Elevation (UX-DR24): only the short (toast) and long (drawer, popover, dialog) shadows exist. */
+  --shadow-*: initial;
+  --inset-shadow-*: initial;
+  --drop-shadow-*: initial;
+  --shadow-short: 0 6px 16px -10px rgba(0,0,0,.45);
+  --shadow-long: 0 12px 28px -18px rgba(0,0,0,.35);
+
+  /* Spacing (UX-DR22): 4px base, so p-1 = 4px … p-8 = 32px, plus the named layout tokens. */
+  --spacing: 4px;
+  --spacing-top-bar-height: 48px;
+  --spacing-rail-width: 76px;
+  --spacing-rail-item-height: 56px;
+  --spacing-panel-width: 300px;
+  --spacing-panel-width-compact: 260px;
+  --spacing-panel-row-min-height: 34px;
+  --spacing-drawer-width: 320px;
+  --spacing-tool-options-bar-height: 36px;
+  --spacing-timeline-height: 200px;
+  --spacing-timeline-min-height: 180px;
+  --spacing-timeline-collapsed-height: 44px;
+  --spacing-timeline-header-height: 40px;
+  --spacing-timeline-ruler-height: 20px;
+  --spacing-act-row-height: 24px;
+  --spacing-etape-thumbnail-height: 72px;
+  --spacing-track-lane-height: 26px;
+  --spacing-track-clip-height: 20px;
+  --spacing-track-peek-height: 18px;
+  --spacing-scrollbar-width: 6px;
+  --spacing-progress-height: 6px;
+  --spacing-hit-area-min: 24px;
+  --spacing-icon-size-rail: 20px;
+  --spacing-icon-size-control: 16px;
+  --spacing-icon-stroke: 1.5px;
+  --spacing-control-height: 32px;
+  --spacing-control-height-sm: 28px;
+  --spacing-panel-padding-x: 18px;
+  --spacing-focus-ring-offset: 2px;
+  --spacing-focus-ring-width: 2px;
+  --spacing-color-swatch-size: 24px;
+  --spacing-basemap-tile-height: 56px;
+  --spacing-assistant-header-height: 56px;
+  --spacing-assistant-step-height: 64px;
+  --spacing-assistant-aside-width: 400px;
+  --spacing-export-dialog-width: 560px;
+  --spacing-export-label-width: 148px;
+  --spacing-dialog-width-sm: 440px;
+  --spacing-home-max-width: 1200px;
+  --spacing-project-card-min-width: 240px;
+  --spacing-presentation-bar-height: 48px;
+  --spacing-presentation-bar-width: 640px;
+  --spacing-map-credit-margin: 24px;
+  --spacing-map-token-size: 56px;
+  --spacing-map-legend-padding: 24px;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground type-body;
+  }
+
+  /* Keyboard focus only (UX-DR27). The transparent outline keeps forced-colors mode visible. */
+  :focus-visible {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    box-shadow: var(--om-focus-ring-shadow);
+  }
+}
+
+/* UI type scale (UX-DR17–UX-DR19). The serif never goes in buttons, fields, tooltips or toasts (UX-DR20). */
+@utility type-title-xl {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+@utility type-title-lg {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.005em;
+}
+
+@utility type-title-md {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+@utility type-date-display {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+@utility type-date-compact {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+@utility type-body {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+@utility type-body-strong {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+@utility type-label {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+@utility type-caption {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.35;
+}
+
+@utility type-label-caps {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+@utility type-label-caps-tight {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0em;
+  text-transform: uppercase;
+}
+
+@utility type-timecode {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+@utility type-timecode-strong {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* Tabular figures for hex values and other numbers outside the timecode tokens (UX-DR18). */
+@utility numeric-tabular {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* At least a 24 × 24 px active area whatever the visual size (UX-DR26). */
+@utility hit-area {
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, var(--spacing-hit-area-min));
+    height: max(100%, var(--spacing-hit-area-min));
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* Disabled control (UX-DR8): keeps its slot, 55 % opacity, not-allowed cursor. */
+@utility control-disabled {
+  opacity: var(--om-opacity-control-disabled);
+  cursor: not-allowed;
+}
+
+/* Icons (UX-DR25): Lucide restyled to a 1.5px stroke. */
+@utility icon-stroke {
+  stroke-width: var(--spacing-icon-stroke);
+}

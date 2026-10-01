@@ -1,0 +1,18 @@
+{
+  "app": {
+    "name": "OPENMAP"
+  },
+  "settings": {
+    "appearance": {
+      "label": "Appearance",
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark"
+    },
+    "language": {
+      "label": "Language",
+      "fr": "Français",
+      "en": "English"
+    }
+  }
+}

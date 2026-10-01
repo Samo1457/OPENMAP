@@ -1,0 +1,6 @@
+{
+  "settings": {
+    "appearance": { "label": "Appearance", "system": "System" },
+    "language": { "label": "Language" }
+  }
+}
