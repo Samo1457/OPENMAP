@@ -2,7 +2,8 @@
 title: 'Story 1.4: Home: create and manage my Projects locally'
 type: 'feature'
 created: '2026-10-01'
-status: 'draft'
+status: 'in-progress'
+baseline_commit: 'bca4af1d6f57f39194db52c1b2d8a7ded70f8aa5'
 route: 'dispatch'
 review_loop_iteration: 0
 context:
@@ -40,24 +41,22 @@ context:
 | Stale epoch | write with older `lockEpoch` | refused, nothing overwritten | status `error` |
 | Schema upgrade elsewhere | Dexie `versionchange` | flush, close, reload once | N/A |
 
+**Decisions (owner accepted all recommended defaults):**
+- Empty-state sentence: « Créez votre premier Projet pour commencer une carte animée. » / "Create your first Project to start an animated map."
+- Duplicate name: « {nom} (copie) » / "{name} (copy)", shortened to fit 120 characters.
+- Card date: « Modifié à l'instant » (< 1 min), « il y a 5 min », « il y a 2 h », « hier », then « le 3 oct. 2026 »; English "just now", "5 min ago", "2 h ago", "yesterday", "Oct 3, 2026"; followed by « · 16:9 ».
+- Thumbnail until the map renders (Story 1.10): plain block in the parchment land colour.
+- "Importer un Fichier projet" and the drop zone: hidden until Story 7.1.
+- Newer document banner: « Ce Projet vient d'une version plus récente d'OPENMAP. Mettez l'application à jour pour le modifier. » / "This Project was made with a newer version of OPENMAP. Update the app to edit it." Unreadable card meta: « Projet illisible » / "Unreadable Project".
+- Editor placeholder: top bar with a « Projets » link back to Home and the Project name; the address is `#/p/<id>` so a reload reopens the Project.
+- Appearance and Language: a temporary « Réglages » / "Settings" popover button in the top bar of Home and Editor, replaced by the Settings dialog in Story 1.6.
+- Toasts: bottom-right; delete toast lasts 8 s.
+- Rename in place: Enter or leaving the field saves, Escape cancels, an empty name restores the previous one.
+- No « Projet sauvegardé » toast yet (arrives with Ctrl+S in Story 1.5).
+- Home load failure: « Impossible de charger vos Projets. » + « Réessayer » / "Your Projects could not be loaded." + "Retry".
+- Full spec kept (~2,100 tokens).
+
 </frozen-after-approval>
-
-## Open Questions
-
-Each has a recommended default; answer "OK" to accept all or override by number.
-
-1. Empty-state sentence: « Créez votre premier Projet pour commencer une carte animée. » / "Create your first Project to start an animated map."
-2. Duplicate name: « {nom} (copie) » / "{name} (copy)", shortened to fit 120 characters.
-3. Card date: « Modifié à l'instant » (< 1 min), « il y a 5 min », « il y a 2 h », « hier », then « le 3 oct. 2026 »; English "just now", "5 min ago", "2 h ago", "yesterday", "Oct 3, 2026"; followed by « · 16:9 ».
-4. Thumbnail until the map renders (Story 1.10): plain block in the parchment land colour.
-5. "Importer un Fichier projet" and the drop zone: hidden until Story 7.1.
-6. Newer document banner: « Ce Projet vient d'une version plus récente d'OPENMAP. Mettez l'application à jour pour le modifier. » / "This Project was made with a newer version of OPENMAP. Update the app to edit it." Unreadable card meta: « Projet illisible » / "Unreadable Project".
-7. Editor placeholder: top bar with a « Projets » link back to Home and the Project name; the address is `#/p/<id>` so a reload reopens the Project.
-8. Appearance and Language: a temporary « Réglages » / "Settings" popover button in the top bar of Home and Editor, replaced by the Settings dialog in Story 1.6.
-9. Toasts: bottom-right; delete toast lasts 8 s.
-10. Rename in place: Enter or leaving the field saves, Escape cancels, an empty name restores the previous one.
-11. No « Projet sauvegardé » toast yet (arrives with Ctrl+S in Story 1.5).
-12. Home load failure: « Impossible de charger vos Projets. » + « Réessayer » / "Your Projects could not be loaded." + "Retry".
 
 ## Code Map
 
