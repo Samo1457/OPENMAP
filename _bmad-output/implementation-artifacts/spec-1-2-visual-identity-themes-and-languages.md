@@ -2,7 +2,8 @@
 title: 'Story 1.2: Visual identity, themes and languages'
 type: 'feature'
 created: '2026-10-01'
-status: 'draft'
+status: 'in-progress'
+baseline_commit: '5ee9652f93b52e1e9330b00f37364ba0fa839dbc'
 route: 'dispatch'
 review_loop_iteration: 0
 context:
@@ -36,12 +37,12 @@ context:
 | IndexedDB unavailable | Dexie open fails | app still renders with system theme and default language | choice not persisted; no crash |
 | Contrast | every DESIGN.md text/control pair | ≥ 4.5:1 text, ≥ 3:1 border-input, focus-ring, act-rule, in both themes | test fails naming the pair |
 
+**Decisions:**
+- Theme and language controls: build "Apparence" (Système · Clair · Sombre / System · Light · Dark) and "Langue" (Français · English) as reusable components now, shown on a temporary placeholder screen (brand title "OPENMAP" plus the two controls, chrome styled with the tokens); Story 1.6 moves them into the "Réglages" dialog. Labels use the EXPERIENCE.md microcopy.
+- First-launch language: French if `navigator.language` starts with `fr`, otherwise English; the stored choice wins afterwards.
+- Full spec kept (~1,800 tokens).
+
 </frozen-after-approval>
-
-## Open Questions
-
-1. Where can the user choose the theme and language in this story? The real place is the Settings dialog ("Réglages"), owned by Story 1.6. Options: (a) build the "Apparence" and "Langue" controls now as reusable components shown on a temporary placeholder screen, which 1.6 moves into the dialog (visible and testable today; small throwaway screen) / (b) no visible control: ship the store, providers and setters with tests only (nothing to see until 1.6) / (c) build a minimal Settings dialog now (overlaps Story 1.6).
-2. Which language on first launch? Options: (a) French if the browser language starts with `fr`, else English (natural for both audiences) / (b) always French (the PRD's primary audience; English users switch once).
 
 ## Code Map
 
@@ -66,7 +67,7 @@ context:
 - [ ] `src/i18n/index.ts`, `src/i18n/locales/{fr,en}.json` -- i18next init, `setLanguage` updates `<html lang>` and persists; French strings use U+202F before `: ; ? !` and « » quotes
 - [ ] `tests/guardrails/i18n-keys.test.ts` -- fails on a key in one locale only (with a violating fixture)
 - [ ] `src/ui/theme/contrast.test.ts` -- WCAG ratios for every DESIGN.md pair in both themes, forbidden pair asserted below 4.5
-- [ ] Open Question 1 outcome (controls and/or screen) + e2e: theme follows emulated dark scheme, choice persists across reload, language switch changes text without reload
+- [ ] `src/ui/settings/AppearanceControl.tsx`, `LanguageControl.tsx`, `src/ui/App.tsx` placeholder screen + `tests/e2e/smoke.spec.ts` update (body no longer empty) + e2e: theme follows emulated dark scheme, choice persists across reload, language switch changes text without reload
 - [ ] `licence-overrides.json`, `README.md` -- only if needed
 
 **Acceptance Criteria:**
