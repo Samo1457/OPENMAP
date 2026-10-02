@@ -146,7 +146,7 @@
         {
           "name": "SR_HR.zip",
           "url": "https://naciscdn.org/naturalearth/10m/raster/SR_HR.zip",
-          "sha256": "",
+          "sha256": "b2619fff2fc73c17152983c066adfaa25c4b626916b822bad2fae8bcd9be41a5",
           "extract": "SR_HR.tif"
         }
       ]

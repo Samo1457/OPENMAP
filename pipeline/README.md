@@ -38,12 +38,12 @@ Les téléchargements sont mis en cache dans `pipeline/cache/` (rien n'est reté
 
 ## Taille sur disque
 
-Mesures de la construction `--vector-only` (sources Natural Earth 10 m) :
+Mesures de la construction complète (sources Natural Earth 10 m, relief compris, Windows, Node 24) :
 
-- `pipeline/out/` : 7,1 Mio (tuiles vectorielles 6,4 Mio, glyphes 0,7 Mio, styles 7 Kio) ;
-- `pipeline/cache/` : 50 Mio (shapefiles téléchargés).
+- `pipeline/out/` : 56 Mio, dont les tuiles vectorielles 6,4 Mio, le relief 48,1 Mio (`natural-earth-relief-v1.pmtiles`), les glyphes 0,7 Mio et les styles 7 Kio ;
+- `pipeline/cache/` : 92 Mio, dont les shapefiles téléchargés (environ 50 Mio) et l'archive du relief `SR_HR.zip` (42,3 Mio).
 
-Le relief n'a pas pu être mesuré dans l'environnement de développement (hôte `naciscdn.org` inaccessible) : à renseigner ici après le premier passage complet (`pipeline/out/natural-earth-relief-v1.pmtiles` et archive `SR_HR.zip` dans le cache). Mesure à faire : `du -sh pipeline/out pipeline/cache`.
+Soit environ 148 Mio sur disque pour une construction complète. Mesure : `du -sh pipeline/out pipeline/cache`.
 
 ## Tests
 
