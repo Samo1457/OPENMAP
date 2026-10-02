@@ -2,7 +2,8 @@
 title: 'Story 1.9: Historical borders pipeline (Cliopatria)'
 type: 'feature'
 created: '2026-10-02'
-status: 'draft'
+status: 'in-progress'
+baseline_commit: '488938f28b988561fec346a4e54054b9694ba2da'
 route: 'dispatch'
 review_loop_iteration: 0
 context:
@@ -19,7 +20,7 @@ context:
 
 ## Boundaries & Constraints
 
-**Always:** Source = Cliopatria release tag `v0.2.0` (`cliopatria.geojson.zip`, member `cliopatria_polities_only.geojson`, raw GitHub URL pinned to the tag, SHA-256 `d01ae3a20d358cc5d54f69d9d725d390767d9c8759ac89ad6f90c58d106f3370`), declared `CC-BY-4.0`, `creditRequired: true`, attribution naming Cliopatria and the Seshat Global History Databank; the run fails before any download if a licence is off the allowlist (reuse the Story 1.8 gate); entity = all rows sharing a Cliopatria `Name`; `entityId` = ASCII slug of the Name (parentheses stripped, aggregate marked by suffix `.group`; any residual slug collision, e.g. « Han » / « Hán », gets `-` + first 6 hex of the SHA-256 of the exact Name on every colliding Name; an unresolved collision fails the run); canonical key `cliopatria@0.2.0:<entityId>` (AD-12); states of one entity must not overlap in time (checked, run fails otherwise); geometry kept whole (never clipped), Douglas–Peucker at 0.005° then coordinates rounded to 4 decimals, rings below 4 points dropped, a state left with no polygon fails the run naming it; RFC 7946 winding; output deterministic; paths: `/library/v1/geo/index.json` and `/library/v1/geo/<entityId>/<fromYear>.json` (years as integers, BCE negative); each state file is one compact GeoJSON Feature with `id` = canonical key and `properties {fromYear, toYear, area}`; `index.json` lists dataset metadata `{id, version, source, licence, attribution, creditRequired, simplification, generated counts}` and per entity `{id, name, kind, wikidata, wikipedia, seshatId, memberOf (entityIds), states [[fromYear, toYear], …] sorted}`; output goes to its own root `pipeline/out-geo/` (gitignored) so the Story 1.8 build never deletes it; the same replace-safely rules as Story 1.8; new dependency only as MIT/BSD/ISC devDependency passing `npm run licences`; README section in plain French (version, simplification level, measured disk size).
+**Always:** Source = Cliopatria release tag `v0.2.0` (`cliopatria.geojson.zip`, member `cliopatria_polities_only.geojson`, raw GitHub URL pinned to the tag, SHA-256 `d01ae3a20d358cc5d54f69d9d725d390767d9c8759ac89ad6f90c58d106f3370`), declared `CC-BY-4.0`, `creditRequired: true`, attribution naming Cliopatria and the Seshat Global History Databank; the run fails before any download if a licence is off the allowlist (reuse the Story 1.8 gate); entity = all rows sharing a Cliopatria `Name`; `entityId` = ASCII slug of the Name (parentheses stripped, aggregate marked by suffix `.group`; any residual slug collision, e.g. « Han » / « Hán », gets `-` + first 6 hex of the SHA-256 of the exact Name on every colliding Name; an unresolved collision fails the run); canonical key `cliopatria@0.2.0:<entityId>` (AD-12); states of one entity must not overlap in time (checked, run fails otherwise); geometry kept whole (never clipped), Douglas–Peucker at 0.005° then coordinates rounded to 4 decimals, rings below 4 points dropped, a state left with no polygon fails the run naming it; RFC 7946 winding; output deterministic; paths: `/library/v1/geo/index.json` and `/library/v1/geo/<entityId>/<fromYear>.json` (years as integers, BCE negative); each state file is one compact GeoJSON Feature with `id` = canonical key and `properties {fromYear, toYear, area}`; `index.json` lists dataset metadata `{id, version, source, licence, attribution, creditRequired, simplification, generated counts}` and per entity `{id, name, kind ("polity" | "group" | "relation"), components (relations only), wikidata, wikipedia, seshatId, memberOf (entityIds), states [[fromYear, toYear], …] sorted}`; output goes to its own root `pipeline/out-geo/` (gitignored) so the Story 1.8 build never deletes it; the same replace-safely rules as Story 1.8; new dependency only as MIT/BSD/ISC devDependency passing `npm run licences`; README section in plain French (version, simplification level, measured disk size).
 
 **Never:** No rendering or date selection (Story 1.11), no search index (Story 1.12), no credit display (Story 1.13), no Natural Earth change, no VPS publishing (Epic 7), no pipeline output committed.
 
@@ -32,17 +33,17 @@ context:
 | Bad licence | manifest source `ODbL-1.0` / `CC-BY-NC-4.0` | stops before any download, names the source | exit ≠ 0, nothing written |
 | Download problem | network error or wrong SHA-256 | stops, names the URL | partial files removed |
 | Aggregates, members | name in parentheses; row with `MemberOf` | kept; `kind: "group"`; `memberOf` lists entityIds | N/A |
-| Relations | `Type: RELATION` | decided by Open Question 1 | N/A |
+| Relations | `Type: RELATION` | kept, `kind: "relation"`, `memberOf` empty, parties kept in `components` (entityIds) | N/A |
 | Id collision | « Han » / « Hán » | both get the hash suffix, stable across runs | unresolved → fail naming them |
 | Overlapping states | two rows of one Name overlap in years | run stops naming the entity | exit ≠ 0 |
 | Dev serving | `npm run dev` after a build | index and state files with JSON type | unknown id/year → 404; `..` refused |
 | No build | `npm run dev`, no `pipeline/out-geo/` | app starts; paths answer 404 with a console hint | N/A |
 
+**Decisions (owner, 2026-10-02):**
+- Rows kept: every Cliopatria row (option B): plain polities (`kind: "polity"`), groups in parentheses (`"group"`, with `memberOf`) and the 385 relations (`"relation"`, with `components`); Story 1.11 filters what it displays.
+- Full spec kept (~2,300 tokens); Sonnet subagents for implementation and review.
+
 </frozen-after-approval>
-
-## Open Questions
-
-1. **Which Cliopatria rows become GeoEntities?** The file mixes three kinds: 12 043 plain polity rows, 1 337 « group » polities written in parentheses (e.g. « (Kingdom of France) », whose members such as « County of Nevers » are also rows, so both overlap), and 385 `RELATION` rows (alliances, vassalages such as « Allegiance of Joseon to Ming Dynasty », drawn as the union of the parties). (A, recommended) keep every polity row, groups included, with `kind` and `memberOf` so Story 1.11 chooses the level to display; drop the 385 relations (they are overlays, not territory) and report the count. (B) keep relations too, as `kind: "relation"` (nothing lost, 3 % more data, Story 1.11 must filter them). (C) keep only leaf polities, dropping groups: no overlap, a clean map, but « Kingdom of France » or « Holy Roman Empire » can no longer be painted as one entity.
 
 ## Code Map
 
