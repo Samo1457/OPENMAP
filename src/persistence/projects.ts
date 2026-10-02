@@ -1,7 +1,7 @@
 // The `projects` and `media` tables (AD-8, AD-9): whole-document snapshots, tombstones, lockEpoch
 // checks and media garbage collection. Reached only through ./index.ts.
 
-import { loadProject, migrate, type Project } from '@/core'
+import { loadProject, MAP_LOCALES, type MapLocale, migrate, OUTPUT_FORMATS, type OutputFormat, type Project } from '@/core'
 import type { OpenmapDatabase, PendingSaveRow, ProjectRow } from './db'
 
 /** How a stored document reads with this app version (AD-9). */
@@ -19,8 +19,11 @@ export interface ProjectSummary {
 export type LoadedProject =
   /** A valid document after migration; `lockEpoch` is the epoch this caller writes with. */
   | { readonly kind: 'editable'; readonly project: Project; readonly lockEpoch: number }
-  /** Written by a newer app: opens read-only and is never written (AD-9). */
-  | { readonly kind: 'too_new'; readonly name: string }
+  /**
+   * Written by a newer app: opens read-only and is never written (AD-9). The Output Format and Map
+   * language are shown when the stored values are ones this app knows.
+   */
+  | { readonly kind: 'too_new'; readonly name: string; readonly outputFormat?: OutputFormat; readonly mapLocale?: MapLocale }
   | { readonly kind: 'unreadable' }
   /** No row, or a tombstone. */
   | { readonly kind: 'not_found' }
@@ -58,6 +61,15 @@ function isNewerThanApp(document: unknown): boolean {
 }
 
 const text = (value: unknown) => (typeof value === 'string' ? value : '')
+const oneOf = <T extends string>(values: readonly T[], value: unknown): T | undefined => values.find((known) => known === value)
+const field = (document: unknown, key: string): unknown =>
+  typeof document === 'object' && document !== null ? (document as Record<string, unknown>)[key] : undefined
+
+function tooNew(row: ProjectRow): LoadedProject {
+  const outputFormat = oneOf(OUTPUT_FORMATS, row.outputFormat)
+  const mapLocale = oneOf(MAP_LOCALES, field(row.document, 'mapLocale'))
+  return { kind: 'too_new', name: text(row.name), ...(outputFormat && { outputFormat }), ...(mapLocale && { mapLocale }) }
+}
 
 function rowFor(project: Project, updatedAt: number, lockEpoch: number, deletedAt?: number): ProjectRow {
   const row: ProjectRow = { id: project.id, document: project, name: project.name, outputFormat: project.outputFormat, updatedAt, lockEpoch }
@@ -85,7 +97,7 @@ function loaded(row: ProjectRow | undefined, lockEpoch: (row: ProjectRow) => num
   if (!row || row.deletedAt !== undefined) return { kind: 'not_found' }
   const classified = classify(row.document)
   if (classified.state === 'ok') return { kind: 'editable', project: classified.project, lockEpoch: lockEpoch(row) }
-  if (classified.state === 'too_new') return { kind: 'too_new', name: text(row.name) }
+  if (classified.state === 'too_new') return tooNew(row)
   return { kind: 'unreadable' }
 }
 

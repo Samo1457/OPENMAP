@@ -17,6 +17,13 @@ export const OUTPUT_FORMATS = ['16:9', '9:16', '1:1'] as const
 export const outputFormatSchema = z.enum(OUTPUT_FORMATS)
 export type OutputFormat = z.infer<typeof outputFormatSchema>
 
+/** Output frame size in export px for each Output Format (AD-23); the short side is 1080. */
+export const OUTPUT_FRAME_SIZES: Readonly<Record<OutputFormat, { readonly width: number; readonly height: number }>> = {
+  '16:9': { width: 1920, height: 1080 },
+  '9:16': { width: 1080, height: 1920 },
+  '1:1': { width: 1080, height: 1080 },
+}
+
 export const BASEMAP_IDS = ['parchment', 'sombre', 'clair', 'relief'] as const
 export const basemapIdSchema = z.enum(BASEMAP_IDS)
 export type BasemapId = z.infer<typeof basemapIdSchema>

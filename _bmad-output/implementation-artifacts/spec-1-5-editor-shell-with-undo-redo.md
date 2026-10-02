@@ -2,7 +2,7 @@
 title: 'Story 1.5: Editor shell with undo/redo'
 type: 'feature'
 created: '2026-10-01'
-status: 'in-progress'
+status: 'done'
 baseline_commit: '72f5d7fa644e8cd2f7a4e3b36b3e401045f38b62'
 route: 'dispatch'
 review_loop_iteration: 0
@@ -65,14 +65,14 @@ context:
 ## Tasks & Acceptance
 
 **Execution:**
-- [ ] `src/ui/editor/EditorShell.tsx` + parts (`EditorTopBar`, `ToolRail`, `OptionsBar`, `MapArea`, `PropertiesPanel`, `TimelineArea`) -- CSS grid with tokens, named landmarks, opening skeletons
-- [ ] `src/ui/editor/ProjectSettingsPanel.tsx` -- name, Output Format, Map language; `MoreOptions` component (hidden when empty)
-- [ ] `src/ui/editor/SaveStatus.tsx` -- subscribed to the Editor's autosave
-- [ ] `src/ui/editor/editor-shortcuts.ts` -- Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y / Ctrl+S, ignoring editable targets for undo/redo
-- [ ] `src/ui/components/Menu.tsx` -- checked items; Output Format menu; « ⋯ » menu with Réglages
-- [ ] read-only rendering (banner, disabled inputs and undo/redo); first disabled control completes the UX-DR8 pattern (text-disabled, test)
-- [ ] `src/i18n/locales/{fr,en}.json` -- all new strings
-- [ ] tests -- unit (shortcut handler, save status mapping) and e2e (layout at 1366×648 and 1279 px, rename/format/locale undo and redo by buttons and keys, text-field Ctrl+Z, save status transitions, Ctrl+S toast and failure path, reload loses history, read-only)
+- [x] `src/ui/editor/EditorShell.tsx` + parts (`EditorTopBar`, `ToolRail`, `OptionsBar`, `MapArea`, `PropertiesPanel`, `TimelineArea`) -- CSS grid with tokens, named landmarks, opening skeletons
+- [x] `src/ui/editor/ProjectSettingsPanel.tsx` -- name, Output Format, Map language; `MoreOptions` component (hidden when empty)
+- [x] `src/ui/editor/SaveStatus.tsx` -- subscribed to the Editor's autosave
+- [x] `src/ui/editor/editor-shortcuts.ts` -- Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y / Ctrl+S, ignoring editable targets for undo/redo
+- [x] `src/ui/components/Menu.tsx` -- checked items; Output Format menu; « ⋯ » menu with Réglages
+- [x] read-only rendering (banner, disabled inputs and undo/redo); first disabled control completes the UX-DR8 pattern (text-disabled, test)
+- [x] `src/i18n/locales/{fr,en}.json` -- all new strings
+- [x] tests -- unit (shortcut handler, save status mapping) and e2e (layout at 1366×648 and 1279 px, rename/format/locale undo and redo by buttons and keys, text-field Ctrl+Z, save status transitions, Ctrl+S toast and failure path, reload loses history, read-only)
 
 **Acceptance Criteria:**
 - Given `npm run check`, when it runs, then all guardrails and tests pass with no request leaving the app origin.
@@ -88,3 +88,28 @@ context:
 ## Spec Change Log
 
 ## Review Triage Log
+
+| # | Source | Finding | Verdict | Evidence / route |
+|---|--------|---------|---------|------------------|
+| 1 | blind, edge | Not-found/unreadable/error states show a fake « Untitled Project » breadcrumb and editing controls | medium | Error branch renders full top bar with undefined name. patch |
+| 2 | gap, blind | Error states of the new shell untested | medium | Pre-verified. patch |
+| 3 | gap | Toast placement clear of panel/Timeline untested | medium | Pre-verified. patch |
+| 4 | gap, blind | Ctrl+S from the name field: test cannot tell flush from debounce; invalid draft gives error plus « Projet sauvegardé » | medium | Pre-verified; contradictory feedback. patch |
+| 5 | edge | Name draft discarded on navigation/pagehide without blur | medium | Only blur/Enter/Ctrl+S commit. patch |
+| 6 | edge | Settings panel stays open when focus leaves via its owner (Home regression) | medium | Removed wrapper onBlur. patch |
+| 7 | edge | Shortcuts dead on non-Latin layouts; browser Save dialog opens | medium | `event.key` only. patch (fallback to `event.code`) |
+| 8 | blind | Disabled search/Presentation/Export explanations not exposed to AT | medium | `title` on wrapper only. patch |
+| 9 | edge | « Projet sauvegardé » toast after leaving the Editor | low | Direct fix. patch |
+| 10 | edge | MoreOptions renders an empty row for `false` children | low | Direct fix. patch |
+| 11 | blind | Shortcut handler ignores `isComposing`/`defaultPrevented` | low | Direct fix. patch |
+| 12 | blind | « ⋯ » button lacks `aria-controls`/expanded for the Settings panel | low | Direct fix. patch |
+| 13 | blind | Hard-coded "—" and `'' as` casts | low | Direct fix. patch |
+| 14 | blind | Contrast test comment overclaims (surface-raised, button looks) | low | Direct fix. patch |
+| 15 | blind | `waitForTimeout(500)` in failed-save e2e | low | Direct fix. patch |
+| 16 | blind | Shell never turns read-only when another tab takes the Project | medium | Lock and takeover are Story 1.14. defer |
+| 17 | blind | « Projet sauvegardé » on first save of a new Project not implemented | low | Not in this story's ACs. defer |
+| 18 | blind | Ctrl+S silent while loading or read-only | low | Read-only banner explains; rejected |
+| 19 | blind | `tooNew` reads mapLocale from a newer document | low | Value is validated against known locales; rejected |
+| 20 | blind | Undo click while editing commits the draft first | low | Expected blur-commit behaviour; rejected |
+| 21 | blind | Menu `findIndex` evaluated each render | low | Negligible; rejected |
+| 22 | blind | Status mismatch / 1.4 flipped to done | false | Sprint sync at present step; owner accepted 1.4 |

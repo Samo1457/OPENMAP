@@ -10,18 +10,22 @@ export interface SegmentedOption<T extends string> {
 
 /**
  * Exclusive choice of 2 to 4 options (DESIGN.md `segmented-control`): a radio
- * group with one tab stop; arrow keys, Home and End move the choice.
+ * group with one tab stop; arrow keys, Home and End move the choice. Disabled
+ * (UX-DR8), it keeps its slot and its tab stop so the value stays readable, but ignores input.
  */
 export function SegmentedControl<T extends string>({
   labelledBy,
   options,
   value,
   onChange,
+  disabled = false,
 }: {
   labelledBy: string
   options: readonly SegmentedOption<T>[]
-  value: T
+  /** The chosen option; none is chosen when it is undefined (an unknown stored value). */
+  value?: T
   onChange: (value: T) => void
+  disabled?: boolean
 }) {
   const buttons = useRef<(HTMLButtonElement | null)[]>([])
   // With no matching value, the first option keeps the group reachable with Tab.
@@ -47,6 +51,7 @@ export function SegmentedControl<T extends string>({
     }
     if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || !(event.key in moves)) return
     event.preventDefault()
+    if (disabled) return
     select(moves[event.key])
   }
 
@@ -54,7 +59,8 @@ export function SegmentedControl<T extends string>({
     <div
       role="radiogroup"
       aria-labelledby={labelledBy}
-      className="inline-flex h-control-height rounded-sm border border-om-border-input bg-om-surface-raised"
+      aria-disabled={disabled || undefined}
+      className={cn('inline-flex h-control-height rounded-sm border border-om-border-input bg-om-surface-raised', disabled && 'control-disabled')}
     >
       {options.map((option, index) => {
         const checked = option.value === value
@@ -67,14 +73,17 @@ export function SegmentedControl<T extends string>({
             type="button"
             role="radio"
             aria-checked={checked}
+            aria-disabled={disabled || undefined}
             tabIndex={index === tabStop ? 0 : -1}
             lang={option.lang}
-            onClick={() => onChange(option.value)}
+            onClick={() => {
+              if (!disabled && !checked) onChange(option.value)
+            }}
             onKeyDown={(event) => onKeyDown(event, index)}
             className={cn(
               'relative min-w-hit-area-min px-3 type-label text-om-text-secondary focus-visible:z-10',
               'not-first:border-l not-first:border-om-border',
-              'hover:bg-om-selection hover:text-om-text-primary',
+              disabled ? 'cursor-not-allowed' : 'hover:bg-om-selection hover:text-om-text-primary',
               checked &&
                 'bg-om-selection font-semibold text-om-text-primary after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-om-accent',
             )}

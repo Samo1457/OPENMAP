@@ -101,9 +101,16 @@ describe('list and load (AD-9)', () => {
       { id: 'broken', name: 'Broken', state: 'unreadable' },
       { id: 'garbage', name: '', state: 'unreadable' },
     ])
-    expect(await loadStoredProject(db, 'newer')).toEqual({ kind: 'too_new', name: 'Future' })
+    expect(await loadStoredProject(db, 'newer')).toEqual({ kind: 'too_new', name: 'Future', outputFormat: '9:16' })
     expect(await openStoredProject(db, 'broken')).toEqual({ kind: 'unreadable' })
     expect(await openStoredProject(db, 'missing')).toEqual({ kind: 'not_found' })
+  })
+
+  it('keeps the known Output Format and Map language of a newer document, and drops unknown ones', async () => {
+    await db.projects.add({ id: 'known', document: { schemaVersion: 2, mapLocale: 'en' }, name: 'Known', outputFormat: '1:1', updatedAt: 5, lockEpoch: 0 })
+    await db.projects.add({ id: 'unknown', document: { schemaVersion: 2, mapLocale: 'de' }, name: 'Unknown', outputFormat: '4:3', updatedAt: 4, lockEpoch: 0 })
+    expect(await openStoredProject(db, 'known')).toEqual({ kind: 'too_new', name: 'Known', outputFormat: '1:1', mapLocale: 'en' })
+    expect(await openStoredProject(db, 'unknown')).toEqual({ kind: 'too_new', name: 'Unknown' })
   })
 
   it('never writes a newer document, even with a current epoch', async () => {

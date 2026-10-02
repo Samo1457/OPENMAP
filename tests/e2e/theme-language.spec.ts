@@ -231,5 +231,16 @@ test.describe('focus ring (UX-DR27)', () => {
     await page.keyboard.press('Tab')
     await expect(page.getByRole('group', { name: 'Settings' })).toHaveCount(0)
     await expect(settings).toHaveAttribute('aria-expanded', 'false')
+
+    // Leaving backwards, through the Settings button, closes it too.
+    await settings.focus()
+    await page.keyboard.press('Enter')
+    await expect(page.getByRole('radio', { name: 'System' })).toBeFocused()
+    await page.keyboard.press('Shift+Tab')
+    await expect(settings).toBeFocused()
+    await expect(page.getByRole('group', { name: 'Settings' })).toBeVisible()
+    await page.keyboard.press('Shift+Tab')
+    await expect(page.getByRole('group', { name: 'Settings' })).toHaveCount(0)
+    await expect(settings).toHaveAttribute('aria-expanded', 'false')
   })
 })

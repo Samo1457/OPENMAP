@@ -34,3 +34,9 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-1-4-home-create-and-manage-my-projects-locally.md`
   summary: List Home cards from the row summary fields instead of loading and validating every whole document; index deletedAt for the start-up purge.
   evidence: listProjects runs migrate+validate on every document per Home load; cost grows with Map content.
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-5-editor-shell-with-undo-redo.md`
+  summary: Switch the Editor shell to read-only with a banner when another tab takes the Project (wire Dispatcher.setReadOnly to the lock), instead of letting edits fail as « Non enregistré ».
+  evidence: Nothing calls setReadOnly for a live Project; Story 1.14 owns the lock and takeover banner.
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-5-editor-shell-with-undo-redo.md`
+  summary: Show « Projet sauvegardé » on the first save of a new Project, as EXPERIENCE.md's toast table says.
+  evidence: Only Ctrl+S shows the toast today; no story AC carries the first-save rule yet.

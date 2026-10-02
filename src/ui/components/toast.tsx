@@ -65,7 +65,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastContext value={show}>
       {children}
       {/* Live regions stay mounted so a new toast is announced: polite for information, assertive for errors. */}
-      <section aria-label={t('toast.region')} className="pointer-events-none fixed right-6 bottom-6 z-40 flex w-90 max-w-[calc(100vw-48px)] flex-col">
+      <section aria-label={t('toast.region')} className="om-toast-region pointer-events-none fixed right-6 bottom-6 z-40 flex w-90 max-w-[calc(100vw-48px)] flex-col">
         <div role="status" aria-live="polite">
           {current && current.tone !== 'error' && <Toast key={current.id} toast={current} onClose={(reason, hadFocus) => close(current, reason, hadFocus)} />}
         </div>

@@ -1,6 +1,8 @@
+import { Check } from 'lucide-react'
 import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode, type RefObject } from 'react'
 import { createPortal } from 'react-dom'
 import { cn } from '@/ui/lib/utils'
+import { iconProps } from './button'
 
 export interface MenuItem {
   readonly id: string
@@ -8,6 +10,11 @@ export interface MenuItem {
   readonly icon?: ReactNode
   /** Destructive action, shown in the danger colour with its icon (never colour alone). */
   readonly danger?: boolean
+  /**
+   * Makes the item one choice of an exclusive set (`menuitemradio`), shown with a check mark when
+   * true. Opening the menu focuses the checked item.
+   */
+  readonly checked?: boolean
   readonly onSelect: () => void
 }
 
@@ -52,9 +59,13 @@ export function Menu({
     })
   }, [at])
 
+  /** Opening focuses the checked item, else the first; later item changes do not move the focus. */
+  const initialFocus = useRef(Math.max(0, items.findIndex((item) => item.checked)))
   useEffect(() => {
-    buttons.current[0]?.focus()
+    buttons.current[initialFocus.current]?.focus()
   }, [])
+
+  const radio = items.some((item) => item.checked !== undefined)
 
   // A press anywhere else closes the menu.
   useEffect(() => {
@@ -101,7 +112,8 @@ export function Menu({
             buttons.current[index] = element
           }}
           type="button"
-          role="menuitem"
+          role={item.checked === undefined ? 'menuitem' : 'menuitemradio'}
+          aria-checked={item.checked}
           tabIndex={-1}
           onClick={() => {
             onClose()
@@ -112,6 +124,7 @@ export function Menu({
             item.danger ? 'text-om-danger' : 'text-om-text-primary',
           )}
         >
+          {radio && <span className="flex size-4 shrink-0 items-center justify-center">{item.checked && <Check {...iconProps} />}</span>}
           {item.icon}
           {item.label}
         </button>

@@ -59,14 +59,48 @@
   "editor": {
     "breadcrumb": "Breadcrumb",
     "opening": "Opening…",
-    "rename": "Rename the Project",
     "newerVersion": "This Project was made with a newer version of OPENMAP. Update the app to edit it.",
     "notFound": "This Project could not be found on this device.",
     "unreadable": "This Project could not be read.",
     "loadError": "This Project could not be opened.",
     "map": "Map",
     "saveError": "The latest changes to this Project were not saved on this device.",
-    "renameError": "This name cannot be used. The Project keeps its previous name."
+    "renameError": "This name cannot be used. The Project keeps its previous name.",
+    "regions": {
+      "topBar": "Top bar",
+      "tools": "Tools",
+      "toolOptions": "Tool options",
+      "properties": "Properties",
+      "timeline": "Timeline"
+    },
+    "tools": {
+      "select": "Select"
+    },
+    "save": {
+      "saving": "Saving…",
+      "saved": "Saved",
+      "error": "Not saved",
+      "done": "Project saved",
+      "doneDetail": "On this device · just now"
+    },
+    "outputFormat": "Output format",
+    "frameSize": "{{format}} · {{width}} × {{height}}",
+    "undo": "Undo",
+    "redo": "Redo",
+    "undoTooltip": "Undo · Ctrl+Z",
+    "redoTooltip": "Redo · Ctrl+Shift+Z",
+    "undone": "Undone",
+    "redone": "Redone",
+    "search": "Search for a place",
+    "presentation": "Presentation",
+    "export": "Export",
+    "comingSoon": "Coming soon",
+    "menu": "Menu",
+    "projectSettings": "Project settings",
+    "mapLocale": "Map language",
+    "moreOptions": "More options",
+    "timeline": "Timeline",
+    "unknownValue": "Unknown"
   },
   "toast": {
     "region": "Notifications",

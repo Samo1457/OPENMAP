@@ -67,7 +67,7 @@ async function gotoHome(page: Page) {
   await expect(heading(page)).toBeVisible()
 }
 
-/** Creates a blank Project from Home and waits for the Editor placeholder. */
+/** Creates a blank Project from Home and waits for the Editor. */
 async function createProject(page: Page): Promise<string> {
   await page.getByRole('button', { name: 'New Project', exact: true }).first().click()
   await expect(page).toHaveURL(/#\/p\/[A-Za-z0-9_-]{21}$/)
@@ -80,11 +80,12 @@ async function backHome(page: Page) {
   await expect(heading(page)).toBeVisible()
 }
 
-/** Renames the open Project from the Editor top bar. */
-const editorName = (page: Page, name: string) => page.getByRole('navigation', { name: 'Breadcrumb' }).getByRole('button', { name, exact: true })
+/** The Project name in the Editor breadcrumb. */
+const editorName = (page: Page, name: string) => page.getByRole('navigation', { name: 'Breadcrumb' }).getByText(name, { exact: true })
 
+/** Renames the open Project from the Project settings panel (Story 1.5). */
 async function renameInEditor(page: Page, from: string, to: string) {
-  await editorName(page, from).click()
+  await expect(editorName(page, from)).toBeVisible()
   const field = page.getByRole('textbox', { name: 'Project name' })
   await field.fill(to)
   await field.press('Enter')
@@ -133,7 +134,7 @@ test.describe('Home (UX-DR118–120, UX-DR136, FR-1, FR-52)', () => {
     await expect.poll(() => page.evaluate(() => (window as unknown as { persistCalls: { count: number } }).persistCalls.count)).toBe(1)
 
     await page.reload()
-    await expect(page.getByRole('button', { name: 'Untitled Project', exact: true })).toBeVisible()
+    await expect(editorName(page, 'Untitled Project')).toBeVisible()
     await backHome(page)
     await expect(cards(page)).toHaveCount(1)
     await expect(card(page, 'Untitled Project')).toContainText('Modified just now · 16:9')
@@ -161,7 +162,7 @@ test.describe('Home (UX-DR118–120, UX-DR136, FR-1, FR-52)', () => {
     await card(page, 'Beta').getByRole('button', { name: 'Beta', exact: true }).focus()
     await page.keyboard.press('Enter')
     await expect(page).toHaveURL(/#\/p\//)
-    await expect(page.getByRole('button', { name: 'Beta', exact: true })).toHaveAttribute('aria-current', 'page')
+    await expect(editorName(page, 'Beta')).toHaveAttribute('aria-current', 'page')
   })
 
   test('rename in place: Enter saves, Escape cancels, an empty name keeps the previous one', async ({ page }) => {
@@ -343,7 +344,7 @@ test.describe('autosave (NFR-5, FR-53, AD-8)', () => {
     await createProject(page)
     await renameInEditor(page, 'Untitled Project', 'Flushed on pagehide')
     await page.reload()
-    await expect(page.getByRole('button', { name: 'Flushed on pagehide', exact: true })).toBeVisible()
+    await expect(editorName(page, 'Flushed on pagehide')).toBeVisible()
     const [row] = await readRows(page)
     expect(row.document).toMatchObject({ name: 'Flushed on pagehide', revision: 1 })
   })
@@ -353,7 +354,7 @@ test.describe('autosave (NFR-5, FR-53, AD-8)', () => {
     const id = await createProject(page)
     const second = await context.newPage()
     await second.goto(`/#/p/${id}`)
-    await expect(second.getByRole('button', { name: 'Untitled Project', exact: true })).toBeVisible()
+    await expect(editorName(second, 'Untitled Project')).toBeVisible()
 
     await renameInEditor(page, 'Untitled Project', 'From the older tab')
     await expect(page.getByRole('alert').filter({ hasText: 'The latest changes to this Project were not saved on this device.' })).toBeVisible()
@@ -437,21 +438,12 @@ test.describe('keyboard and focus (UX-DR119, UX-DR27)', () => {
       await expect(page.getByRole('menu')).toBeVisible()
       await page.keyboard.press('Escape')
 
-      // The Editor placeholder: back link and Settings are reachable with Tab.
+      // The Editor: the back link is the first stop; its keyboard tour lives in editor.spec.ts.
       await open.focus()
       await page.keyboard.press('Enter')
-      await expect(page.getByRole('link', { name: 'Projects' })).toBeVisible()
-      await expect(page.getByRole('button', { name: 'Untitled Project', exact: true })).toHaveAttribute('aria-current', 'page')
+      await expect(editorName(page, 'Untitled Project')).toHaveAttribute('aria-current', 'page')
       await page.keyboard.press('Tab')
       await expect(page.getByRole('link', { name: 'Projects' })).toBeFocused()
-      await page.keyboard.press('Tab')
-      await expect(page.getByRole('button', { name: 'Untitled Project', exact: true })).toBeFocused()
-      await page.keyboard.press('Tab')
-      await expect(page.getByRole('button', { name: 'Settings', exact: true })).toBeFocused()
-      await page.keyboard.press('Enter')
-      await expect(page.getByRole('group', { name: 'Settings' })).toBeVisible()
-      await page.keyboard.press('Escape')
-      await page.getByRole('link', { name: 'Projects' }).focus()
       await page.keyboard.press('Enter')
       await expect(heading(page)).toBeVisible()
     })

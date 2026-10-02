@@ -72,3 +72,21 @@ describe('WCAG 2.2 AA in both themes (UX-DR153)', () => {
     expect(ratio(theme, fg, bg), `${fg} on ${bg} (${theme})`).toBeLessThan(4.5)
   })
 })
+
+describe('disabled controls (UX-DR8, DESIGN.md `control-disabled`)', () => {
+  const channels = (hex: string) => [1, 3, 5].map((i) => Number.parseInt(hex.slice(i, i + 2), 16))
+  /** `foreground` drawn at `opacity` over `background`. */
+  const over = (foreground: string, background: string, opacity: number) =>
+    channels(foreground).map((value, i) => Math.round(value * opacity + channels(background)[i] * (1 - opacity)))
+
+  // `text-disabled` is defined as text-secondary at 55 % (DESIGN.md Colors): this checks that the
+  // token matches that blend on the two surfaces disabled controls sit on, surface and surface-raised.
+  it.each(['light', 'dark'] as const)('text-secondary at 55 %% on surface and surface-raised reads as text-disabled (%s)', (theme) => {
+    const colors = chromeColors[theme]
+    const expected = channels(colors['text-disabled'])
+    for (const background of ['surface', 'surface-raised'] as const) {
+      const rendered = over(colors['text-secondary'], colors[background], 0.55)
+      rendered.forEach((value, i) => expect(Math.abs(value - expected[i]), `${background} channel ${i}`).toBeLessThanOrEqual(8))
+    }
+  })
+})
