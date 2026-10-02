@@ -2,7 +2,7 @@
 title: 'Story 1.10: Display the stylized Basemap and the output frame'
 type: 'feature'
 created: '2026-10-02'
-status: 'in-progress'
+status: 'done'
 baseline_commit: 'c5959f6cd628eb6876171fa348ca757a736e3ab8'
 route: 'dispatch'
 review_loop_iteration: 0
@@ -21,7 +21,7 @@ context:
 
 ## Boundaries & Constraints
 
-**Always:** `evaluate` is pure and deterministic (no clock, no random, no DOM); `ctx = {geodata, frame}` with an empty `geodata` for now; the Scene is plain serializable data. The Basemap palettes (`mapColors`, `mapExtraColors`) move to `src/core` as the single source and `src/ui/theme/tokens.ts` re-exports them (tokens tests stay green, no value retyped). Adjustments (brightness, saturation, tint colour + intensity, ranges from `BASEMAP_ADJUSTMENT_RANGES`) are applied by the evaluator on the resolved palette, never by CSS filters or MapLibre-only properties, so preview equals export; they touch the Basemap only. Map colours never come from CSS variables or the UI theme. MapLibre is created with `fadeDuration: 0`; no `flyTo`/`easeTo`/`panTo` in app code and no deck.gl `transitions`; the Scene camera is applied with `jumpTo`, and only the user's own wheel/drag/pinch motion animates (edit camera, AD-1). The edit camera is UI state, never in the Project, and never changes the Scene camera. The default camera is the whole world fitted in the output frame (framing stored as bounds, resolved by the evaluator, AD-23). `z` bands, bottom to top: Basemap, personal map background, Project Layers (document order), place labels, screen overlays, credit; every Scene item carries a `z`. Sizes: reference px for a 1080 px short side; on screen scale `s = frameShortSide / 1080` (MapLibre `zoom + log2(s)`, deck.gl sizes × `s`); a 562×316 frame shows 56 → about 16 px; chrome never scales. The frame is centred at the Output Format ratio (1920×1080, 1080×1920, 1080×1080), fitted with a margin of at least 24 px (plus 40 px at the bottom for the zoom controls); outside it the Map is dimmed by `canvas-mask` at 55 %, no border, rule or ornament; the mask is drawn on the Map and never uses the UI accent; no chrome covers the frame. Basemap and style come from `/library/v1/styles/<basemap>.json` (Story 1.8, root-relative, resolve against the app origin if MapLibre needs it); the Scene's resolved colours repaint the style's layers by id. Without data (404, SPA fallback HTML, parse error, slow tiles) the Map shows the active Basemap's plain `map-land-neutral`, editing is never blocked, there is no toast and no app-originated console error. The Map code loads lazily from the Editor; Home does not pay for it. New dependencies (MapLibre GL JS ≥ 6.9.1, deck.gl 9.4 and its luma.gl peers) only as MIT/BSD/ISC/Apache packages passing `npm run licences`; any transitive needing an entry gets a reviewed `licence-overrides.json` line. Every string is an i18n key in `fr` and `en` (« Fond de carte », Parchemin · Sombre · Clair · Relief, « Luminosité », « Saturation », « Teinte », « Rétablir les réglages du Fond »). New keys, tools and controls follow the Story 1.7 Definition of Done (registry, keyboard, announcements, axe, `docs/keyboard.md`).
+**Always:** `evaluate` is pure and deterministic (no clock, no random, no DOM); `ctx = {geodata, frame}` with an empty `geodata` for now; the Scene is plain serializable data. The Basemap palettes (`mapColors`, `mapExtraColors`) move to `src/core` as the single source and `src/ui/theme/tokens.ts` re-exports them (tokens tests stay green, no value retyped). Adjustments (brightness, saturation, tint colour + intensity, ranges from `BASEMAP_ADJUSTMENT_RANGES`) are applied by the evaluator on the resolved palette, never by CSS filters or MapLibre-only properties, so preview equals export; they touch the Basemap only. Map colours never come from CSS variables or the UI theme. MapLibre is created with `fadeDuration: 0`; no `flyTo`/`easeTo`/`panTo` in app code and no deck.gl `transitions`; the Scene camera is applied with `jumpTo`, and only the user's own wheel/drag/pinch motion animates (edit camera, AD-1). The edit camera is UI state, never in the Project, and never changes the Scene camera. The default camera makes the world cover the output frame (framing stored as bounds, resolved by the evaluator, AD-23): the zoom is the larger of fitting the world's width and its height to the frame, so no repeated world copy and no flat polar band shows inside the frame (owner decision after review). `z` bands, bottom to top: Basemap, personal map background, Project Layers (document order), place labels, screen overlays, credit; every Scene item carries a `z`. Sizes: reference px for a 1080 px short side; on screen scale `s = frameShortSide / 1080` (MapLibre `zoom + log2(s)`, deck.gl sizes × `s`); a 562×316 frame shows 56 → about 16 px; chrome never scales. The frame is centred at the Output Format ratio (1920×1080, 1080×1920, 1080×1080), fitted with a margin of at least 24 px (plus 40 px at the bottom for the zoom controls); outside it the Map is dimmed by `canvas-mask` at 55 %, no border, rule or ornament; the mask is drawn on the Map and never uses the UI accent; no chrome covers the frame. Basemap and style come from `/library/v1/styles/<basemap>.json` (Story 1.8, root-relative, resolve against the app origin if MapLibre needs it); the Scene's resolved colours repaint the style's layers by id. Without data (404, SPA fallback HTML, parse error, slow tiles) the Map shows the active Basemap's plain `map-land-neutral`, editing is never blocked, there is no toast and no app-originated console error. The Map code loads lazily from the Editor; Home does not pay for it. New dependencies (MapLibre GL JS ≥ 6.9.1, deck.gl 9.4 and its luma.gl peers) only as MIT/BSD/ISC/Apache packages passing `npm run licences`; any transitive needing an entry gets a reviewed `licence-overrides.json` line. Every string is an i18n key in `fr` and `en` (« Fond de carte », Parchemin · Sombre · Clair · Relief, « Luminosité », « Saturation », « Teinte », « Rétablir les réglages du Fond »). New keys, tools and controls follow the Story 1.7 Definition of Done (registry, keyboard, announcements, axe, `docs/keyboard.md`).
 
 **Never:** No Satellite tile (Epic 8), no GeoEntity or Territory drawing (Story 1.11), no place labels (Story 1.12), no credit display (Story 1.13), no nearest-data chip, no Timeline or Step camera, no Library fetching, no pipeline change, no VPS data origin.
 
@@ -29,7 +29,7 @@ context:
 
 | Scenario | Input / State | Expected Output / Behavior | Error Handling |
 |----------|--------------|---------------------------|----------------|
-| Editor opens, data present | `pipeline/out` built, dev | styled Basemap fills the Map, frame dimmed outside, world fitted | N/A |
+| Editor opens, data present | `pipeline/out` built, dev | styled Basemap fills the Map, frame dimmed outside, the world covers the frame (no repeated Earth inside it) | N/A |
 | Editor opens, no data | CI preview, Pages, 404 or HTML fallback | plain land colour of the Basemap, Editor fully usable | no toast, no app console error |
 | Tiles slow | tiles pending | land colour until tiles arrive | editing never blocked |
 | Pick a Basemap | click a tile | `SET_BASEMAP` Command, Map changes at once, one Ctrl+Z reverts | elements untouched |
@@ -44,6 +44,7 @@ context:
 
 **Decisions (owner, 2026-10-02):**
 - Keyboard camera (option B): with the Map focused, `+` / `-` zoom, Ctrl+←/↑/↓/→ pan, Shift+1 recentres on the output frame; three on-screen buttons (+, −, recentre) sit bottom-left of the Map area. Plain arrows and Shift+arrows stay free for Steps, frames and nudging (Epics 2 and 3); the keys are listed in the `?` help and `docs/keyboard.md`.
+- Default framing (option C, after review): the world covers the output frame, zoom = larger of width-fit and height-fit; in 16:9 and 1:1 the world's width fills the frame (16:9 shows about ±70° of latitude), in 9:16 the world's height fills it and about 55 % of the longitudes show; the user can pan and zoom out freely.
 - Full spec kept (~2,800 tokens); Sonnet subagents for implementation and review.
 
 </frozen-after-approval>
@@ -103,7 +104,7 @@ context:
 
 | # | Source | Finding | Verdict | Evidence / route |
 |---|--------|---------|---------|------------------|
-| 1 | orchestrator | Default camera fits the whole world inside a 16:9 frame: the Earth shows twice side by side, poles are flat bands | medium | Seen on screenshots with the mask hidden: world square 530 px tall, world copies fill the 942 px frame width. intent_gap, owner asked |
+| 1 | orchestrator | Default camera fits the whole world inside a 16:9 frame: the Earth shows twice side by side, poles are flat bands | medium | Seen on screenshots with the mask hidden: world square 530 px tall, world copies fill the 942 px frame width. intent_gap, owner chose C (world covers the frame), applied |
 | 2 | orchestrator | Relief Basemap: sea-coloured wedge over Greenland | medium | Screenshot; only the `ocean` layer drawn by Relief exposes the tile geometry from Story 1.8. patch (pipeline) |
 | 3 | blind, edge | `LOADING_LAND` retypes a palette value | low | `MapArea.tsx:26` against "no value retyped". patch |
 | 4 | blind | `commitValue` announces when the Command is refused | low | `BasemapSettings.tsx:41-45`. patch |
@@ -128,7 +129,7 @@ context:
 
 ## Design Notes
 
-Decisions taken in planning (owner may override): the default framing is the whole world; the picker's 56 px preview tiles are static swatches built from the palette (sea, land, coast), not live maps; four tiles only (Satellite arrives with Epic 8); the evaluator, not the renderer, owns colour adjustments, so export reuses them; `render` consumes the style structure from the pipeline but never its colours; Map code is a separate lazy chunk.
+Decisions taken in planning (owner may override): the default framing makes the world cover the frame (owner decision C after review: 16:9 and 1:1 fit the world's width, 9:16 fits its height and shows about 55 % of the longitudes); the picker's 56 px preview tiles are static swatches built from the palette (sea, land, coast), not live maps; four tiles only (Satellite arrives with Epic 8); the evaluator, not the renderer, owns colour adjustments, so export reuses them; `render` consumes the style structure from the pipeline but never its colours; Map code is a separate lazy chunk.
 
 ## Verification
 

@@ -37,7 +37,7 @@ export function evaluate(project: Project, t: number, ctx: EvaluateContext): Sce
   return {
     t,
     frame: { width: ctx.frame.width, height: ctx.frame.height },
-    camera: fitBounds(DEFAULT_BOUNDS, ctx.frame),
+    camera: fitBounds(DEFAULT_BOUNDS, ctx.frame, 'cover'),
     basemap: evaluateBasemap(project),
     items: [],
   }

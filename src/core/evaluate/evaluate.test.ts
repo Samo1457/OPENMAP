@@ -66,18 +66,49 @@ describe('evaluate (AD-1)', () => {
     expect(evaluate(project, 0, ctx()).basemap.colours.sea).toBe(adjustColour(mapColors.sombre['map-sea'], adjustments))
   })
 
-  it('fits the whole world in the output frame by default (AD-23)', () => {
-    const scene = evaluate(blankProject(), 0, ctx('16:9'))
-    expect(scene.camera.center[0]).toBeCloseTo(0, 6)
-    expect(scene.camera.center[1]).toBeCloseTo(0, 6)
-    // The world is square in Web Mercator: the 1080 px short side bounds it.
-    expect(scene.camera.zoom).toBeCloseTo(Math.log2(1080 / 512), 6)
-    expect(scene.camera).toMatchObject({ bearing: 0, pitch: 0 })
-    expect(evaluate(blankProject(), 0, ctx('9:16')).camera.zoom).toBeCloseTo(Math.log2(1080 / 512), 6)
+  describe('the default camera makes the world cover the output frame (AD-23)', () => {
+    const worldPx = (format: OutputFormat) => 512 * 2 ** evaluate(blankProject(), 0, ctx(format)).camera.zoom
+    const mercatorLat = (halfHeightFraction: number) => (Math.atan(Math.sinh(Math.PI * 2 * halfHeightFraction)) * 180) / Math.PI
+
+    it('is centred on the world, north up and flat', () => {
+      const scene = evaluate(blankProject(), 0, ctx('16:9'))
+      expect(scene.camera.center[0]).toBeCloseTo(0, 6)
+      expect(scene.camera.center[1]).toBeCloseTo(0, 6)
+      expect(scene.camera).toMatchObject({ bearing: 0, pitch: 0 })
+    })
+
+    it('16:9 fits the world width: no second copy of the Earth, about ±70° of latitude', () => {
+      const world = worldPx('16:9')
+      expect(world).toBeCloseTo(1920, 6) // the world is exactly as wide as the frame
+      expect(world).toBeGreaterThanOrEqual(1080) // and tall enough: no flat polar band
+      expect(mercatorLat(1080 / 2 / world)).toBeGreaterThan(70)
+      expect(mercatorLat(1080 / 2 / world)).toBeLessThan(71)
+    })
+
+    it('1:1 shows the whole world', () => {
+      expect(worldPx('1:1')).toBeCloseTo(1080, 6)
+    })
+
+    it('9:16 fits the world height: about 55 % of the longitudes, no flat band', () => {
+      const world = worldPx('9:16')
+      expect(world).toBeCloseTo(1920, 6)
+      expect(1080 / world).toBeCloseTo(0.5625, 4)
+    })
+
+    it.each(['16:9', '9:16', '1:1'] as const)('%s: the world is at least as large as the frame on both axes', (format) => {
+      const { width, height } = OUTPUT_FRAME_SIZES[format]
+      expect(worldPx(format)).toBeGreaterThanOrEqual(Math.max(width, height) - 1e-6)
+    })
   })
 })
 
 describe('fitBounds', () => {
+  it('contains by default and covers on request', () => {
+    const frame = { width: 1920, height: 1080 }
+    expect(fitBounds(WORLD_BOUNDS, frame).zoom).toBeCloseTo(Math.log2(1080 / 512), 6)
+    expect(fitBounds(WORLD_BOUNDS, frame, 'cover').zoom).toBeCloseTo(Math.log2(1920 / 512), 6)
+  })
+
   it('centres and zooms on a regional box', () => {
     const camera = fitBounds([0, 40, 20, 50], { width: 1920, height: 1080 })
     expect(camera.center[0]).toBeCloseTo(10, 6)
