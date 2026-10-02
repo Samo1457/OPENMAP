@@ -7,11 +7,12 @@ import { SegmentedControl, type SegmentedOption } from '@/ui/components/Segmente
 import { isSaveKey } from '@/ui/keyboard/registry'
 import { cn } from '@/ui/lib/utils'
 import type { EditorActions, EditorModel } from './editor-model'
+import { BasemapSettings } from './BasemapSettings'
 import { MoreOptions } from './MoreOptions'
 
 /**
  * The panel when nothing is selected: Project settings (UX-DR35). Essential settings only (NFR-9):
- * name, Output Format and Map language; Reference Date, Region and Basemap join in later stories.
+ * name, Output Format, Map language and Basemap (picker, brightness, saturation, tint); Reference Date and Region join in later stories.
  * Every change is one Command, applied at once with no « Appliquer » button.
  */
 export function ProjectSettingsPanel({ model, actions }: { model: EditorModel; actions?: EditorActions }) {
@@ -61,6 +62,7 @@ export function ProjectSettingsPanel({ model, actions }: { model: EditorModel; a
             onChange={(mapLocale) => actions?.dispatch({ type: 'SET_MAP_LOCALE', payload: { mapLocale } })}
           />
         </div>
+        {model.basemap && <BasemapSettings basemap={model.basemap} actions={actions} editable={editable} />}
       </div>
       {/* No advanced Project setting yet: the row appears with the first one (Front Line, Sources…). */}
       <MoreOptions panel="project" />

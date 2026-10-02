@@ -79,9 +79,52 @@ context:
 
 ## Implementation Notes
 
+**Overlay spike (AD-6), result: interleaved.** A throwaway `ScatterplotLayer` (3 cities, `radiusUnits: 'pixels'`) was drawn through `MapLibreOverlay` in both modes in headless Chromium (SwiftShader WebGL), at 1366×768 with the frame `padding`, after `jumpTo` with bearing and zoom, after a Basemap switch and after a viewport resize.
+- Both modes put every point on the pixel `map.project()` predicts (within 1 px), at rest and rotated/zoomed, with the frame padding: neither misplaces the overlay.
+- Interleaved: one WebGL canvas and context, shared with MapLibre; deck.gl layers can be placed between Basemap layers with `beforeId` (the `z` bands of AD-6 map to it); nothing outside the canvas to stack. Only cost seen: Chromium's non-error `GPU stall due to ReadPixels` warning under SwiftShader (also printed by MapLibre alone; not a console error).
+- Overlaid: two canvases and two contexts; the deck.gl canvas sits above MapLibre's and is not placed relative to the Basemap layers (it can only be on top). It also escaped the output-frame mask: points outside the frame stayed fully bright, because its canvas carries its own z-index above the DOM mask.
+- Chosen: interleaved (the architecture target). It keeps a single canvas for the future export capture (Epic 4) and keeps the mask a plain DOM layer above the Map. The constant is `OVERLAY_MODE` in `src/render/overlay-mode.ts`. No deck.gl layer is drawn yet: the overlay is mounted with `layers: []` until Story 1.11.
+
+**Decisions taken while implementing (spec silent):**
+- Adjustments apply to the Basemap surface colours only (`sea`, `land`, `coast`) in the Scene; labels, fronts and arrows keep their palette (they are elements and labels, not Basemap). Order: saturation (HSL), brightness (mix with white/black), tint (mix with the tint colour). Golden values in `adjust-colour.test.ts`.
+- Scene camera zoom is in reference px (frame 1920×1080 etc.); the render adapter adds `log2(s)`. The edit camera is stored in reference zoom too, so it survives a resize or an Output Format change. MapLibre's default constrain keeps the world covering the viewport, which would forbid the default whole-world fit inside a frame smaller than the Map area: the render adapter replaces it (`transformConstrain`) with a clamp of latitude and zoom only.
+- The picker tiles are static SVG swatches from the palette; four tiles (Satellite arrives with Epic 8).
+- Tint is a hex field plus the native colour input (preview on input, one Command on `change`/blur). The numeric fields commit on Enter or blur; an invalid entry keeps the previous value.
+- Adjustment values equal to the default are not stored (`withoutDefaults`), so « Rétablir » is a no-op (`aria-disabled`) on an untouched Basemap.
+- Until the tiles of a loaded style arrive the background is `map-land-neutral` of the active Basemap; once all sources are loaded it switches to the sea colour. A source error (404, parse error) keeps the land colour for good. A style that cannot be fetched or parsed gives a style with a land-coloured background only.
+- MapLibre 6 runs its worker from a separate file: `setWorkerUrl` with the Vite `?url` import, so the worker is served by the app origin.
+- The Map region's inset focus ring would sit under the canvas, so an overlay element draws it (`.om-map-focus-ring`). The MapLibre canvas is taken out of the tab order and the accessibility tree.
+- `matchesCombo` now honours `shift` on `code` combos (Shift+1 on the physical key); Alt+digit behaviour is unchanged.
+- Observation outside this story: the relief style's `ocean` layer draws a thin sea-coloured wedge over Greenland in the sandbox tiles (a tessellation artefact of the ocean polygon in the pipeline output). Not touched here.
+
 ## Spec Change Log
 
 ## Review Triage Log
+
+| # | Source | Finding | Verdict | Evidence / route |
+|---|--------|---------|---------|------------------|
+| 1 | orchestrator | Default camera fits the whole world inside a 16:9 frame: the Earth shows twice side by side, poles are flat bands | medium | Seen on screenshots with the mask hidden: world square 530 px tall, world copies fill the 942 px frame width. intent_gap, owner asked |
+| 2 | orchestrator | Relief Basemap: sea-coloured wedge over Greenland | medium | Screenshot; only the `ocean` layer drawn by Relief exposes the tile geometry from Story 1.8. patch (pipeline) |
+| 3 | blind, edge | `LOADING_LAND` retypes a palette value | low | `MapArea.tsx:26` against "no value retyped". patch |
+| 4 | blind | `commitValue` announces when the Command is refused | low | `BasemapSettings.tsx:41-45`. patch |
+| 5 | edge | Hex field rejects 3-digit shorthand | low | EXPERIENCE.md colour field accepts 3 or 6 digits. patch |
+| 6 | edge | Cancelled drag commits the pending value | low | Slider pointercancel. patch |
+| 7 | verification-gap | Native tint colour input untested | medium | Pre-verified. patch |
+| 8 | blind, edge | macOS/Cmd arrow collisions undocumented | low | Doc only. patch |
+| 9 | blind | Lockfile absent from the diff | false | `package-lock.json` is modified; the review diff excluded it. reject |
+| 10 | blind | `tokens.ts` re-exports through a relative `.ts` path | false | Deliberate so `pipeline/styles.ts` loads under Node; depcruise and tests pass. reject |
+| 11 | blind, edge | Chunk failure swallowed silently | false | `installChunkReload` (`main.tsx:24`) handles `vite:preloadError`; the land colour fallback is the specified behaviour. reject |
+| 12 | blind | Zoom/pan announcements noisy, uninformative | low | Short fixed messages; debouncing adds state. reject |
+| 13 | blind | Malformed stored tint colour gives NaN | low | Zod validates `#RRGGBB` on every load path. reject |
+| 14 | blind, edge | Bounds crossing the antimeridian, zero span, 1000 layers | low | Bounds are a code constant and layers are five; no input path until Epic 3. reject |
+| 15 | blind | Test hooks (`data-*`) ship in production | low | Cheap attributes; one documented seam is a refactor. reject |
+| 16 | blind | No unit tests for `map-view`, `Slider`, stores | low | Covered by 22 e2e tests asserting pixels and state (verification-gap found only the colour input). reject |
+| 17 | blind | Hard-coded zoom limits, `frameRect` doc wording | low | Cosmetic. reject |
+| 18 | blind | Greenland wedge not in deferred work; spike has no artefact | false | Fixed this round (row 2); the spec's notes record the spike result. reject |
+| 19 | edge | Style race, invalid-style rejection, empty-source style, single tile error pins land colour | low | Token guard exists; real styles are validated by the pipeline; arrival rule only matters before first tiles. reject |
+| 20 | edge | View creation failure, shortcuts while view absent, recreated view vs store | low | Fallback colour is the specified behaviour; WebGL is gated earlier (AD-19). reject |
+| 21 | edge | Numeric field accepts `1e1`; `inputMode` without minus | low | Desktop-only product. reject |
+| 22 | edge | Array-form sprite URLs | low | Styles have no sprite. reject |
 
 ## Design Notes
 

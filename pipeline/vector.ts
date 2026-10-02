@@ -9,6 +9,13 @@ import type { InputTile } from './pmtiles-writer.ts'
 
 export const VECTOR_MAX_ZOOM = 6
 const EXTENT = 4096
+const TOLERANCE = 3
+/**
+ * The ocean is one polygon with thousands of holes. At tolerance 3 the simplification makes holes
+ * (Greenland's among them) self-intersect, and the renderers' triangulation then covers part of the
+ * land with sea (a wedge over Greenland on the Relief Basemap). At 1 the rings stay simple enough.
+ */
+export const OCEAN_TOLERANCE = 1
 
 /** Populated places shown per zoom: the highest `scalerank` kept at z0..z6 (lower is more important). */
 export const MAX_PLACE_SCALE = [1, 2, 3, 4, 5, 7, 10] as const
@@ -51,6 +58,30 @@ export function shapeLayer(layer: VectorLayerId, collection: FeatureCollection):
   return { type: 'FeatureCollection', features }
 }
 
+/**
+ * Rings smaller than this (twice the area, in tile units squared: about one screen pixel at 512 px
+ * per tile) are dropped from polygons. geojson-vt's simplification collapses tiny holes into slivers
+ * with flipped winding; renderers classify rings by winding, so a flipped sliver starts a new
+ * polygon and the holes after it are attached to the wrong outer ring. On the ocean layer that
+ * painted sea over Greenland.
+ */
+export const MIN_RING_AREA = 128
+
+type TileFeature = NonNullable<ReturnType<GeoJSONVT['getTile']>>['features'][number]
+
+const ringArea2 = (ring: readonly number[][]): number => {
+  let sum = 0
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) sum += (ring[j][0] - ring[i][0]) * (ring[i][1] + ring[j][1])
+  return sum
+}
+
+/** Removes the rings below MIN_RING_AREA from a polygon feature; other geometries are kept. */
+export function dropTinyRings(feature: TileFeature): TileFeature | undefined {
+  if (feature.type !== 3) return feature
+  const rings = (feature.geometry as unknown as number[][][]).filter((ring) => Math.abs(ringArea2(ring)) >= MIN_RING_AREA)
+  return rings.length > 0 ? ({ ...feature, geometry: rings } as unknown as TileFeature) : undefined
+}
+
 export interface VectorTilesResult {
   tiles: InputTile[]
   layers: { id: VectorLayerId; fields: Record<string, string> }[]
@@ -67,7 +98,7 @@ export function buildVectorTiles(layers: Partial<Record<VectorLayerId, FeatureCo
       maxZoom: VECTOR_MAX_ZOOM,
       indexMaxZoom: VECTOR_MAX_ZOOM,
       indexMaxPoints: 0,
-      tolerance: 3,
+      tolerance: id === 'ocean' ? OCEAN_TOLERANCE : TOLERANCE,
       extent: EXTENT,
       buffer: 64,
     })
@@ -84,7 +115,7 @@ export function buildVectorTiles(layers: Partial<Record<VectorLayerId, FeatureCo
       const features =
         id === 'places'
           ? tile.features.filter((f) => Number(f.tags?.scale ?? 10) <= MAX_PLACE_SCALE[z])
-          : tile.features
+          : tile.features.flatMap((f) => dropTinyRings(f) ?? [])
       if (features.length > 0) encoded[id] = { features }
     }
     if (Object.keys(encoded).length === 0) continue

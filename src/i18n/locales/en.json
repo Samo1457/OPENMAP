@@ -121,7 +121,34 @@
     "mapLocale": "Map language",
     "moreOptions": "More options",
     "timeline": "Timeline",
-    "unknownValue": "Unknown"
+    "unknownValue": "Unknown",
+    "camera": {
+      "group": "Map view",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out",
+      "recentre": "Recentre on the frame",
+      "zoomedIn": "Zoomed in",
+      "zoomedOut": "Zoomed out",
+      "panned": "Map moved",
+      "recentred": "Recentred on the frame"
+    },
+    "basemap": {
+      "title": "Basemap",
+      "parchment": "Parchment",
+      "sombre": "Dark",
+      "clair": "Light",
+      "relief": "Relief",
+      "brightness": "Brightness",
+      "saturation": "Saturation",
+      "tint": "Tint",
+      "tintColour": "Tint colour (hex)",
+      "valueOf": "{{name}}, value",
+      "reset": "Reset Basemap settings",
+      "changed": "Basemap: {{name}}",
+      "adjusted": "{{name}}: {{value}} %",
+      "resetDone": "Basemap settings reset",
+      "tintColourPicker": "Tint colour picker"
+    }
   },
   "keyboard": {
     "tooltip": "{{name}} · {{shortcut}}",
@@ -154,6 +181,17 @@
         "map": "Go to the Map",
         "panel": "Go to the properties",
         "timeline": "Go to the Timeline"
+      },
+      "map": {
+        "zoomIn": "Zoom the Map in",
+        "zoomOut": "Zoom the Map out",
+        "recentre": "Recentre the Map on the frame",
+        "pan": {
+          "left": "Pan the Map left",
+          "up": "Pan the Map up",
+          "right": "Pan the Map right",
+          "down": "Pan the Map down"
+        }
       }
     }
   },

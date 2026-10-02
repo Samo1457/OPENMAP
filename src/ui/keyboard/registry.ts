@@ -11,7 +11,7 @@ import { useSyncExternalStore } from 'react'
 export interface KeyCombo {
   /** A typed character: a Latin letter (matched case-insensitively), a symbol such as `?`, or `Escape`. */
   readonly key?: string
-  /** A physical key such as `Digit1`, matched on `event.code` (region jumps). */
+  /** A physical key such as `Digit1`, matched on `event.code` (region jumps, Shift+1). */
   readonly code?: string
   /** Ctrl, or Cmd on a Mac. */
   readonly ctrl?: boolean
@@ -79,8 +79,8 @@ export function letterOf(event: ShortcutEvent): string | undefined {
 export function matchesCombo(combo: KeyCombo, event: ShortcutEvent): boolean {
   const ctrl = event.ctrlKey || event.metaKey
   if (combo.code !== undefined) {
-    // Region jumps: the physical key, with Alt alone (no Shift, Ctrl, Cmd or AltGr).
-    return event.code === combo.code && event.altKey === (combo.alt ?? false) && !ctrl && !event.shiftKey
+    // The physical key (region jumps, Shift+1): with Alt or Shift as the combo says, never Ctrl, Cmd or AltGr.
+    return event.code === combo.code && event.altKey === (combo.alt ?? false) && !ctrl && event.shiftKey === (combo.shift ?? false)
   }
   const key = combo.key
   if (key === undefined) return false
@@ -275,6 +275,8 @@ export function installKeyboard(target: EventTarget, isBlocked: () => boolean = 
 // ---------------------------------------------------------------------------------------------
 // Display
 
+const ARROW_GLYPHS: Readonly<Record<string, string>> = { ArrowLeft: '←', ArrowUp: '↑', ArrowRight: '→', ArrowDown: '↓' }
+
 /** The parts of `combo` as shown: modifier i18n keys first, then the key itself. */
 export function comboParts(combo: KeyCombo, translate: (key: string) => string): string[] {
   const parts: string[] = []
@@ -283,6 +285,7 @@ export function comboParts(combo: KeyCombo, translate: (key: string) => string):
   if (combo.shift) parts.push(translate('keyboard.keys.shift'))
   if (combo.code) parts.push(combo.code.replace(/^Digit/, ''))
   else if (combo.key === 'Escape') parts.push(translate('keyboard.keys.escape'))
+  else if (combo.key && combo.key in ARROW_GLYPHS) parts.push(ARROW_GLYPHS[combo.key])
   else if (combo.key) parts.push(combo.key.length === 1 ? combo.key.toUpperCase() : combo.key)
   return parts
 }

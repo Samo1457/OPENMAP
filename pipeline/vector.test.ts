@@ -5,7 +5,8 @@ import Pbf from 'pbf'
 import { describe, expect, it } from 'vitest'
 import { openArchive, FIXTURES } from './test-helpers.ts'
 import { writePmtiles } from './pmtiles-writer.ts'
-import { buildVectorTiles, MAX_PLACE_SCALE, readShapefile, shapeLayer, VECTOR_MAX_ZOOM } from './vector.ts'
+import type { FeatureCollection } from 'geojson'
+import { buildVectorTiles, dropTinyRings, MAX_PLACE_SCALE, MIN_RING_AREA, OCEAN_TOLERANCE, readShapefile, shapeLayer, VECTOR_MAX_ZOOM } from './vector.ts'
 
 const read = (name: string) => readFileSync(join(FIXTURES, name))
 const land = shapeLayer('land', await readShapefile(read('tiny-land.shp'), read('tiny-land.dbf')))
@@ -73,5 +74,64 @@ describe('vector tiles', () => {
     const got = await openArchive(bytes).getZxy(0, 0, 0)
     expect(got).toBeDefined()
     expect(decode(new Uint8Array(got!.data)).layers.land).toBeDefined()
+  })
+})
+
+describe('tiny rings (ocean wedge over Greenland)', () => {
+  /** One world-sized polygon (the ocean) with a Greenland-like hole and a speck of an island. */
+  const ocean: FeatureCollection = {
+    type: 'FeatureCollection',
+    features: [
+      {
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'Polygon',
+          coordinates: [
+            [[-180, -85], [-180, 85], [180, 85], [180, -85], [-180, -85]],
+            [[-60, 60], [-20, 60], [-20, 80], [-60, 80], [-60, 60]],
+            [[100, 10], [100.01, 10], [100.01, 10.01], [100, 10.01], [100, 10]],
+          ],
+        },
+      },
+    ],
+  }
+  const ringArea2 = (ring: { x: number; y: number }[]) => {
+    let sum = 0
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) sum += (ring[j].x - ring[i].x) * (ring[i].y + ring[j].y)
+    return sum
+  }
+
+  it('keeps no ring smaller than a screen pixel in a polygon layer, so winding classification stays sound', () => {
+    const built = buildVectorTiles({ ocean })
+    const world = decode(built.tiles.find((t) => t.z === 0)!.data).layers.ocean
+    const areas = []
+    for (let i = 0; i < world.length; i++) for (const ring of (world.feature(i) as unknown as { loadGeometry(): { x: number; y: number }[][] }).loadGeometry()) areas.push(Math.abs(ringArea2(ring)))
+    expect(areas.length).toBeGreaterThan(1) // the big hole stays
+    expect(Math.min(...areas)).toBeGreaterThanOrEqual(MIN_RING_AREA)
+  })
+
+  it('drops a collapsed sliver with flipped winding that would start a polygon of its own', () => {
+    const feature = {
+      type: 3 as const,
+      tags: {},
+      geometry: [
+        [[0, 0], [0, 4096], [4096, 4096], [4096, 0], [0, 0]],
+        [[100, 100], [100, 900], [900, 900], [900, 100], [100, 100]],
+        [[2000, 2000], [2002, 2001], [2004, 2000], [2000, 2000]], // a sliver
+      ],
+    }
+    const kept = dropTinyRings(feature as never)
+    expect(kept).toBeDefined()
+    expect((kept!.geometry as unknown as number[][][]).length).toBe(2)
+    expect(dropTinyRings({ ...feature, geometry: [feature.geometry[2]] } as never)).toBeUndefined()
+    const point = { type: 1 as const, tags: {}, geometry: [[1, 1]] }
+    expect(dropTinyRings(point as never)).toBe(point)
+  })
+})
+
+describe('ocean simplification', () => {
+  it('keeps the ocean finer than the other layers, so its holes stay simple', () => {
+    expect(OCEAN_TOLERANCE).toBeLessThan(3)
   })
 })

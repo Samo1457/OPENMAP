@@ -1,4 +1,4 @@
-import type { Command, MapLocale, OutputFormat } from '@/core'
+import type { Basemap, Command, MapLocale, OutputFormat } from '@/core'
 
 /** What the Editor shell shows of the open Project. */
 export interface EditorModel {
@@ -7,6 +7,7 @@ export interface EditorModel {
   readonly name?: string
   readonly outputFormat?: OutputFormat
   readonly mapLocale?: MapLocale
+  readonly basemap?: Basemap
   /** Editing is off: loading, a document newer than the app (AD-9), or a read-only dispatcher. */
   readonly readOnly: boolean
   readonly canUndo: boolean

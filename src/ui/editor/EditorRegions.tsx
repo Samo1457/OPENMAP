@@ -7,14 +7,10 @@ import { Tooltip } from '@/ui/components/Tooltip'
 import { announce } from '@/ui/keyboard/announcer'
 import { regionProps } from '@/ui/keyboard/regions'
 import { setTool, useTool } from '@/ui/keyboard/tool-store'
-import { mapColors } from '@/ui/theme/tokens'
 
 // The named regions of the Editor (EXPERIENCE.md Accessibility Floor): top bar, tool rail, options
 // bar, Map, properties panel, Timeline. Each is a jump target of Alt+1 to Alt+6 (`regionProps`):
 // the container takes the focus, the Map is also a tab stop. The DOM order is the visual order.
-
-/** Until the Map renders (Story 1.10), the plain land colour of the parchment Basemap. */
-const MAP_PLACEHOLDER_COLOR = mapColors.parchment['map-land-neutral']
 
 /** The tool rail (UX-DR31): only Select in this story, active. `V` selects it (registered by the Editor). */
 export function ToolRail({ disabled }: { disabled: boolean }) {
@@ -66,12 +62,6 @@ export function OptionsBar({ outputFormat }: { outputFormat?: OutputFormat }) {
       )}
     </section>
   )
-}
-
-/** The Map area: the plain land colour of the active Basemap until the Basemap renders. */
-export function MapArea() {
-  const { t } = useTranslation()
-  return <section aria-label={t('editor.map')} {...regionProps('map')} data-map-content className="min-h-0 flex-1" style={{ backgroundColor: MAP_PLACEHOLDER_COLOR }} />
 }
 
 /** The properties panel (UX-DR33): always visible, scrolls inside. */

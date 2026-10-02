@@ -1,4 +1,4 @@
-// Public API of the pure core (model, Commands, undo engine). Evaluator and more from later stories.
+// Public API of the pure core (model, Commands, undo engine, Basemap colours, evaluator).
 
 export * from './result'
 export * from './ids'
@@ -20,3 +20,5 @@ export {
 } from './schema'
 export * from './commands'
 export * from './history'
+export * from './basemap'
+export * from './evaluate'

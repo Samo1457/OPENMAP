@@ -85,3 +85,60 @@ body:has(.om-editor) .om-toast-region {
   outline-offset: -2px;
   box-shadow: inset 0 0 0 2px var(--om-focus-ring);
 }
+
+/* The Map fills its region, so the region's own inset ring would sit under the canvas: an overlay draws it above. */
+.om-map-focus-ring {
+  display: none;
+}
+
+[data-region='map']:focus-visible > .om-map-focus-ring,
+[data-region='map'][data-jumped]:focus > .om-map-focus-ring {
+  display: block;
+  box-shadow: inset 0 0 0 2px var(--om-focus-ring);
+}
+
+/* Slider (DESIGN.md `slider`): 2px track in border-input, range in text-secondary, 12px round thumb in text-primary. */
+.om-slider {
+  appearance: none;
+  height: 16px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.om-slider::-webkit-slider-runnable-track {
+  height: 2px;
+  background: linear-gradient(to right, var(--om-text-secondary) var(--om-slider-fill, 0%), var(--om-border-input) var(--om-slider-fill, 0%));
+}
+
+.om-slider::-moz-range-track {
+  height: 2px;
+  background: var(--om-border-input);
+}
+
+.om-slider::-moz-range-progress {
+  height: 2px;
+  background: var(--om-text-secondary);
+}
+
+.om-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  margin-top: -5px;
+  border: 0;
+  border-radius: 9999px;
+  background: var(--om-text-primary);
+}
+
+.om-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: 0;
+  border-radius: 9999px;
+  background: var(--om-text-primary);
+}
+
+.om-slider:disabled,
+.om-slider[aria-disabled='true'] {
+  cursor: not-allowed;
+}

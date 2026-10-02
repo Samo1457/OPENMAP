@@ -53,6 +53,30 @@ for (const scheme of ['light', 'dark'] as const) {
       await expectNoViolations(page, 'Editor with a menu')
     })
 
+    test('the Editor Map, its zoom buttons and the Basemap picker and sliders', async ({ page }) => {
+      // The data origin is mocked: the check does not depend on `pipeline/out`.
+      await page.route('**/library/v1/styles/*.json', (route) =>
+        route.fulfill({ json: { version: 8, sources: {}, layers: [{ id: 'background', type: 'background', paint: { 'background-color': '#FF00FF' } }] } }),
+      )
+      await openEditor(page)
+      const map = page.getByRole('region', { name: 'Map' })
+      await expect(map.getByRole('group', { name: 'Map view' }).getByRole('button')).toHaveCount(3)
+      await expect(page.getByTestId('map-canvas')).toHaveAttribute('data-ready', 'true')
+      await expectNoViolations(page, 'Editor Map')
+      await page.keyboard.press('Alt+4')
+      await page.keyboard.press('Tab') // the Map region, then its first button: a keyboard focus shows the tooltip
+      await expect(map.getByRole('button', { name: 'Zoom in' })).toBeFocused()
+      await expect(page.getByRole('tooltip')).toBeVisible()
+      await expectNoViolations(page, 'Editor Map with a tooltip on a zoom button')
+      await page.keyboard.press('Escape')
+      const panel = page.getByRole('complementary', { name: 'Properties' })
+      await panel.getByRole('radio', { name: 'Dark' }).click()
+      await panel.getByRole('slider', { name: 'Brightness' }).focus()
+      await page.keyboard.press('Shift+ArrowRight')
+      await expect(panel.getByRole('slider', { name: 'Brightness' })).toHaveValue('10')
+      await expectNoViolations(page, 'Editor Basemap settings (Dark, brightness 10)')
+    })
+
     test('Settings (each tab) and the shortcuts help', async ({ page }) => {
       await page.goto('/')
       await page.getByRole('button', { name: 'Menu' }).click()

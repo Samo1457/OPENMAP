@@ -121,7 +121,34 @@
     "mapLocale": "Langue de la carte",
     "moreOptions": "Plus d'options",
     "timeline": "Timeline",
-    "unknownValue": "Inconnu"
+    "unknownValue": "Inconnu",
+    "camera": {
+      "group": "Vue de la carte",
+      "zoomIn": "Zoom avant",
+      "zoomOut": "Zoom arrière",
+      "recentre": "Recentrer sur le cadre",
+      "zoomedIn": "Zoom avant",
+      "zoomedOut": "Zoom arrière",
+      "panned": "Carte déplacée",
+      "recentred": "Recentré sur le cadre"
+    },
+    "basemap": {
+      "title": "Fond de carte",
+      "parchment": "Parchemin",
+      "sombre": "Sombre",
+      "clair": "Clair",
+      "relief": "Relief",
+      "brightness": "Luminosité",
+      "saturation": "Saturation",
+      "tint": "Teinte",
+      "tintColour": "Couleur de la teinte (hexadécimal)",
+      "valueOf": "{{name}}, valeur",
+      "reset": "Rétablir les réglages du Fond",
+      "changed": "Fond de carte : {{name}}",
+      "adjusted": "{{name}} : {{value}} %",
+      "resetDone": "Réglages du Fond rétablis",
+      "tintColourPicker": "Sélecteur de couleur de la teinte"
+    }
   },
   "keyboard": {
     "tooltip": "{{name}} · {{shortcut}}",
@@ -154,6 +181,17 @@
         "map": "Aller à la Carte",
         "panel": "Aller aux propriétés",
         "timeline": "Aller à la Timeline"
+      },
+      "map": {
+        "zoomIn": "Zoomer sur la carte",
+        "zoomOut": "Dézoomer la carte",
+        "recentre": "Recentrer la carte sur le cadre",
+        "pan": {
+          "left": "Déplacer la carte vers la gauche",
+          "up": "Déplacer la carte vers le haut",
+          "right": "Déplacer la carte vers la droite",
+          "down": "Déplacer la carte vers le bas"
+        }
       }
     }
   },

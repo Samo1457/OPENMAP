@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { useTranslation } from 'react-i18next'
-import { type Command, createDispatcher, type Dispatcher, type DispatcherState, type MapLocale, type OutputFormat } from '@/core'
+import { type Command, createDispatcher, type Dispatcher, type DispatcherState, evaluate, type MapLocale, OUTPUT_FRAME_SIZES, type OutputFormat, type Scene } from '@/core'
 import { type Autosave, createAutosave, openStoredProject } from '@/persistence'
 import { Banner } from '@/ui/components/Banner'
 import { useToast } from '@/ui/components/toast'
@@ -14,7 +14,9 @@ import { returnToSelect, selectToolShortcut } from '@/ui/keyboard/tool-store'
 import { homeHref } from '@/ui/routing'
 import type { EditorActions, EditorModel } from './editor-model'
 import { EditorTopBar } from './EditorTopBar'
-import { MapArea, OptionsBar, PanelSkeleton, PropertiesPanel, TimelineArea, ToolRail } from './EditorRegions'
+import { OptionsBar, PanelSkeleton, PropertiesPanel, TimelineArea, ToolRail } from './EditorRegions'
+import { clearBasemapPreview, useBasemapPreview } from './basemap-preview-store'
+import { MapArea } from './MapArea'
 import { ProjectSettingsPanel } from './ProjectSettingsPanel'
 import { createSaveIndicator, type SaveIndicatorStore } from './save-status'
 
@@ -81,6 +83,7 @@ export function EditorShell({ projectId }: { projectId: string }) {
         name: project.name,
         outputFormat: project.outputFormat,
         mapLocale: project.mapLocale,
+        basemap: project.map.basemap,
         readOnly: current.readOnly,
         canUndo: current.canUndo,
         canRedo: current.canRedo,
@@ -91,6 +94,18 @@ export function EditorShell({ projectId }: { projectId: string }) {
     }
     return { loading: true, readOnly: true, canUndo: false, canRedo: false }
   }, [state, current])
+
+  // The Scene the Map draws (AD-1): the Project at t = 0 with a slider drag's live values laid over
+  // its Basemap adjustments. The drag itself is UI state; the Command comes on release.
+  const preview = useBasemapPreview()
+  const project = state.kind === 'editable' ? current?.project : undefined
+  const scene = useMemo<Scene | undefined>(() => {
+    if (!project) return undefined
+    const shown = preview ? { ...project, map: { ...project.map, basemap: { ...project.map.basemap, adjustments: preview } } } : project
+    return evaluate(shown, 0, { geodata: {}, frame: OUTPUT_FRAME_SIZES[project.outputFormat] })
+  }, [project, preview])
+  // A preview never outlives its Project or the Editor.
+  useEffect(() => clearBasemapPreview, [projectId])
 
   /** « Annulé » / « Rétabli » for screen readers; `n` makes a repeated message be read again. */
   const announcement = useAnnouncement()
@@ -184,7 +199,7 @@ export function EditorShell({ projectId }: { projectId: string }) {
       <ToolRail disabled={model.loading} />
       <main className="flex min-h-0 min-w-0 flex-col [grid-area:scene]">
         <OptionsBar outputFormat={model.outputFormat} />
-        <MapArea />
+        <MapArea scene={scene} outputFormat={model.outputFormat} />
       </main>
       <PropertiesPanel>{model.loading ? <PanelSkeleton /> : <ProjectSettingsPanel model={model} actions={actions} />}</PropertiesPanel>
       <TimelineArea />
