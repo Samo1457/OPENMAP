@@ -10,9 +10,13 @@ Browser editor for animated historical/geopolitical maps, exported as video. Gre
 - Commit directly to `main` only after an independent review by a separate agent (`bmad-code-review` or `bmad-review`) has passed on the change; never push unreviewed work — Cloudflare Pages deploys `main`.
 - Never edit `_bmad-output/planning-artifacts/` or `_bmad/` while implementing; report the conflict and route it through `bmad-correct-course` or the owning BMAD skill.
 - Write code, comments and commit messages in English; user-facing text only through i18n keys in `fr` and `en` (AD-20).
-- Add only dependencies licensed MIT, BSD, ISC, Apache-2.0, 0BSD, Unlicense, BlueOak-1.0.0 or OFL; MPL-2.0 only for unmodified Mediabunny and unmodified build-time `lightningcss` and its platform binaries (required by Tailwind 4 and Vite 8, never shipped), each with an entry in `licence-overrides.json`; never GPL/LGPL/AGPL, and never ODbL, share-alike or non-commercial data (AD-17).
+- Add only dependencies licensed MIT, BSD, ISC, Apache-2.0, 0BSD, Unlicense, BlueOak-1.0.0 or OFL; MPL-2.0 only for unmodified Mediabunny, unmodified build-time `lightningcss` and its platform binaries (required by Tailwind 4 and Vite 8, never shipped), and unmodified dev-only `axe-core` and `@axe-core/playwright` (accessibility e2e check, never shipped), each with an entry in `licence-overrides.json`; never GPL/LGPL/AGPL, and never ODbL, share-alike or non-commercial data (AD-17).
 - Never send Project content, media, names or ids over the network; runtime calls go only to the app origin and the data origin (AD-16).
 - Never commit secrets; server secrets live in env files on the VPS.
+
+## Definition of Done
+
+- Every new tool, panel or dialog registers its shortcuts in the keyboard registry (`src/ui/keyboard/`), is keyboard-operable, announces its state changes and passes the axe e2e check (`tests/e2e/accessibility.spec.ts`); document key collisions in `docs/keyboard.md`.
 
 ## Where things are
 

@@ -419,6 +419,8 @@ test.describe('keyboard and focus (UX-DR27, UX-DR8)', () => {
         topBar(page).getByRole('button', { name: 'Export' }),
         topBar(page).getByRole('button', { name: 'Menu' }),
         page.getByRole('button', { name: 'Select' }),
+        // The Map is a tab stop (Story 1.7), between the tool rail and the panel.
+        page.getByRole('region', { name: 'Map' }),
         nameField(page),
         formatGroup(page).getByRole('radio', { name: '16:9' }),
         localeGroup(page).getByRole('radio', { name: 'English' }),

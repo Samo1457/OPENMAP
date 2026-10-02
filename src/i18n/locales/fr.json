@@ -98,7 +98,8 @@
       "timeline": "Timeline"
     },
     "tools": {
-      "select": "Sélection"
+      "select": "Sélection",
+      "selectActive": "Outil Sélection actif"
     },
     "save": {
       "saving": "Enregistrement…",
@@ -111,8 +112,6 @@
     "frameSize": "{{format}} · {{width}} × {{height}}",
     "undo": "Annuler",
     "redo": "Rétablir",
-    "undoTooltip": "Annuler · Ctrl+Z",
-    "redoTooltip": "Rétablir · Ctrl+Maj+Z",
     "undone": "Annulé",
     "redone": "Rétabli",
     "search": "Rechercher un lieu",
@@ -123,6 +122,40 @@
     "moreOptions": "Plus d'options",
     "timeline": "Timeline",
     "unknownValue": "Inconnu"
+  },
+  "keyboard": {
+    "tooltip": "{{name}} · {{shortcut}}",
+    "keys": {
+      "ctrl": "Ctrl",
+      "shift": "Maj",
+      "alt": "Alt",
+      "escape": "Échap"
+    },
+    "groups": {
+      "editing": "Édition",
+      "tools": "Outils",
+      "navigation": "Navigation",
+      "help": "Aide"
+    },
+    "help": {
+      "title": "Raccourcis clavier"
+    },
+    "shortcuts": {
+      "undo": "Annuler",
+      "redo": "Rétablir",
+      "save": "Sauvegarder",
+      "selectTool": "Outil Sélection",
+      "help": "Afficher les raccourcis",
+      "escape": "Fermer, annuler ou revenir d'un pas en arrière",
+      "region": {
+        "top": "Aller à la barre haute",
+        "rail": "Aller aux outils",
+        "options": "Aller aux options de l'outil",
+        "map": "Aller à la Carte",
+        "panel": "Aller aux propriétés",
+        "timeline": "Aller à la Timeline"
+      }
+    }
   },
   "toast": {
     "region": "Notifications",

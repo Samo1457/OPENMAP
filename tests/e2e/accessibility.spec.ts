@@ -1,0 +1,98 @@
+import AxeBuilder from '@axe-core/playwright'
+import { devices, expect, test, type Page } from '@playwright/test'
+
+// Story 1.7: automated axe check (WCAG 2.2 AA, UX-DR157) on Home, the Editor, Settings, the
+// shortcuts help and the gate pages, in light and dark. Every later screen adds itself here.
+
+test.use({ locale: 'en-US', viewport: { width: 1366, height: 768 } })
+
+const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']
+
+async function expectNoViolations(page: Page, label: string) {
+  const results = await new AxeBuilder({ page }).withTags(TAGS).analyze()
+  const summary = results.violations.map((violation) => `${violation.id}: ${violation.nodes.map((node) => node.target.join(' ')).join(' | ')}`)
+  expect(summary, `axe violations on ${label}`).toEqual([])
+}
+
+async function openEditor(page: Page) {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'New Project', exact: true }).first().click()
+  await expect(page).toHaveURL(/#\/p\//)
+  await expect(page.getByRole('textbox', { name: 'Project name' })).toHaveValue('Untitled Project')
+}
+
+for (const scheme of ['light', 'dark'] as const) {
+  test.describe(`axe, ${scheme} theme`, () => {
+    test.beforeEach(async ({ page }) => {
+      await page.emulateMedia({ colorScheme: scheme })
+    })
+
+    test('Home, empty and with a Project', async ({ page }) => {
+      await page.goto('/')
+      await expect(page.getByRole('heading', { level: 1, name: 'Projects' })).toBeVisible()
+      await expect(page.getByText('No Projects yet.')).toBeVisible()
+      await expectNoViolations(page, 'Home (empty)')
+      await openEditor(page)
+      await page.getByRole('link', { name: 'Projects' }).click()
+      await expect(page.getByRole('heading', { level: 1, name: 'Projects' })).toBeVisible()
+      await expect(page.getByText('Untitled Project').first()).toBeVisible()
+      await expectNoViolations(page, 'Home (with a Project)')
+    })
+
+    test('the Editor, with a tooltip and the Output Format menu open', async ({ page }) => {
+      await openEditor(page)
+      await expectNoViolations(page, 'Editor')
+      await page.getByRole('button', { name: 'Undo', exact: true }).focus()
+      await page.keyboard.press('Shift+Tab')
+      await page.keyboard.press('Tab')
+      await expect(page.getByRole('tooltip')).toBeVisible()
+      await expectNoViolations(page, 'Editor with a tooltip')
+      await page.keyboard.press('Escape')
+      await page.getByRole('button', { name: /^Output format/ }).click()
+      await expect(page.getByRole('menu', { name: 'Output format' })).toBeVisible()
+      await expectNoViolations(page, 'Editor with a menu')
+    })
+
+    test('Settings (each tab) and the shortcuts help', async ({ page }) => {
+      await page.goto('/')
+      await page.getByRole('button', { name: 'Menu' }).click()
+      await page.getByRole('menuitem', { name: 'Settings' }).click()
+      const dialog = page.getByRole('dialog', { name: 'Settings' })
+      await expect(dialog).toBeVisible()
+      for (const tab of ['Appearance', 'Language', 'Storage']) {
+        await dialog.getByRole('tab', { name: tab }).click()
+        await expectNoViolations(page, `Settings, ${tab}`)
+      }
+      await page.keyboard.press('Escape')
+      await expect(dialog).toHaveCount(0)
+
+      await page.keyboard.press('?')
+      await expect(page.getByRole('dialog', { name: 'Keyboard shortcuts' })).toBeVisible()
+      await expectNoViolations(page, 'Shortcuts help')
+    })
+  })
+}
+
+test.describe('gate pages', () => {
+  for (const scheme of ['light', 'dark'] as const) {
+    test(`the unsupported-browser page (${scheme})`, async ({ browser }) => {
+      const context = await browser.newContext({ locale: 'en-US', colorScheme: scheme })
+      const page = await context.newPage()
+      await page.addInitScript(() => Object.defineProperty(Navigator.prototype, 'locks', { get: () => undefined }))
+      await page.goto('/')
+      await expect(page.getByRole('heading', { level: 1, name: 'Unsupported browser' })).toBeVisible()
+      await expectNoViolations(page, 'unsupported-browser gate')
+      await context.close()
+    })
+
+    test(`the designed-for-a-computer page (${scheme})`, async ({ browser }) => {
+      const { defaultBrowserType: _browser, ...pixel } = devices['Pixel 7']
+      const context = await browser.newContext({ ...pixel, locale: 'en-US', colorScheme: scheme })
+      const page = await context.newPage()
+      await page.goto('/')
+      await expect(page.getByRole('heading', { level: 1, name: 'Designed for a computer' })).toBeVisible()
+      await expectNoViolations(page, 'desktop-only gate')
+      await context.close()
+    })
+  }
+})

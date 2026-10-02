@@ -3,6 +3,7 @@ import { useEffect, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { getStorageStatus, type StorageStatus } from '@/persistence'
 import { buttonLook, iconProps } from '@/ui/components/button'
+import { Tooltip } from '@/ui/components/Tooltip'
 import { scaleBytes } from './format-bytes'
 
 /**
@@ -45,10 +46,14 @@ export function StorageTab() {
         <span id={comingSoonId} hidden>
           {t('common.comingSoon')}
         </span>
-        <button type="button" aria-disabled title={t('common.comingSoon')} aria-describedby={comingSoonId} className={buttonLook('secondary', true)}>
-          <Download {...iconProps} />
-          {t('settings.storage.export')}
-        </button>
+        <Tooltip label={t('common.comingSoon')} describedBy={comingSoonId}>
+          {(tip) => (
+            <button {...tip} type="button" aria-disabled className={buttonLook('secondary', true)}>
+              <Download {...iconProps} />
+              {t('settings.storage.export')}
+            </button>
+          )}
+        </Tooltip>
       </div>
     </div>
   )

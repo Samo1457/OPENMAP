@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { cn } from '@/ui/lib/utils'
 import { sessionDismissals } from './banner-dismissals'
 import { buttonClass, iconProps } from './button'
+import { Tooltip } from './Tooltip'
 
 export interface BannerAction {
   readonly label: string
@@ -38,9 +39,13 @@ export function Banner({ tone, children, action, onDismiss }: { tone: 'info' | '
         </button>
       )}
       {onDismiss && (
-        <button type="button" aria-label={t('banner.dismiss')} title={t('banner.dismiss')} onClick={onDismiss} className={buttonClass.ghostIcon}>
-          <X {...iconProps} />
-        </button>
+        <Tooltip label={t('banner.dismiss')}>
+          {(tip) => (
+            <button {...tip} type="button" aria-label={t('banner.dismiss')} onClick={onDismiss} className={buttonClass.ghostIcon}>
+              <X {...iconProps} />
+            </button>
+          )}
+        </Tooltip>
       )}
     </div>
   )

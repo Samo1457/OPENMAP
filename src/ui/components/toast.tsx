@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/ui/lib/utils'
 import { buttonClass, iconProps } from './button'
+import { Tooltip } from './Tooltip'
 
 /** EXPERIENCE.md Toasts: information 4 s, with an action 8 s, an error stays until closed. */
 export const INFO_TOAST_MS = 4000
@@ -138,9 +139,13 @@ function Toast({ toast, onClose }: { toast: QueuedToast; onClose: (reason: Toast
           {toast.action.label}
         </button>
       )}
-      <button type="button" aria-label={t('toast.close')} title={t('toast.close')} className={cn(buttonClass.ghostIcon, 'size-control-height-sm')} onClick={() => finish('dismissed')}>
-        <X {...iconProps} />
-      </button>
+      <Tooltip label={t('toast.close')}>
+        {(tip) => (
+          <button {...tip} type="button" aria-label={t('toast.close')} className={cn(buttonClass.ghostIcon, 'size-control-height-sm')} onClick={() => finish('dismissed')}>
+            <X {...iconProps} />
+          </button>
+        )}
+      </Tooltip>
     </div>
   )
 }

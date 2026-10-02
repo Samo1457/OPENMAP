@@ -3,6 +3,7 @@ import { useCallback, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { buttonLook, iconProps } from '@/ui/components/button'
 import { Menu, type MenuPoint } from '@/ui/components/Menu'
+import { Tooltip } from '@/ui/components/Tooltip'
 import { openSettings } from './settings-store'
 
 /**
@@ -21,22 +22,25 @@ export function AppMenu() {
 
   return (
     <div className="relative shrink-0">
-      <button
-        ref={button}
-        type="button"
-        aria-label={t('appMenu.label')}
-        title={t('appMenu.label')}
-        aria-haspopup="menu"
-        aria-expanded={menuAt !== undefined}
-        onClick={() => {
-          if (menuAt) return setMenuAt(undefined)
-          const rect = button.current?.getBoundingClientRect()
-          setMenuAt(rect ? { x: rect.left, y: rect.bottom + 4 } : { x: 0, y: 0 })
-        }}
-        className={buttonLook('ghostIcon')}
-      >
-        <Ellipsis {...iconProps} />
-      </button>
+      <Tooltip label={t('appMenu.label')}>
+        {(tip) => (
+          <button {...tip}
+            ref={button}
+            type="button"
+            aria-label={t('appMenu.label')}
+            aria-haspopup="menu"
+            aria-expanded={menuAt !== undefined}
+            onClick={() => {
+              if (menuAt) return setMenuAt(undefined)
+              const rect = button.current?.getBoundingClientRect()
+              setMenuAt(rect ? { x: rect.left, y: rect.bottom + 4 } : { x: 0, y: 0 })
+            }}
+            className={buttonLook('ghostIcon')}
+          >
+            <Ellipsis {...iconProps} />
+          </button>
+        )}
+      </Tooltip>
       {menuAt && (
         <Menu
           label={t('appMenu.label')}

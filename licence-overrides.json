@@ -11,6 +11,16 @@
       "reason": "Platform-specific native binary of lightningcss (see above); unmodified, build-time only, not shipped."
     },
     {
+      "package": "axe-core",
+      "licence": "MPL-2.0",
+      "reason": "Automated accessibility check (Story 1.7 decision, owner 2026-10-02); unmodified from npm, dev-only (Playwright e2e), never shipped in the app bundle. MPL-2.0 permits unmodified use (AD-17)."
+    },
+    {
+      "package": "@axe-core/playwright",
+      "licence": "MPL-2.0",
+      "reason": "Automated accessibility check (Story 1.7 decision, owner 2026-10-02); unmodified from npm, dev-only (Playwright e2e), never shipped in the app bundle. MPL-2.0 permits unmodified use (AD-17)."
+    },
+    {
       "package": "argparse",
       "licence": "Python-2.0",
       "reason": "Permissive PSF licence (no copyleft). Dev-only: js-yaml dependency of the shadcn CLI (cosmiconfig); not shipped."

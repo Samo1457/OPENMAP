@@ -6,8 +6,12 @@ import { Banner } from '@/ui/components/Banner'
 import { useToast } from '@/ui/components/toast'
 import { TopBar } from '@/ui/components/TopBar'
 import { SmallWindowBanner } from '@/ui/gate/EnvironmentBanners'
+import { announce, useAnnouncement } from '@/ui/keyboard/announcer'
+import { editorShortcuts } from '@/ui/keyboard/editor-shortcuts'
+import { regionShortcuts } from '@/ui/keyboard/regions'
+import { registerEscapeStep, registerShortcuts } from '@/ui/keyboard/registry'
+import { returnToSelect, selectToolShortcut } from '@/ui/keyboard/tool-store'
 import { homeHref } from '@/ui/routing'
-import { installEditorShortcuts } from './editor-shortcuts'
 import type { EditorActions, EditorModel } from './editor-model'
 import { EditorTopBar } from './EditorTopBar'
 import { MapArea, OptionsBar, PanelSkeleton, PropertiesPanel, TimelineArea, ToolRail } from './EditorRegions'
@@ -89,8 +93,7 @@ export function EditorShell({ projectId }: { projectId: string }) {
   }, [state, current])
 
   /** « Annulé » / « Rétabli » for screen readers; `n` makes a repeated message be read again. */
-  const [announcement, setAnnouncement] = useState({ text: '', n: 0 })
-  const announce = (text: string) => setAnnouncement((previous) => ({ text, n: previous.n + 1 }))
+  const announcement = useAnnouncement()
 
   const actions = useMemo<EditorActions | undefined>(() => {
     if (state.kind !== 'editable') return undefined
@@ -107,14 +110,16 @@ export function EditorShell({ projectId }: { projectId: string }) {
     }
   }, [state, t])
 
-  // Ctrl+Z, Ctrl+Shift+Z, Ctrl+Y and Ctrl+S, read through a ref so the listener is installed once.
+  // Ctrl+Z, Ctrl+Shift+Z, Ctrl+Y, Ctrl+S, V and Alt+1..6 go through the shortcut registry, read
+  // through a ref so they are registered once per language.
   const latest = useRef({ state, model, actions })
   useEffect(() => {
     latest.current = { state, model, actions }
   })
   useEffect(() => {
     let disposed = false
-    const uninstall = installEditorShortcuts(window, {
+    const unregister = registerShortcuts([
+      ...editorShortcuts({
       undo: () => {
         const { model: shown, actions: act } = latest.current
         if (!shown.readOnly && shown.canUndo) act?.undo()
@@ -131,10 +136,17 @@ export function EditorShell({ projectId }: { projectId: string }) {
           if (!disposed && open.saveStatus.get() !== 'error') toast({ tone: 'success', title: t('editor.save.done'), description: t('editor.save.doneDetail') })
         })
       },
-    })
+      }),
+      // Like the rail button, inert while the Project opens.
+      selectToolShortcut(() => announce(t('editor.tools.selectActive')), () => !latest.current.model.loading),
+      ...regionShortcuts(),
+    ])
+    // The last step of the Escape chain: back to the Select tool.
+    const unregisterEscape = registerEscapeStep({ id: 'tool.return', priority: 0, run: returnToSelect })
     return () => {
       disposed = true
-      uninstall()
+      unregister()
+      unregisterEscape()
     }
   }, [toast, t])
 

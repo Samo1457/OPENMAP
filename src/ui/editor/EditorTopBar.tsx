@@ -4,7 +4,9 @@ import { useTranslation } from 'react-i18next'
 import { OUTPUT_FORMATS, type OutputFormat } from '@/core'
 import { buttonLook, iconProps } from '@/ui/components/button'
 import { Menu, type MenuPoint } from '@/ui/components/Menu'
+import { Tooltip } from '@/ui/components/Tooltip'
 import { TopBar } from '@/ui/components/TopBar'
+import { REDO_COMBO, UNDO_COMBO } from '@/ui/keyboard/editor-shortcuts'
 import { cn } from '@/ui/lib/utils'
 import { homeHref } from '@/ui/routing'
 import type { EditorActions, EditorModel } from './editor-model'
@@ -22,7 +24,7 @@ export function EditorTopBar({ model, actions, saveStatus }: { model: EditorMode
   /** « Bientôt disponible », the description of the slots whose stories come later. */
   const comingSoonId = useId()
   return (
-    <TopBar label={t('editor.regions.topBar')}>
+    <TopBar label={t('editor.regions.topBar')} region>
       <span aria-hidden className="h-6 w-px shrink-0 bg-om-border" />
       <nav aria-label={t('editor.breadcrumb')} className="flex min-w-0 items-center gap-2">
         <a href={homeHref} className="shrink-0 rounded-sm px-1 type-label text-om-accent hover:text-om-accent-hover hover:underline">
@@ -43,42 +45,56 @@ export function EditorTopBar({ model, actions, saveStatus }: { model: EditorMode
       <span aria-hidden className="h-6 w-px shrink-0 bg-om-border" />
       <OutputFormatMenu value={model.outputFormat} loading={model.loading} disabled={!editable} onChange={(outputFormat) => actions?.dispatch({ type: 'SET_OUTPUT_FORMAT', payload: { outputFormat } })} />
       <div className="flex shrink-0 items-center">
-        <button
-          type="button"
-          aria-label={t('editor.undo')}
-          title={t('editor.undoTooltip')}
-          aria-keyshortcuts="Control+Z"
-          aria-disabled={!(editable && model.canUndo)}
-          onClick={() => editable && model.canUndo && actions?.undo()}
-          className={buttonLook('ghostIcon', !(editable && model.canUndo))}
-        >
-          <Undo2 {...iconProps} />
-        </button>
-        <button
-          type="button"
-          aria-label={t('editor.redo')}
-          title={t('editor.redoTooltip')}
-          aria-keyshortcuts="Control+Shift+Z Control+Y"
-          aria-disabled={!(editable && model.canRedo)}
-          onClick={() => editable && model.canRedo && actions?.redo()}
-          className={buttonLook('ghostIcon', !(editable && model.canRedo))}
-        >
-          <Redo2 {...iconProps} />
-        </button>
+        <Tooltip label={t('editor.undo')} shortcut={UNDO_COMBO}>
+          {(tip) => (
+            <button {...tip}
+              type="button"
+              aria-label={t('editor.undo')}
+              aria-keyshortcuts="Control+Z"
+              aria-disabled={!(editable && model.canUndo)}
+              onClick={() => editable && model.canUndo && actions?.undo()}
+              className={buttonLook('ghostIcon', !(editable && model.canUndo))}
+            >
+              <Undo2 {...iconProps} />
+            </button>
+          )}
+        </Tooltip>
+        <Tooltip label={t('editor.redo')} shortcut={REDO_COMBO}>
+          {(tip) => (
+            <button {...tip}
+              type="button"
+              aria-label={t('editor.redo')}
+              aria-keyshortcuts="Control+Shift+Z Control+Y"
+              aria-disabled={!(editable && model.canRedo)}
+              onClick={() => editable && model.canRedo && actions?.redo()}
+              className={buttonLook('ghostIcon', !(editable && model.canRedo))}
+            >
+              <Redo2 {...iconProps} />
+            </button>
+          )}
+        </Tooltip>
       </div>
       <span className="flex-1" />
       <span id={comingSoonId} hidden>
         {t('common.comingSoon')}
       </span>
       <SearchSlot describedBy={comingSoonId} />
-      <button type="button" aria-disabled title={t('common.comingSoon')} aria-describedby={comingSoonId} className={buttonLook('secondary', true)}>
-        <Play {...iconProps} />
-        {t('editor.presentation')}
-      </button>
-      <button type="button" aria-disabled title={t('common.comingSoon')} aria-describedby={comingSoonId} className={buttonLook('primary', true)}>
-        <Upload {...iconProps} />
-        {t('editor.export')}
-      </button>
+      <Tooltip label={t('common.comingSoon')} describedBy={comingSoonId}>
+        {(tip) => (
+          <button {...tip} type="button" aria-disabled className={buttonLook('secondary', true)}>
+            <Play {...iconProps} />
+            {t('editor.presentation')}
+          </button>
+        )}
+      </Tooltip>
+      <Tooltip label={t('common.comingSoon')} describedBy={comingSoonId}>
+        {(tip) => (
+          <button {...tip} type="button" aria-disabled className={buttonLook('primary', true)}>
+            <Upload {...iconProps} />
+            {t('editor.export')}
+          </button>
+        )}
+      </Tooltip>
     </TopBar>
   )
 }
@@ -89,16 +105,18 @@ function SearchSlot({ describedBy }: { describedBy: string }) {
   return (
     <div className="flex h-control-height-sm w-55 min-w-24 shrink items-center gap-2 rounded-sm border border-om-border-input bg-om-surface-raised px-2 control-disabled">
       <Search {...iconProps} className="icon-stroke shrink-0 text-om-text-secondary" />
-      <input
-        type="search"
-        readOnly
-        aria-disabled
-        aria-label={t('editor.search')}
-        aria-describedby={describedBy}
-        title={t('common.comingSoon')}
-        placeholder={t('editor.search')}
-        className="min-w-0 flex-1 cursor-not-allowed bg-transparent type-label text-om-text-primary outline-none placeholder:text-om-text-muted"
-      />
+      <Tooltip label={t('common.comingSoon')} describedBy={describedBy}>
+        {(tip) => (
+          <input {...tip}
+            type="search"
+            readOnly
+            aria-disabled
+            aria-label={t('editor.search')}
+            placeholder={t('editor.search')}
+            className="min-w-0 flex-1 cursor-not-allowed bg-transparent type-label text-om-text-primary outline-none placeholder:text-om-text-muted"
+          />
+        )}
+      </Tooltip>
     </div>
   )
 }

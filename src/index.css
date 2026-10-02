@@ -62,3 +62,26 @@ body:has(.om-editor) .om-toast-region {
     right: calc(var(--spacing-panel-width) + 24px);
   }
 }
+
+/*
+ * Reduced motion (UX-DR157): the chrome (drawer, toasts, accordions, skeletons, panel changes)
+ * changes instantly. The Map is content and the preview must equal the export, so it is left out;
+ * its animation lives in the evaluator and never depends on CSS.
+ */
+@media (prefers-reduced-motion: reduce) {
+  :where(*, *::before, *::after):not([data-map-content], [data-map-content] *) {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* A region the keyboard jumped to (or tabbed into) (Alt+1..6) shows an inset ring: an outer one would be clipped by the Editor grid. */
+[data-region]:focus-visible,
+[data-region][data-jumped]:focus {
+  outline-offset: -2px;
+  box-shadow: inset 0 0 0 2px var(--om-focus-ring);
+}

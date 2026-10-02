@@ -2,7 +2,7 @@
 title: 'Story 1.7: Keyboard and accessibility foundation'
 type: 'feature'
 created: '2026-10-02'
-status: 'in-progress'
+status: 'done'
 baseline_commit: '083a5aeeb239ccd4442a4f3972016bf602bf88d7'
 route: 'dispatch'
 review_loop_iteration: 0
@@ -62,17 +62,17 @@ context:
 ## Tasks & Acceptance
 
 **Execution:**
-- [ ] `src/ui/keyboard/registry.ts` (+ test) -- pure matcher (key combo, context priority, text-field and composite rules), register/unregister, window listener, Escape chain as ordered priority steps, list of active shortcuts for help
-- [ ] `src/ui/keyboard/tool-store.ts` -- active tool (`select` only), V shortcut, last Escape step "return to Select"
-- [ ] `src/ui/editor/EditorShell.tsx`, `editor-shortcuts.ts`, `Dialog.tsx` -- undo/redo/save through the registry; delete the local installer
-- [ ] `src/ui/keyboard/ShortcutHelp.tsx` -- `?` dialog (shared `Dialog`), grouped list from the registry, Home and Editor
-- [ ] `src/ui/keyboard/regions.ts` + `EditorRegions.tsx`/`TopBar.tsx` -- Alt+1..6 focus the region (tabIndex -1, Map 0), visible ring
-- [ ] `src/ui/components/Tooltip.tsx` -- hover (delay) and focus-visible, Escape hides, `aria-describedby`; replace the listed `title`s; rail tool gets `aria-keyshortcuts`
-- [ ] `src/index.css` -- reduced-motion rule for chrome animations and transitions
-- [ ] `docs/keyboard.md` -- shortcut table, Alt+digit collisions checked on Chrome/Edge Windows (none) and noted elsewhere (Linux Chrome/Firefox switch tabs)
-- [ ] `src/i18n/locales/{fr,en}.json` -- shortcut names, key labels, help, announcements
-- [ ] `package.json`, `licence-overrides.json`, `AGENTS.md` -- axe dependency per the answer above
-- [ ] tests -- unit (matcher on AZERTY/QWERTY/Cyrillic events, text field, composite, Alt+Shift, AltGr, Escape order); e2e (every matrix row, tab order follows visual order, axe on Home, Editor, Settings, help, gate pages in light and dark)
+- [x] `src/ui/keyboard/registry.ts` (+ test) -- pure matcher (key combo, context priority, text-field and composite rules), register/unregister, window listener, Escape chain as ordered priority steps, list of active shortcuts for help
+- [x] `src/ui/keyboard/tool-store.ts` -- active tool (`select` only), V shortcut, last Escape step "return to Select"
+- [x] `src/ui/editor/EditorShell.tsx`, `editor-shortcuts.ts`, `Dialog.tsx` -- undo/redo/save through the registry; delete the local installer
+- [x] `src/ui/keyboard/ShortcutHelp.tsx` -- `?` dialog (shared `Dialog`), grouped list from the registry, Home and Editor
+- [x] `src/ui/keyboard/regions.ts` + `EditorRegions.tsx`/`TopBar.tsx` -- Alt+1..6 focus the region (tabIndex -1, Map 0), visible ring
+- [x] `src/ui/components/Tooltip.tsx` -- hover (delay) and focus-visible, Escape hides, `aria-describedby`; replace the listed `title`s; rail tool gets `aria-keyshortcuts`
+- [x] `src/index.css` -- reduced-motion rule for chrome animations and transitions
+- [x] `docs/keyboard.md` -- shortcut table, Alt+digit collisions checked on Chrome/Edge Windows (none) and noted elsewhere (Linux Chrome/Firefox switch tabs)
+- [x] `src/i18n/locales/{fr,en}.json` -- shortcut names, key labels, help, announcements
+- [x] `package.json`, `licence-overrides.json`, `AGENTS.md` -- axe dependency per the answer above
+- [x] tests -- unit (matcher on AZERTY/QWERTY/Cyrillic events, text field, composite, Alt+Shift, AltGr, Escape order); e2e (every matrix row, tab order follows visual order, axe on Home, Editor, Settings, help, gate pages in light and dark)
 
 **Acceptance Criteria:**
 - Given `npm run check`, when it runs, then all guardrails and tests pass, including axe with no violations, and no request leaves the app origin.
@@ -80,9 +80,46 @@ context:
 
 ## Implementation Notes
 
+- Registry `src/ui/keyboard/registry.ts`: pure `matchesCombo`/`resolveShortcut`, module store (`registerShortcut(s)`, `registerEscapeStep`, `useShortcuts`), one window listener installed by `App`; nothing reacts while an `aria-modal` dialog is open. Old `src/ui/editor/editor-shortcuts.ts` removed; Editor keys live in `src/ui/keyboard/editor-shortcuts.ts`.
+- Escape priorities: tooltip 100, menus and dialogs handle their own Escape first, later stories register between, "back to Select" 0. Escape in a text field blurs it; the name field now restores the name on Escape and skips the commit on that blur (behaviour change from Story 1.5).
+- `Tooltip` is a render prop (`{(tip) => <button {...tip} />}`); hover 500 ms, keyboard focus at once, `aria-describedby` only while shown.
+- Alt+N sets `data-jumped` on the region until blur, because Chrome shows no `:focus-visible` ring after a scripted focus from Alt+digit.
+- `data-map-content` marks the Map, excluded from the reduced-motion rule.
+- Windows Alt+digit collisions are documented from browser shortcut lists, not tested by hand (Linux sandbox); `docs/keyboard.md` flags a manual re-check.
+
 ## Spec Change Log
 
 ## Review Triage Log
+
+| # | Source | Finding | Verdict | Evidence / route |
+|---|--------|---------|---------|------------------|
+| 1 | blind, edge | Escape inside a dialog closes it instead of hiding a shown tooltip | medium | Dialog handles Escape; registry blocked under aria-modal. patch |
+| 2 | blind | Tooltip not hoverable (WCAG 1.4.13) | medium | `pointer-events-none`, hides on trigger leave. patch |
+| 3 | edge | Held Ctrl+Z/Ctrl+Y no longer repeat | medium | Old handler blocked repeat for save only; new default `repeat` false. patch |
+| 4 | blind | `letterOf` code fallback fires on Dvorak `.` (KeyV) and AZERTY `,` (KeyM) | medium | Fallback when key is any non-letter. patch |
+| 5 | verification-gap | No test that Back closes the `?` help | medium | Pre-verified. patch |
+| 6 | edge | Alt+1..6 do nothing from a text field | low | `inTextField` false; no typing use for Alt+digit. patch |
+| 7 | edge | Symbol combos ignore ctrl/alt flags | low | Symbol branch does not compare `combo.ctrl`. patch |
+| 8 | blind, edge | « Coming soon » read twice (describedBy + tooltip id) | low | Both ids in `aria-describedby`. patch |
+| 9 | blind, edge | Tooltip shift in useEffect; clipped near viewport bottom (toast close) | low | Direct fix. patch |
+| 10 | blind, edge | V announces while loading, rail button disabled | low | No `enabled` guard. patch |
+| 11 | blind, edge | `skipBlurCommit` depends on the registry blurring | low | Direct fix (blur in field). patch |
+| 12 | blind, edge | V e2e: unused `live`, Shift+V claim not true | low | Matcher rejects Shift+V by design. patch |
+| 13 | blind | docs say Option+digit unsupported on macOS | low | `code` matching works there. patch |
+| 14 | blind, verification-gap | Escape "back to Select" untestable while Select is the only tool | low | ToolId has one value; covered when a second tool lands. reject |
+| 15 | blind, edge | Native `<select>`/range not protected | false | No native select or range in `src/ui`. reject |
+| 16 | blind, edge | Tooltip not repositioned on scroll/resize | low | Fixed chrome, no scrolling hosts today; guard adds complexity. reject |
+| 17 | blind | Tooltip re-shows on focus return after a menu closes | low | Cosmetic; fix needs extra state. reject |
+| 18 | edge | Tooltip on click into the read-only search input | low | Rare, cosmetic; needs pointer tracking. reject |
+| 19 | blind, edge | Announcer keeps last text across Editor mounts | low | Live regions do not announce initial content. reject |
+| 20 | edge | `focusRegion` stacks blur listeners / stale `data-jumped` | low | Regions always rendered and focusable; once-listeners harmless. reject |
+| 21 | blind | AD-17 vs AGENTS.md MPL wording | false | AD-17 allows unmodified MPL-2.0 deps; owner chose option A. reject |
+| 22 | blind | Frozen block edited / statuses / Story 1.6 done | false | Decisions recorded on approval; sprint sync at present step. reject |
+| 23 | blind | French apostrophes, « Sauvegarder » | false | fr.json uses straight apostrophes throughout; « Projet sauvegardé » is existing copy. reject |
+| 24 | blind | Dynamic i18n keys bypass typing | low | i18n guardrail checks fr/en parity. reject |
+| 25 | blind | axe only in English; no lint guard for raw keydown | low | `lang` does not change axe rules here; no new guardrail. reject |
+| 26 | blind | Map region has no role | false | `section` with `aria-label` is a region. reject |
+| 27 | edge | Removed Escape preventDefault breaks a Story 1.5 test | false | e2e green. reject |
 
 ## Design Notes
 

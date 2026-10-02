@@ -3,33 +3,48 @@ import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { OUTPUT_FRAME_SIZES, type OutputFormat } from '@/core'
 import { cn } from '@/ui/lib/utils'
+import { Tooltip } from '@/ui/components/Tooltip'
+import { announce } from '@/ui/keyboard/announcer'
+import { regionProps } from '@/ui/keyboard/regions'
+import { setTool, useTool } from '@/ui/keyboard/tool-store'
 import { mapColors } from '@/ui/theme/tokens'
 
 // The named regions of the Editor (EXPERIENCE.md Accessibility Floor): top bar, tool rail, options
-// bar, Map, properties panel, Timeline. Story 1.7 adds Alt+1 to Alt+6 to move between them.
+// bar, Map, properties panel, Timeline. Each is a jump target of Alt+1 to Alt+6 (`regionProps`):
+// the container takes the focus, the Map is also a tab stop. The DOM order is the visual order.
 
 /** Until the Map renders (Story 1.10), the plain land colour of the parchment Basemap. */
 const MAP_PLACEHOLDER_COLOR = mapColors.parchment['map-land-neutral']
 
-/** The tool rail (UX-DR31): only Select in this story, active. */
+/** The tool rail (UX-DR31): only Select in this story, active. `V` selects it (registered by the Editor). */
 export function ToolRail({ disabled }: { disabled: boolean }) {
   const { t } = useTranslation()
+  const tool = useTool()
   return (
-    <nav aria-label={t('editor.regions.tools')} className="flex flex-col items-center gap-0.5 border-r border-om-border bg-om-surface py-2 [grid-area:rail]">
-      <button
-        type="button"
-        aria-pressed
-        aria-disabled={disabled || undefined}
-        title={t('editor.tools.select')}
-        className={cn(
-          'relative flex h-rail-item-height w-18 flex-col items-center justify-center gap-1.5 rounded-sm bg-om-selection type-label-caps text-om-accent dark:text-om-text-primary',
-          'before:absolute before:inset-y-1.5 before:-left-0.5 before:w-0.75 before:bg-om-accent',
-          disabled && 'control-disabled',
+    <nav aria-label={t('editor.regions.tools')} {...regionProps('rail')} className="flex flex-col items-center gap-0.5 border-r border-om-border bg-om-surface py-2 [grid-area:rail]">
+      <Tooltip label={t('editor.tools.select')} shortcut={{ key: 'v' }}>
+        {(tip) => (
+          <button {...tip}
+            type="button"
+            aria-pressed={tool === 'select'}
+            aria-disabled={disabled || undefined}
+            aria-keyshortcuts="V"
+            onClick={() => {
+              if (disabled) return
+              setTool('select')
+              announce(t('editor.tools.selectActive'))
+            }}
+            className={cn(
+              'relative flex h-rail-item-height w-18 flex-col items-center justify-center gap-1.5 rounded-sm bg-om-selection type-label-caps text-om-accent dark:text-om-text-primary',
+              'before:absolute before:inset-y-1.5 before:-left-0.5 before:w-0.75 before:bg-om-accent',
+              disabled && 'control-disabled',
+            )}
+          >
+            <MousePointer2 size={20} aria-hidden className="icon-stroke shrink-0" />
+            {t('editor.tools.select')}
+          </button>
         )}
-      >
-        <MousePointer2 size={20} aria-hidden className="icon-stroke shrink-0" />
-        {t('editor.tools.select')}
-      </button>
+      </Tooltip>
     </nav>
   )
 }
@@ -42,7 +57,7 @@ export function OptionsBar({ outputFormat }: { outputFormat?: OutputFormat }) {
   const { t } = useTranslation()
   const size = outputFormat && OUTPUT_FRAME_SIZES[outputFormat]
   return (
-    <section aria-label={t('editor.regions.toolOptions')} className="flex h-tool-options-bar-height shrink-0 items-center gap-2.5 bg-om-background px-4">
+    <section aria-label={t('editor.regions.toolOptions')} {...regionProps('options')} className="flex h-tool-options-bar-height shrink-0 items-center gap-2.5 bg-om-background px-4">
       <span className="flex-1" />
       {outputFormat && size && (
         <span data-testid="frame-size" className="type-caption whitespace-nowrap text-om-text-muted">
@@ -56,14 +71,14 @@ export function OptionsBar({ outputFormat }: { outputFormat?: OutputFormat }) {
 /** The Map area: the plain land colour of the active Basemap until the Basemap renders. */
 export function MapArea() {
   const { t } = useTranslation()
-  return <section aria-label={t('editor.map')} className="min-h-0 flex-1" style={{ backgroundColor: MAP_PLACEHOLDER_COLOR }} />
+  return <section aria-label={t('editor.map')} {...regionProps('map')} data-map-content className="min-h-0 flex-1" style={{ backgroundColor: MAP_PLACEHOLDER_COLOR }} />
 }
 
 /** The properties panel (UX-DR33): always visible, scrolls inside. */
 export function PropertiesPanel({ children }: { children: ReactNode }) {
   const { t } = useTranslation()
   return (
-    <aside aria-label={t('editor.regions.properties')} className="min-h-0 overflow-y-auto border-l border-om-border bg-om-surface [grid-area:panel]">
+    <aside aria-label={t('editor.regions.properties')} {...regionProps('panel')} className="min-h-0 overflow-y-auto border-l border-om-border bg-om-surface [grid-area:panel]">
       {children}
     </aside>
   )
@@ -88,7 +103,7 @@ export function PanelSkeleton() {
 export function TimelineArea() {
   const { t } = useTranslation()
   return (
-    <section aria-label={t('editor.regions.timeline')} className="flex h-timeline-collapsed-height items-center border-t border-om-border bg-om-surface px-4 [grid-area:timeline]">
+    <section aria-label={t('editor.regions.timeline')} {...regionProps('timeline')} className="flex h-timeline-collapsed-height items-center border-t border-om-border bg-om-surface px-4 [grid-area:timeline]">
       <h2 className="type-title-md text-om-text-primary">{t('editor.timeline')}</h2>
     </section>
   )

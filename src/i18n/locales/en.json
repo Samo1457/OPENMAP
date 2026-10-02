@@ -98,7 +98,8 @@
       "timeline": "Timeline"
     },
     "tools": {
-      "select": "Select"
+      "select": "Select",
+      "selectActive": "Select tool active"
     },
     "save": {
       "saving": "Saving…",
@@ -111,8 +112,6 @@
     "frameSize": "{{format}} · {{width}} × {{height}}",
     "undo": "Undo",
     "redo": "Redo",
-    "undoTooltip": "Undo · Ctrl+Z",
-    "redoTooltip": "Redo · Ctrl+Shift+Z",
     "undone": "Undone",
     "redone": "Redone",
     "search": "Search for a place",
@@ -123,6 +122,40 @@
     "moreOptions": "More options",
     "timeline": "Timeline",
     "unknownValue": "Unknown"
+  },
+  "keyboard": {
+    "tooltip": "{{name}} · {{shortcut}}",
+    "keys": {
+      "ctrl": "Ctrl",
+      "shift": "Shift",
+      "alt": "Alt",
+      "escape": "Esc"
+    },
+    "groups": {
+      "editing": "Editing",
+      "tools": "Tools",
+      "navigation": "Navigation",
+      "help": "Help"
+    },
+    "help": {
+      "title": "Keyboard shortcuts"
+    },
+    "shortcuts": {
+      "undo": "Undo",
+      "redo": "Redo",
+      "save": "Save",
+      "selectTool": "Select tool",
+      "help": "Show the shortcuts",
+      "escape": "Close, cancel or go back one step",
+      "region": {
+        "top": "Go to the top bar",
+        "rail": "Go to the tools",
+        "options": "Go to the tool options",
+        "map": "Go to the Map",
+        "panel": "Go to the properties",
+        "timeline": "Go to the Timeline"
+      }
+    }
   },
   "toast": {
     "region": "Notifications",

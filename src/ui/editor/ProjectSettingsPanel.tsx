@@ -4,8 +4,8 @@ import { useTranslation } from 'react-i18next'
 import { type MapLocale, OUTPUT_FORMATS, type OutputFormat, PROJECT_NAME_MAX_LENGTH } from '@/core'
 import { iconProps } from '@/ui/components/button'
 import { SegmentedControl, type SegmentedOption } from '@/ui/components/SegmentedControl'
+import { isSaveKey } from '@/ui/keyboard/registry'
 import { cn } from '@/ui/lib/utils'
-import { editorShortcut } from './editor-shortcuts'
 import type { EditorActions, EditorModel } from './editor-model'
 import { MoreOptions } from './MoreOptions'
 
@@ -81,6 +81,8 @@ function ProjectNameField({ name, readOnly, onCommit, onPageHide }: { name: stri
   const errorId = useId()
   const [draft, setDraft] = useState(name)
   const [invalid, setInvalid] = useState(false)
+  /** Set by Escape: the blur that follows restores the name instead of committing the draft. */
+  const skipBlurCommit = useRef(false)
 
   // Undo, redo or a commit changed the name: show it.
   const [shown, setShown] = useState(name)
@@ -142,18 +144,27 @@ function ProjectNameField({ name, readOnly, onCommit, onPageHide }: { name: stri
         // The name limit counts code points (core `projectNameSchema`), not UTF-16 units.
         onChange={(event) => {
           setInvalid(false)
+          skipBlurCommit.current = false
           setDraft(Array.from(event.target.value).slice(0, PROJECT_NAME_MAX_LENGTH).join(''))
         }}
-        onBlur={commit}
+        onBlur={() => {
+          if (skipBlurCommit.current) {
+            skipBlurCommit.current = false
+            return
+          }
+          commit()
+        }}
         onKeyDown={(event) => {
           if (event.key === 'Enter') {
             event.preventDefault()
             commit()
           } else if (event.key === 'Escape') {
-            event.preventDefault()
+            // Restores the name; the shortcut registry then leaves the field (blur), which must not commit.
             setDraft(name)
             setInvalid(false)
-          } else if (editorShortcut(event.nativeEvent) === 'save') {
+            skipBlurCommit.current = true
+            event.currentTarget.blur()
+          } else if (isSaveKey(event.nativeEvent)) {
             // A refused name: Ctrl+S is handled here (no browser dialog) and confirms nothing.
             if (!commit()) event.preventDefault()
           }

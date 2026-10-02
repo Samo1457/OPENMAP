@@ -1,10 +1,11 @@
 import { X } from 'lucide-react'
 import { useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { editorShortcut } from '@/ui/editor/editor-shortcuts'
+import { isSaveKey, runEscapeStepsAtLeast, TOOLTIP_ESCAPE_PRIORITY } from '@/ui/keyboard/registry'
 import { cn } from '@/ui/lib/utils'
 import { buttonClass, iconProps } from './button'
 import { focusableWithin, nextFocusIndex } from './focus-trap'
+import { Tooltip } from './Tooltip'
 
 /**
  * Marks a `<body>`-level layer that stays usable above a modal dialog (the toasts, UX-DR105):
@@ -87,13 +88,14 @@ export function Dialog({
     // Page-level shortcuts (undo, save…) never act behind a modal dialog.
     event.stopPropagation()
     // The Editor's Ctrl/Cmd+S handler no longer sees the key: still keep the browser's Save page away.
-    if (editorShortcut(event) === 'save') {
+    if (isSaveKey(event)) {
       event.preventDefault()
       return
     }
     if (event.key === 'Escape') {
       event.preventDefault()
-      onClose()
+      // A shown tooltip (the close button's) goes first; the dialog closes on the next press.
+      if (!runEscapeStepsAtLeast(TOOLTIP_ESCAPE_PRIORITY)) onClose()
     } else if (event.key === 'Tab' && panel.current) {
       const stops = focusableWithin(panel.current)
       const next = nextFocusIndex(stops.length, stops.indexOf(document.activeElement as HTMLElement), event.shiftKey)
@@ -128,9 +130,13 @@ export function Dialog({
           <h2 id={titleId} className="type-title-lg text-om-text-primary">
             {title}
           </h2>
-          <button type="button" aria-label={closeLabel} title={closeLabel} onClick={onClose} className={buttonClass.ghostIcon}>
-            <X {...iconProps} />
-          </button>
+          <Tooltip label={closeLabel} shortcut={{ key: 'Escape' }}>
+            {(tip) => (
+              <button {...tip} type="button" aria-label={closeLabel} onClick={onClose} className={buttonClass.ghostIcon}>
+                <X {...iconProps} />
+              </button>
+            )}
+          </Tooltip>
         </div>
         {children}
       </div>
