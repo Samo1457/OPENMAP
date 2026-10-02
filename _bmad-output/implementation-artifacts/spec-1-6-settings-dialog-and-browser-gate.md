@@ -2,7 +2,8 @@
 title: 'Story 1.6: Settings dialog and browser gate'
 type: 'feature'
 created: '2026-10-02'
-status: 'draft'
+status: 'in-progress'
+baseline_commit: 'cfad96dceba5f1e6f69e3f3c7c35b3f139b0ebe0'
 route: 'dispatch'
 review_loop_iteration: 0
 context:
@@ -38,18 +39,16 @@ context:
 | Firefox | Firefox user agent, all capabilities present | app opens with a dismissable warning banner on Home | N/A |
 | Small window | window narrower than 1366 px | dismissable warning banner | N/A |
 
+**Decisions (owner accepted all recommended defaults):**
+- Storage tab: « 12 Mo utilisés sur 2 Go » (« Espace utilisé »); protected: « Protégé : le navigateur ne supprimera pas vos Projets. »; not protected: « Non protégé : le navigateur peut supprimer vos Projets si l'espace manque. »; unknown: « Information indisponible dans ce navigateur. »; reminder: « Exportez régulièrement vos Projets en Fichier projet pour ne rien perdre. » with a disabled « Exporter le Fichier projet » button (« Bientôt disponible ») until Story 7.1. English equivalents.
+- Unsupported-browser page: « Ce navigateur ne peut pas faire fonctionner OPENMAP. Ouvrez ce lien avec Chrome ou Edge à jour sur votre ordinateur. » + « Copier le lien »; a missing `navigator.storage` does not block (Storage shows "unknown").
+- The Firefox banner and the 1366 px small-window banner ship in this story (copy from EXPERIENCE.md), both dismissable for the session.
+- Settings dialog 560 px wide, horizontal tabs, close button (×) in the header.
+- Home gets the « ⋯ » top-bar menu like the Editor, with « Réglages »; the temporary Settings button goes away.
+- The phone/tablet page blocks: no "continue anyway".
+- Full spec kept (~1,700 tokens).
+
 </frozen-after-approval>
-
-## Open Questions
-
-Each has a recommended default; answer "OK" to accept all or override by number.
-
-1. Storage tab: « 12 Mo utilisés sur 2 Go » (« Espace utilisé »); protected: « Protégé : le navigateur ne supprimera pas vos Projets. »; not protected: « Non protégé : le navigateur peut supprimer vos Projets si l'espace manque. »; unknown: « Information indisponible dans ce navigateur. »; reminder: « Exportez régulièrement vos Projets en Fichier projet pour ne rien perdre. » with a disabled « Exporter le Fichier projet » button (« Bientôt disponible ») until Story 7.1. English equivalents.
-2. Unsupported-browser page: « Ce navigateur ne peut pas faire fonctionner OPENMAP. Ouvrez ce lien avec Chrome ou Edge à jour sur votre ordinateur. » + « Copier le lien »; a missing `navigator.storage` does not block (Storage shows "unknown").
-3. The Firefox banner and the 1366 px small-window banner ship in this story (copy from EXPERIENCE.md), both dismissable for the session.
-4. Settings dialog 560 px wide, horizontal tabs, close button (×) in the header.
-5. Home gets the « ⋯ » top-bar menu like the Editor, with « Réglages »; the temporary Settings button goes away.
-6. The phone/tablet page blocks: no "continue anyway".
 
 ## Code Map
 
