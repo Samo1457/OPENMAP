@@ -2,7 +2,8 @@
 title: 'Story 1.8: Basemap data pipeline (Natural Earth)'
 type: 'feature'
 created: '2026-10-02'
-status: 'draft'
+status: 'in-progress'
+baseline_commit: '120cc3c553dd2db21b35fd710959a2250d9e0a73'
 route: 'dispatch'
 review_loop_iteration: 0
 context:
@@ -34,13 +35,13 @@ context:
 | Dev tiles | `npm run dev` after a build | tile, TileJSON, styles, glyphs served with the right content types | missing output → 404 and a one-line console hint |
 | No build yet | `npm run dev`, no `pipeline/out/` | app starts normally | N/A |
 
+**Decisions (owner, 2026-10-02):**
+- Tooling: Node-only npm devDependencies — `shapefile`, `geojson-vt` + `vt-pbf`, `geotiff` + `@jsquash/webp`, `@napi-rs/canvas` + `@mapbox/tiny-sdf`, an in-repo PMTiles v3 writer, `pmtiles` to read in dev; one `npm run pipeline:basemap`.
+- Relief: a second raster tileset `natural-earth-relief-v1.pmtiles` (WebP) from Natural Earth's shaded-relief raster, served as `/natural-earth-relief-v1/{z}/{x}/{y}.webp` + TileJSON `/natural-earth-relief-v1.json`; the vector `natural-earth-v1.pmtiles` holds coastlines, land, rivers, lakes and populated places.
+- Max zoom: z0–6 for both tilesets (MapLibre over-zooms beyond).
+- Full spec kept (~2,100 tokens).
+
 </frozen-after-approval>
-
-## Open Questions
-
-1. **Tile-building tooling** (spine Deferred: "decide in the pipeline epic"). (A, recommended) Node-only, npm devDependencies: `shapefile` (BSD-3) to read, `geojson-vt` (ISC) + `vt-pbf` (MIT) for vector tiles, `geotiff` (MIT) + `@jsquash/webp` (Apache-2.0) for relief, `@napi-rs/canvas` (MIT) + `@mapbox/tiny-sdf` (BSD-2) for glyphs, a small in-repo PMTiles v3 writer, `pmtiles` (BSD-3) to read in dev — one `npm run pipeline:basemap`, runs on Windows, pinned by the lockfile and covered by the licence check; simplification slightly less refined than tippecanoe. (B) tippecanoe (BSD-2) + GDAL (MIT) in Docker — industry-standard quality, but needs Docker on your PC and a second toolchain outside the licence check.
-2. **Relief shading.** A PMTiles file holds one tile type, so raster relief cannot sit in the vector `natural-earth-v1.pmtiles`. (A, recommended) A second raster tileset `natural-earth-relief-v1.pmtiles` (WebP, served as `/natural-earth-relief-v1/{z}/{x}/{y}.webp`, the spine's path pattern) from Natural Earth's shaded-relief raster — true hillshade look; the AC's single file name becomes two. (B) Vectorise the relief into a few shade bands inside `natural-earth-v1.pmtiles` — one file as worded, but a posterised, less natural relief.
-3. **Max zoom** (spine Deferred: "per-tileset max zoom… decide in the Basemap pipeline epic", VPS budget ≤ 70 GB). (A, recommended) z0–6 for vectors and relief (Natural Earth 1:10m holds no more detail; MapLibre over-zooms beyond, estimated ≲ 300 MB total). (B) z0–8 — slightly crisper coastlines when zoomed far in, several times the size, no new data.
 
 ## Code Map
 
@@ -58,9 +59,9 @@ context:
 **Execution:**
 - [ ] `pipeline/sources.json` + `pipeline/sources.ts` (+ test) -- pinned manifest with metadata and checksums; licence gate (allow / refuse rules, NC/ODbL/SA never)
 - [ ] `pipeline/download.ts` (+ test) -- cached, checksum-verified download; cleanup on failure
-- [ ] `pipeline/vector.ts` (+ test) -- land, ocean, coastline, rivers, lakes, populated places (name, rank, scale fields) to MVT layers per answer 1/3
-- [ ] `pipeline/relief.ts` (+ test) -- relief tiles per answer 2/3
-- [ ] `pipeline/pmtiles-writer.ts` (+ test) -- if answer 1 is A; round-trip read with `pmtiles`
+- [ ] `pipeline/vector.ts` (+ test) -- land, ocean, coastline, rivers, lakes, populated places (name, rank, scale fields) to MVT layers per the decisions
+- [ ] `pipeline/relief.ts` (+ test) -- relief tiles per the decisions
+- [ ] `pipeline/pmtiles-writer.ts` (+ test) -- round-trip read with `pmtiles`
 - [ ] `pipeline/styles.ts` (+ test) -- four styles from tokens; validated with `@maplibre/maplibre-gl-style-spec`; Relief shade 35 %
 - [ ] `pipeline/glyphs.ts` (+ test) -- SDF glyph ranges for both fonts
 - [ ] `pipeline/build-basemap.ts` -- orchestrates, writes `datasets.json`, prints sizes; `npm run pipeline:basemap`
