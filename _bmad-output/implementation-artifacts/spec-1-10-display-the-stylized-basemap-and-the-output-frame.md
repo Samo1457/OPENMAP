@@ -2,7 +2,8 @@
 title: 'Story 1.10: Display the stylized Basemap and the output frame'
 type: 'feature'
 created: '2026-10-02'
-status: 'draft'
+status: 'in-progress'
+baseline_commit: 'c5959f6cd628eb6876171fa348ca757a736e3ab8'
 route: 'dispatch'
 review_loop_iteration: 0
 context:
@@ -38,14 +39,14 @@ context:
 | UI theme | light ↔ dark | Map canvas pixel-identical | N/A |
 | Output Format | 16:9, 9:16, 1:1 | frame recomputed at exact ratio, margin ≥ 24 px, 55 % mask, no border | N/A |
 | Edit camera | wheel, pinch, Space + drag, middle button, Shift + wheel rotate, Shift+1 | camera moves, Project and Scene camera unchanged | N/A |
-| Keyboard camera | Map focused | per the answer to Open Question 1 | N/A |
+| Keyboard camera | Map focused | `+` / `-` zoom, Ctrl+arrows pan, Shift+1 recentre; bottom-left buttons +, −, recentre do the same with the pointer | arrows alone left to later stories |
 | Scale | 562×316 frame, 56 px label | about 16.4 px | N/A |
 
+**Decisions (owner, 2026-10-02):**
+- Keyboard camera (option B): with the Map focused, `+` / `-` zoom, Ctrl+←/↑/↓/→ pan, Shift+1 recentres on the output frame; three on-screen buttons (+, −, recentre) sit bottom-left of the Map area. Plain arrows and Shift+arrows stay free for Steps, frames and nudging (Epics 2 and 3); the keys are listed in the `?` help and `docs/keyboard.md`.
+- Full spec kept (~2,800 tokens); Sonnet subagents for implementation and review.
+
 </frozen-after-approval>
-
-## Open Questions
-
-1. **Keyboard panning of the edit camera.** The AC says the camera pans and zooms with the keyboard, but EXPERIENCE.md reserves ←/→ on the Map for the previous/next Step and Shift+←/→ for one frame (Epic 3), and arrows for nudging a selection (Epic 2). Panning has no key of its own yet. (A) MapLibre's defaults while the Map is focused: arrows pan, `+`/`-` zoom, Shift+arrows rotate; Epic 3 takes the arrows back and moves panning to another key then (rework later, familiar behaviour now). (B, recommended) `+`/`-` zoom, Shift+1 recentre and ← ↑ ↓ → pan with **Ctrl+arrows** while the Map is focused, plus on-screen zoom buttons (+, −, recentre) bottom-left; no later conflict, but Ctrl+arrows is less discoverable (listed in the `?` help). (C) no keyboard panning until Epic 3 chooses; `+`/`-`, recentre and the buttons only (the AC's "keyboard pans" stays unmet for now).
 
 ## Code Map
 
