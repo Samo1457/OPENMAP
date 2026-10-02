@@ -2,7 +2,7 @@
 title: 'Story 1.6: Settings dialog and browser gate'
 type: 'feature'
 created: '2026-10-02'
-status: 'in-progress'
+status: 'done'
 baseline_commit: 'cfad96dceba5f1e6f69e3f3c7c35b3f139b0ebe0'
 route: 'dispatch'
 review_loop_iteration: 0
@@ -65,14 +65,14 @@ context:
 ## Tasks & Acceptance
 
 **Execution:**
-- [ ] `src/ui/components/Dialog.tsx`, `Tabs.tsx`, `Banner.tsx` -- focus trap, Escape, return focus, scrim; roving tabs; banner `info`/`warning`, one action, optional session dismissal
-- [ ] `src/ui/settings/SettingsDialog.tsx` (+ `StorageTab.tsx`) and a `openSettings(tab?)` entry; delete `SettingsPopover.tsx`
-- [ ] Home and Editor top bars -- « ⋯ » menu with Réglages
-- [ ] `src/persistence` -- `getStorageStatus()` with unit tests
-- [ ] `src/ui/gate/` -- capability checks (pure, injectable), the two gate pages, Firefox and small-window banners; wired in `src/main.tsx`
-- [ ] `EditorShell` read-only banner on `Banner`
-- [ ] `src/i18n/locales/{fr,en}.json` -- all new strings
-- [ ] tests -- unit (capability rules, storage status, dialog focus) and e2e (open/close from Home and Editor, tabs by keyboard, Storage states, mobile emulation gated, coarse+wide not gated, missing IndexedDB/Web Locks/WebGL2 gated, Firefox banner, small-window banner, existing settings tests migrated)
+- [x] `src/ui/components/Dialog.tsx`, `Tabs.tsx`, `Banner.tsx` -- focus trap, Escape, return focus, scrim; roving tabs; banner `info`/`warning`, one action, optional session dismissal
+- [x] `src/ui/settings/SettingsDialog.tsx` (+ `StorageTab.tsx`) and a `openSettings(tab?)` entry; delete `SettingsPopover.tsx`
+- [x] Home and Editor top bars -- « ⋯ » menu with Réglages
+- [x] `src/persistence` -- `getStorageStatus()` with unit tests
+- [x] `src/ui/gate/` -- capability checks (pure, injectable), the two gate pages, Firefox and small-window banners; wired in `src/main.tsx`
+- [x] `EditorShell` read-only banner on `Banner`
+- [x] `src/i18n/locales/{fr,en}.json` -- all new strings
+- [x] tests -- unit (capability rules, storage status, dialog focus) and e2e (open/close from Home and Editor, tabs by keyboard, Storage states, mobile emulation gated, coarse+wide not gated, missing IndexedDB/Web Locks/WebGL2 gated, Firefox banner, small-window banner, existing settings tests migrated)
 
 **Acceptance Criteria:**
 - Given `npm run check`, when it runs, then all guardrails and tests pass with no request leaving the app origin.
@@ -85,6 +85,40 @@ context:
 
 ## Implementation Notes
 
+- `getStorageStatus()` lives in `src/persistence/storage-status.ts` (pure `readStorageStatus(storage)`), exported through `src/persistence/index.ts`; each fact is `unavailable` on its own.
+- One `SettingsDialog` is mounted by `App`; `openSettings(tab?)` / `closeSettings()` in `src/ui/settings/settings-store.ts` (module store, `useSyncExternalStore`, no Zustand installed yet). `openSettings` records the focused element to refocus on close.
+- `Dialog` makes every other `<body>` child `inert`, wraps Tab with `nextFocusIndex` (unit-tested), stops key propagation so window shortcuts (Ctrl+Z) never act behind it, and closes on Escape, × and scrim click.
+- The « ⋯ » `AppMenu` is `TopBar`'s default end slot (Home and Editor); `editor.menu` became `appMenu.label`.
+- Gate: `src/ui/gate/capabilities.ts` (pure rules + `readEnvironment`), `GatePage` (title + warning `Banner` with « Copier le lien »; a failed copy shows the link), run in `main.tsx` before rendering; the page-lifecycle flush, schema-upgrade reload and tombstone purge are installed only when the app renders. A phone that also lacks a capability gets the designed-for-computer page.
+- Banners: `FirefoxBanner` (Home only) and `SmallWindowBanner` (Home and Editor, live on resize; width < 1366 px or viewport height < 648 px, DESIGN.md's measured viewport of a 1366 × 768 screen); session dismissal is kept in sessionStorage (`banner-dismissals.ts`, guarded, never localStorage), so it survives Home↔Editor and reloads of the tab.
+- Playwright's default viewport is now 1366×768 (the minimum layout), so the small-window banner appears only in tests that ask for it; the 1279 px Editor layout test dismisses it first. The Home load-failure test now breaks `IDBFactory.open` instead of removing IndexedDB (which is gated).
+
 ## Spec Change Log
 
+- Review row 4: the small-window banner uses the DESIGN.md minimum viewport (1366 × 648, i.e. a 1366 × 768 screen with browser chrome and taskbar) rather than a 768 px viewport height, so real 1366 × 768 laptops do not see it; threshold is `LAYOUT_MIN_VIEWPORT_HEIGHT`.
+
 ## Review Triage Log
+
+| # | Source | Finding | Verdict | Evidence / route |
+|---|--------|---------|---------|------------------|
+| 1 | edge | Ctrl+S inside the Settings dialog opens the browser Save dialog | medium | Dialog stops propagation before the editor handler can preventDefault. patch |
+| 2 | edge | Back/Forward while Settings is open leaves it over the new screen, focus lost | medium | Store is route-independent. patch |
+| 3 | blind, edge | Toasts raised while Settings is open are inert; later body portals are not | medium | Toasts live in #root, inert set once on mount. patch |
+| 4 | blind, edge | Small-window banner ignores height (copy says 1366 × 768) | medium | Width-only check. patch |
+| 5 | blind, edge | `readEnvironment` can throw; fallback reinstalls lifecycle hooks | medium | Reads outside try; `rendered` set after render. patch |
+| 6 | gap | Tabs ArrowLeft and its wrap untested | medium | Pre-verified. patch |
+| 7 | gap | Firefox "Home only" asserted after dismissal | medium | Pre-verified. patch |
+| 8 | edge | Storage probes that never settle leave a skeleton forever | low | Direct timeout. patch |
+| 9 | blind | Page scrolls behind the dialog | low | Direct scroll lock. patch |
+| 10 | blind | AD-19 `navigator.storage` not probed (non-blocking) | low | Direct field + test. patch |
+| 11 | blind | Designed-for-computer page focus ring and Storage tab keyboard untested | low | Direct tests. patch |
+| 12 | blind | Bytes divided by 1024 but labelled MB/GB | low | Direct fix (1000). patch |
+| 13 | blind | Capability names hard-coded; Settings reuses `editor.comingSoon` | low | Direct i18n fix. patch |
+| 14 | blind | Banner dismissal lost on reload though "for the session" | low | Direct fix (sessionStorage). patch |
+| 15 | blind | Copy-link feedback stale; not tied to the button | low | Direct fix. patch |
+| 16 | blind | Return focus relies on Menu call order | low | Direct fallback. patch |
+| 17 | blind | `isFirefox` regex flags inconsistent, untested | low | Direct fix + test. patch |
+| 18 | blind | App fallback start (preferences unreadable) no longer asserted | low | Direct assertion. patch |
+| 19 | gap | Schema-upgrade reload wiring in `main.tsx` untested | medium | No e2e before this story either. defer |
+| 20 | blind | Settings borrows the Export dialog width token, fixed `h-90` | low | Same size by design; rejected |
+| 21 | blind | Frozen block edited / status mismatch / 1.5 flipped | false | Decisions recorded on approval; sprint sync at present step |

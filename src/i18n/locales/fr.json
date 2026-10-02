@@ -2,6 +2,9 @@
   "app": {
     "name": "OPENMAP"
   },
+  "common": {
+    "comingSoon": "Bientôt disponible"
+  },
   "settings": {
     "title": "Réglages",
     "appearance": {
@@ -14,6 +17,27 @@
       "label": "Langue",
       "fr": "Français",
       "en": "English"
+    },
+    "storage": {
+      "label": "Stockage",
+      "spaceLabel": "Espace utilisé",
+      "usage": "{{used}} utilisés sur {{quota}}",
+      "unavailable": "Information indisponible dans ce navigateur.",
+      "protectionLabel": "Stockage persistant",
+      "protection": {
+        "protected": "Protégé : le navigateur ne supprimera pas vos Projets.",
+        "unprotected": "Non protégé : le navigateur peut supprimer vos Projets si l'espace manque.",
+        "unavailable": "Information indisponible dans ce navigateur."
+      },
+      "reminder": "Exportez régulièrement vos Projets en Fichier projet pour ne rien perdre.",
+      "export": "Exporter le Fichier projet",
+      "units": {
+        "b": "{{value}} o",
+        "kb": "{{value}} ko",
+        "mb": "{{value}} Mo",
+        "gb": "{{value}} Go",
+        "tb": "{{value}} To"
+      }
     }
   },
   "project": {
@@ -94,8 +118,6 @@
     "search": "Rechercher un lieu",
     "presentation": "Présentation",
     "export": "Exporter",
-    "comingSoon": "Bientôt disponible",
-    "menu": "Menu",
     "projectSettings": "Paramètres du Projet",
     "mapLocale": "Langue de la carte",
     "moreOptions": "Plus d'options",
@@ -105,5 +127,35 @@
   "toast": {
     "region": "Notifications",
     "close": "Fermer la notification"
+  },
+  "appMenu": {
+    "label": "Menu"
+  },
+  "dialog": {
+    "close": "Fermer"
+  },
+  "banner": {
+    "dismiss": "Masquer ce bandeau"
+  },
+  "gate": {
+    "desktopOnly": {
+      "title": "Conçu pour un ordinateur",
+      "message": "OPENMAP est conçu pour un ordinateur. Ouvrez ce lien sur votre PC avec Chrome ou Edge."
+    },
+    "unsupported": {
+      "title": "Navigateur non pris en charge",
+      "message": "Ce navigateur ne peut pas faire fonctionner OPENMAP. Ouvrez ce lien avec Chrome ou Edge à jour sur votre ordinateur."
+    },
+    "missing": "Fonctions manquantes : {{list}}",
+    "copyLink": "Copier le lien",
+    "copied": "Lien copié.",
+    "copyFailed": "Le lien n'a pas pu être copié. Copiez-le ci-dessous.",
+    "firefoxBanner": "OPENMAP est conçu pour Chrome et Edge. L'export vidéo peut ne pas fonctionner ici.",
+    "smallWindowBanner": "OPENMAP est conçu pour un écran d'au moins 1366 × 768.",
+    "capability": {
+      "webgl2": "WebGL2",
+      "indexedDB": "IndexedDB",
+      "webLocks": "Web Locks"
+    }
   }
 }

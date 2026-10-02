@@ -23,8 +23,9 @@ test('the app loads Home with self-hosted fonts only', async ({ page, baseURL })
   await expect(page).toHaveTitle('OPENMAP')
   await expect(page.getByRole('banner').getByText('OPENMAP')).toBeVisible()
   await expect(page.getByRole('heading', { level: 1, name: 'Projects' })).toBeVisible()
-  await page.getByRole('button', { name: 'Settings' }).click()
-  await expect(page.getByRole('radiogroup')).toHaveCount(2)
+  await page.getByRole('button', { name: 'Menu' }).click()
+  await page.getByRole('menuitem', { name: 'Settings' }).click()
+  await expect(page.getByRole('dialog', { name: 'Settings' }).getByRole('radiogroup')).toHaveCount(1)
 
   // UX-DR16: Libre Baskerville and Source Sans 3 are served by the app origin.
   await page.evaluate(() => document.fonts.ready)

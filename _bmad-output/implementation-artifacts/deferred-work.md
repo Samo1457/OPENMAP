@@ -40,3 +40,6 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-1-5-editor-shell-with-undo-redo.md`
   summary: Show « Projet sauvegardé » on the first save of a new Project, as EXPERIENCE.md's toast table says.
   evidence: Only Ctrl+S shows the toast today; no story AC carries the first-save rule yet.
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-6-settings-dialog-and-browser-gate.md`
+  summary: Add an e2e test that a schema upgrade from a second page makes the open app tab flush and reload (AD-9), covering the handler registration in main.tsx.
+  evidence: Only the persistence unit test covers versionchange with its own handler; nothing loads main.tsx's registration.

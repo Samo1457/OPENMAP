@@ -318,8 +318,17 @@ test.describe('Home (UX-DR118–120, UX-DR136, FR-1, FR-52)', () => {
   })
 
   test('a load failure shows a message and Retry', async ({ page }) => {
-    await page.addInitScript(() => Object.defineProperty(window, 'indexedDB', { value: undefined }))
+    // IndexedDB exists (a missing one is gated, Story 1.6) but refuses to open.
+    await page.addInitScript(() => {
+      IDBFactory.prototype.open = () => {
+        throw new DOMException('Storage blocked', 'UnknownError')
+      }
+    })
+    await page.emulateMedia({ colorScheme: 'dark' })
     await gotoHome(page)
+    // Unreadable preferences: the app starts with the defaults, system theme and browser language.
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en')
+    expect(await page.evaluate(() => document.documentElement.classList.contains('dark'))).toBe(true)
     const message = page.getByRole('alert').filter({ hasText: 'Your Projects could not be loaded.' })
     await expect(message).toBeVisible()
     await expect(page.getByRole('button', { name: 'Retry', exact: true })).toBeVisible()

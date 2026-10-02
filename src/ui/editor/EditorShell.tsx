@@ -1,11 +1,11 @@
-import { Info } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { useTranslation } from 'react-i18next'
 import { type Command, createDispatcher, type Dispatcher, type DispatcherState, type MapLocale, type OutputFormat } from '@/core'
 import { type Autosave, createAutosave, openStoredProject } from '@/persistence'
-import { iconProps } from '@/ui/components/button'
+import { Banner } from '@/ui/components/Banner'
 import { useToast } from '@/ui/components/toast'
 import { TopBar } from '@/ui/components/TopBar'
+import { SmallWindowBanner } from '@/ui/gate/EnvironmentBanners'
 import { homeHref } from '@/ui/routing'
 import { installEditorShortcuts } from './editor-shortcuts'
 import type { EditorActions, EditorModel } from './editor-model'
@@ -164,12 +164,11 @@ export function EditorShell({ projectId }: { projectId: string }) {
       <div className="min-w-0 [grid-area:top]">
         <EditorTopBar model={model} actions={actions} saveStatus={state.kind === 'editable' ? state.saveStatus : undefined} />
       </div>
-      {state.kind === 'too_new' && (
-        <div role="status" className="flex items-center gap-3 border-b border-l-3 border-om-border border-l-om-accent bg-om-surface-raised px-4 py-2 [grid-area:banner]">
-          <Info {...iconProps} className="icon-stroke shrink-0 text-om-text-secondary" />
-          <p className="type-body text-om-text-primary">{t('editor.newerVersion')}</p>
-        </div>
-      )}
+      <div className="flex min-w-0 flex-col [grid-area:banner]">
+        {/* Read-only: not dismissable (UX-DR66). */}
+        {state.kind === 'too_new' && <Banner tone="info">{t('editor.newerVersion')}</Banner>}
+        <SmallWindowBanner />
+      </div>
       <ToolRail disabled={model.loading} />
       <main className="flex min-h-0 min-w-0 flex-col [grid-area:scene]">
         <OptionsBar outputFormat={model.outputFormat} />

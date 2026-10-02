@@ -23,10 +23,13 @@ function storedPreference(page: Page, key: string) {
   )
 }
 
-/** Appearance and Language live in the temporary Settings popover of the top bar (Story 1.4). */
-async function openSettings(page: Page, name = 'Settings') {
-  await page.getByRole('button', { name }).click()
-  await expect(page.getByRole('group', { name })).toBeVisible()
+/** Opens the Settings dialog from the « ⋯ » top-bar menu (Story 1.6), optionally on a tab. */
+async function openSettings(page: Page, name = 'Settings', tab?: string) {
+  await page.getByRole('button', { name: 'Menu' }).click()
+  await page.getByRole('menuitem', { name }).click()
+  const dialog = page.getByRole('dialog', { name })
+  await expect(dialog).toBeVisible()
+  if (tab) await dialog.getByRole('tab', { name: tab }).click()
 }
 
 const isDark = (page: Page) => page.evaluate(() => document.documentElement.classList.contains('dark'))
@@ -57,7 +60,7 @@ test.describe('theme (UX-DR28, AD-8)', () => {
     await expect(page.locator('html')).toHaveAttribute('lang', 'en')
   })
 
-  test('without IndexedDB the app still renders with the system theme and default language', async ({ page }) => {
+  test('without IndexedDB the unsupported-browser page renders in the system theme and default language', async ({ page }) => {
     const errors: string[] = []
     page.on('pageerror', (error) => errors.push(error.message))
     page.on('console', (message) => {
@@ -66,11 +69,9 @@ test.describe('theme (UX-DR28, AD-8)', () => {
     await page.addInitScript(() => Object.defineProperty(window, 'indexedDB', { value: undefined }))
     await page.emulateMedia({ colorScheme: 'dark' })
     await page.goto('/')
-    await openSettings(page)
-    await expect(page.getByRole('radio', { name: 'System' })).toHaveAttribute('aria-checked', 'true')
+    await expect(page.getByRole('heading', { level: 1, name: 'Unsupported browser' })).toBeVisible()
     expect(await isDark(page)).toBe(true)
-    await page.getByRole('radio', { name: 'Light' }).click()
-    expect(await isDark(page)).toBe(false)
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en')
     expect(errors).toEqual([])
   })
 
@@ -130,7 +131,7 @@ test.describe('language (UX-DR150, AD-20)', () => {
 
   test('language names carry their own lang (WCAG 3.1.2)', async ({ page }) => {
     await page.goto('/')
-    await openSettings(page, 'Réglages')
+    await openSettings(page, 'Réglages', 'Langue')
     await expect(page.getByRole('radio', { name: 'Français' })).toHaveAttribute('lang', 'fr')
     await expect(page.getByRole('radio', { name: 'English' })).toHaveAttribute('lang', 'en')
   })
@@ -141,17 +142,22 @@ test.describe('language (UX-DR150, AD-20)', () => {
     await page.goto('/')
     await expect(page.locator('html')).toHaveAttribute('lang', 'fr')
     await openSettings(page, 'Réglages')
-    await expect(page.getByText('Apparence')).toBeVisible()
+    const dialog = page.getByRole('dialog', { name: 'Réglages' })
+    await expect(dialog.getByRole('tab', { name: 'Apparence' })).toBeVisible()
     await expect(page.getByRole('radio', { name: 'Système' })).toBeVisible()
 
     await page.evaluate(() => ((window as unknown as { marker: boolean }).marker = true))
+    await dialog.getByRole('tab', { name: 'Langue' }).click()
     await page.getByRole('radio', { name: 'English' }).click()
 
     await expect(page.locator('html')).toHaveAttribute('lang', 'en')
-    await expect(page.getByText('Appearance')).toBeVisible()
-    await expect(page.getByText('Language', { exact: true })).toBeVisible()
+    const english = page.getByRole('dialog', { name: 'Settings' })
+    for (const name of ['Appearance', 'Language', 'Storage']) await expect(english.getByRole('tab', { name })).toBeVisible()
+    await expect(english.getByRole('tab', { name: 'Language' })).toHaveAttribute('aria-selected', 'true')
+    await english.getByRole('tab', { name: 'Appearance' }).click()
     for (const name of ['System', 'Light', 'Dark']) await expect(page.getByRole('radio', { name })).toBeVisible()
-    await expect(page.getByText(/Apparence|Langue|Système|Clair|Sombre|Réglages|Projets/)).toHaveCount(0)
+    await expect(page.getByText(/Apparence|Langue|Système|Clair|Sombre|Réglages|Projets|Stockage/)).toHaveCount(0)
+    await page.keyboard.press('Escape')
     await expect(page.getByRole('heading', { level: 1, name: 'Projects' })).toBeVisible()
     expect(await page.evaluate(() => (window as unknown as { marker?: boolean }).marker)).toBe(true)
     await expect.poll(() => storedPreference(page, 'language')).toBe('en')
@@ -159,7 +165,7 @@ test.describe('language (UX-DR150, AD-20)', () => {
     await page.reload()
     await expect(page.locator('html')).toHaveAttribute('lang', 'en')
     await openSettings(page)
-    await expect(page.getByText('Appearance')).toBeVisible()
+    await expect(page.getByRole('dialog', { name: 'Settings' }).getByRole('tab', { name: 'Appearance' })).toBeVisible()
   })
 })
 
@@ -207,40 +213,5 @@ test.describe('focus ring (UX-DR27)', () => {
     await page.keyboard.press('Home')
     await expect(radio('System')).toBeFocused()
     await expect(radio('System')).toHaveAttribute('aria-checked', 'true')
-  })
-
-  test('the Settings popover opens from the keyboard; Tab reaches each radio group once; Escape or leaving it closes it', async ({ page }) => {
-    await page.goto('/')
-    await expect(page.getByRole('heading', { level: 1, name: 'Projects' })).toBeVisible()
-    const settings = page.getByRole('button', { name: 'Settings' })
-    await settings.focus()
-    await expect(settings).toHaveAttribute('aria-expanded', 'false')
-    await page.keyboard.press('Enter')
-    await expect(settings).toHaveAttribute('aria-expanded', 'true')
-    await expect(page.getByRole('radio', { name: 'System' })).toBeFocused()
-    await page.keyboard.press('Tab')
-    await expect(page.getByRole('radio', { name: 'English' })).toBeFocused()
-    await page.keyboard.press('Escape')
-    await expect(page.getByRole('group', { name: 'Settings' })).toHaveCount(0)
-    await expect(settings).toBeFocused()
-
-    // A disclosure, not a dialog: focus leaving the panel closes it.
-    await page.keyboard.press('Enter')
-    await expect(page.getByRole('radio', { name: 'System' })).toBeFocused()
-    await page.keyboard.press('Tab')
-    await page.keyboard.press('Tab')
-    await expect(page.getByRole('group', { name: 'Settings' })).toHaveCount(0)
-    await expect(settings).toHaveAttribute('aria-expanded', 'false')
-
-    // Leaving backwards, through the Settings button, closes it too.
-    await settings.focus()
-    await page.keyboard.press('Enter')
-    await expect(page.getByRole('radio', { name: 'System' })).toBeFocused()
-    await page.keyboard.press('Shift+Tab')
-    await expect(settings).toBeFocused()
-    await expect(page.getByRole('group', { name: 'Settings' })).toBeVisible()
-    await page.keyboard.press('Shift+Tab')
-    await expect(page.getByRole('group', { name: 'Settings' })).toHaveCount(0)
-    await expect(settings).toHaveAttribute('aria-expanded', 'false')
   })
 })

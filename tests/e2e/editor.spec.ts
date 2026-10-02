@@ -90,6 +90,14 @@ test.describe('layout (UX-DR30–33, UX-DR127, UX-DR159, NFR-8)', () => {
       await page.setViewportSize({ width, height: 648 })
       await page.emulateMedia({ colorScheme: scheme })
       await openNewProject(page)
+      // Under 1366 px a dismissable banner says the window is too small (UX-DR148); dismiss it to
+      // measure the regions.
+      const narrowBanner = page.getByRole('status').filter({ hasText: 'designed for a screen of at least 1366 × 768' })
+      if (width < 1366) {
+        await expect(narrowBanner).toBeVisible()
+        await narrowBanner.getByRole('button', { name: 'Dismiss this banner' }).click()
+      }
+      await expect(narrowBanner).toHaveCount(0)
 
       const box = async (name: string, role: Parameters<Page['getByRole']>[0]) => {
         const element = page.getByRole(role, { name })
@@ -445,9 +453,10 @@ test.describe('keyboard and focus (UX-DR27, UX-DR8)', () => {
     await page.keyboard.press('Enter')
     await expect(page.getByRole('menuitem', { name: 'Settings' })).toBeFocused()
     await page.keyboard.press('Enter')
-    const settings = page.getByRole('group', { name: 'Settings' })
+    const settings = page.getByRole('dialog', { name: 'Settings' })
     await expect(settings).toBeVisible()
-    await expect(settings.getByRole('radiogroup')).toHaveCount(2)
+    await expect(settings.getByRole('tab', { name: 'Appearance' })).toBeFocused()
+    await expect(settings.getByRole('radiogroup')).toHaveCount(1)
     await page.keyboard.press('Escape')
     await expect(settings).toHaveCount(0)
     await expect(menuButton).toBeFocused()

@@ -1,5 +1,6 @@
 import { CircleAlert, CircleCheck, Info, X } from 'lucide-react'
 import { createContext, use, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/ui/lib/utils'
 import { buttonClass, iconProps } from './button'
@@ -64,15 +65,19 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext value={show}>
       {children}
-      {/* Live regions stay mounted so a new toast is announced: polite for information, assertive for errors. */}
-      <section aria-label={t('toast.region')} className="om-toast-region pointer-events-none fixed right-6 bottom-6 z-40 flex w-90 max-w-[calc(100vw-48px)] flex-col">
-        <div role="status" aria-live="polite">
-          {current && current.tone !== 'error' && <Toast key={current.id} toast={current} onClose={(reason, hadFocus) => close(current, reason, hadFocus)} />}
-        </div>
-        <div role="alert" aria-live="assertive">
-          {current && current.tone === 'error' && <Toast key={current.id} toast={current} onClose={(reason, hadFocus) => close(current, reason, hadFocus)} />}
-        </div>
-      </section>
+      {/* Live regions stay mounted so a new toast is announced: polite for information, assertive for errors.
+          Their own <body>-level layer, above a modal dialog and never made inert by it. */}
+      {createPortal(
+        <section data-above-dialog aria-label={t('toast.region')} className="om-toast-region pointer-events-none fixed right-6 bottom-6 z-60 flex w-90 max-w-[calc(100vw-48px)] flex-col">
+          <div role="status" aria-live="polite">
+            {current && current.tone !== 'error' && <Toast key={current.id} toast={current} onClose={(reason, hadFocus) => close(current, reason, hadFocus)} />}
+          </div>
+          <div role="alert" aria-live="assertive">
+            {current && current.tone === 'error' && <Toast key={current.id} toast={current} onClose={(reason, hadFocus) => close(current, reason, hadFocus)} />}
+          </div>
+        </section>,
+        document.body,
+      )}
     </ToastContext>
   )
 }

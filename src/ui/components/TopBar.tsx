@@ -1,13 +1,13 @@
 import { Map as MapIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { SettingsPopover } from '@/ui/settings/SettingsPopover'
+import { AppMenu } from '@/ui/settings/AppMenu'
 
 /**
  * The 48px top bar shared by Home and the Editor (DESIGN.md `top-bar`): logotype, content, then the
- * end slot (Settings on Home, the « ⋯ » menu in the Editor).
+ * end slot: by default the « ⋯ » menu with Settings (UX-DR134).
  */
-export function TopBar({ children, end = <SettingsPopover />, label }: { children?: ReactNode; end?: ReactNode; label?: string }) {
+export function TopBar({ children, end = <AppMenu />, label }: { children?: ReactNode; end?: ReactNode; label?: string }) {
   const { t } = useTranslation()
   return (
     <header aria-label={label} className="flex h-top-bar-height min-w-0 shrink-0 items-center gap-3 border-b border-om-border bg-om-surface px-4">

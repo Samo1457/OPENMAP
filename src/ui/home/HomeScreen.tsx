@@ -5,6 +5,7 @@ import { flushPendingSaves, listProjects, purgeProject, restoreProject, tombston
 import { buttonClass, iconProps } from '@/ui/components/button'
 import { useToast } from '@/ui/components/toast'
 import { TopBar } from '@/ui/components/TopBar'
+import { FirefoxBanner, SmallWindowBanner } from '@/ui/gate/EnvironmentBanners'
 import { editorHref, navigate } from '@/ui/routing'
 import { copyName } from './copy-name'
 import { createBlank, duplicateStored, renameStored } from './project-actions'
@@ -154,6 +155,11 @@ export function HomeScreen() {
   return (
     <div className="flex min-h-screen flex-col bg-om-background">
       <TopBar />
+      {/* Browser and window banners sit between the top bar and the header (UX-DR66, UX-DR148). */}
+      <div className="flex flex-col">
+        <FirefoxBanner />
+        <SmallWindowBanner />
+      </div>
       <main className="mx-auto flex w-full max-w-home-max-width flex-col gap-6 px-8 py-8">
         <div className="flex items-center justify-between gap-4">
           <h1 className="type-title-xl text-om-text-primary">{t('home.title')}</h1>

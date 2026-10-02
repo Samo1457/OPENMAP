@@ -10,8 +10,10 @@ import {
 } from './autosave'
 import { OpenmapDatabase } from './db'
 import * as projects from './projects'
+import { readStorageStatus, type StorageStatus } from './storage-status'
 
 export { AUTOSAVE_DEBOUNCE_MS, AUTOSAVE_MAX_WAIT_MS, type Autosave, type AutosaveClock, type SaveStatus } from './autosave'
+export type { StorageSpace, StorageStatus } from './storage-status'
 export type { LoadedProject, ProjectSummary, SaveFailure, SaveOutcome, StoredProjectState } from './projects'
 
 let database: OpenmapDatabase | undefined
@@ -168,6 +170,14 @@ export async function purgeExpiredTombstones(graceMs: number): Promise<number> {
 /** Requests `navigator.storage.persist()` once, on the first Project creation (AD-8). */
 export function requestPersistOnce(): Promise<void> {
   return projects.requestPersistOnce(db(), globalThis.navigator?.storage)
+}
+
+/**
+ * Space used and whether the browser may evict the Projects (`navigator.storage`), each
+ * `unavailable` when the browser cannot tell (Settings → Storage). Never rejects.
+ */
+export function getStorageStatus(): Promise<StorageStatus> {
+  return readStorageStatus(globalThis.navigator?.storage)
 }
 
 // ---------------------------------------------------------------- Preferences

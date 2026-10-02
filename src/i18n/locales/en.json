@@ -2,6 +2,9 @@
   "app": {
     "name": "OPENMAP"
   },
+  "common": {
+    "comingSoon": "Coming soon"
+  },
   "settings": {
     "title": "Settings",
     "appearance": {
@@ -14,6 +17,27 @@
       "label": "Language",
       "fr": "Français",
       "en": "English"
+    },
+    "storage": {
+      "label": "Storage",
+      "spaceLabel": "Space used",
+      "usage": "{{used}} used of {{quota}}",
+      "unavailable": "Information unavailable in this browser.",
+      "protectionLabel": "Persistent storage",
+      "protection": {
+        "protected": "Protected: the browser will not delete your Projects.",
+        "unprotected": "Not protected: the browser may delete your Projects if space runs low.",
+        "unavailable": "Information unavailable in this browser."
+      },
+      "reminder": "Export your Projects as Project files regularly so you never lose your work.",
+      "export": "Export Project file",
+      "units": {
+        "b": "{{value}} B",
+        "kb": "{{value}} kB",
+        "mb": "{{value}} MB",
+        "gb": "{{value}} GB",
+        "tb": "{{value}} TB"
+      }
     }
   },
   "project": {
@@ -94,8 +118,6 @@
     "search": "Search for a place",
     "presentation": "Presentation",
     "export": "Export",
-    "comingSoon": "Coming soon",
-    "menu": "Menu",
     "projectSettings": "Project settings",
     "mapLocale": "Map language",
     "moreOptions": "More options",
@@ -105,5 +127,35 @@
   "toast": {
     "region": "Notifications",
     "close": "Close notification"
+  },
+  "appMenu": {
+    "label": "Menu"
+  },
+  "dialog": {
+    "close": "Close"
+  },
+  "banner": {
+    "dismiss": "Dismiss this banner"
+  },
+  "gate": {
+    "desktopOnly": {
+      "title": "Designed for a computer",
+      "message": "OPENMAP is designed for a computer. Open this link on your PC with Chrome or Edge."
+    },
+    "unsupported": {
+      "title": "Unsupported browser",
+      "message": "This browser cannot run OPENMAP. Open this link with an up-to-date Chrome or Edge on your computer."
+    },
+    "missing": "Missing features: {{list}}",
+    "copyLink": "Copy link",
+    "copied": "Link copied.",
+    "copyFailed": "The link could not be copied. Copy it below.",
+    "firefoxBanner": "OPENMAP is designed for Chrome and Edge. Video export may not work here.",
+    "smallWindowBanner": "OPENMAP is designed for a screen of at least 1366 × 768.",
+    "capability": {
+      "webgl2": "WebGL2",
+      "indexedDB": "IndexedDB",
+      "webLocks": "Web Locks"
+    }
   }
 }
