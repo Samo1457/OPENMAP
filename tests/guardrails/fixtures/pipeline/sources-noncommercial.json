@@ -1,0 +1,27 @@
+{
+  "naturalEarthRelease": "5.1.2",
+  "sources": [
+    {
+      "id": "nc-dataset",
+      "kind": "vector",
+      "layer": "land",
+      "version": "5.1.2",
+      "source": "Natural Earth",
+      "licence": "CC-BY-NC-4.0",
+      "attribution": "Made with Natural Earth.",
+      "creditRequired": false,
+      "files": [
+        {
+          "name": "ne_50m_land.shp",
+          "url": "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/50m_physical/ne_50m_land.shp",
+          "sha256": "140d1419f7ace66bf0ea8ceb068cab544d413170f4e8c48e0a11bde6c978b319"
+        },
+        {
+          "name": "ne_50m_land.dbf",
+          "url": "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/50m_physical/ne_50m_land.dbf",
+          "sha256": "d082add78c82e01b9bf422df3143ad6fbe43ca1bcb798d12a334f9e001b67bc0"
+        }
+      ]
+    }
+  ]
+}

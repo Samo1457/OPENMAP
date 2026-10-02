@@ -1,0 +1,155 @@
+{
+  "naturalEarthRelease": "5.1.2",
+  "sources": [
+    {
+      "id": "ne-10m-land",
+      "kind": "vector",
+      "layer": "land",
+      "version": "5.1.2",
+      "source": "Natural Earth",
+      "licence": "Public-Domain",
+      "attribution": "Made with Natural Earth.",
+      "creditRequired": false,
+      "files": [
+        {
+          "name": "ne_10m_land.shp",
+          "url": "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/10m_physical/ne_10m_land.shp",
+          "sha256": "4cad3a49bc75c1a4c2f3d7efae04f2f8e63151c96764b2658effabf524331fa6"
+        },
+        {
+          "name": "ne_10m_land.dbf",
+          "url": "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/10m_physical/ne_10m_land.dbf",
+          "sha256": "e422520372e65c6fb8220888580e5331d04699bcd71c27e53ad42e241a531cbd"
+        }
+      ]
+    },
+    {
+      "id": "ne-10m-ocean",
+      "kind": "vector",
+      "layer": "ocean",
+      "version": "5.1.2",
+      "source": "Natural Earth",
+      "licence": "Public-Domain",
+      "attribution": "Made with Natural Earth.",
+      "creditRequired": false,
+      "files": [
+        {
+          "name": "ne_10m_ocean.shp",
+          "url": "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/10m_physical/ne_10m_ocean.shp",
+          "sha256": "bb5ae1e0922b02e61e14f6d562fc2299db4bef5ca36c1008b1a8e7ddf9da6410"
+        },
+        {
+          "name": "ne_10m_ocean.dbf",
+          "url": "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/10m_physical/ne_10m_ocean.dbf",
+          "sha256": "4b2f302a84bcbb0fe5d744a9b40df173f562e07eb57532935fb6bc664d21fa33"
+        }
+      ]
+    },
+    {
+      "id": "ne-10m-coastline",
+      "kind": "vector",
+      "layer": "coastline",
+      "version": "5.1.2",
+      "source": "Natural Earth",
+      "licence": "Public-Domain",
+      "attribution": "Made with Natural Earth.",
+      "creditRequired": false,
+      "files": [
+        {
+          "name": "ne_10m_coastline.shp",
+          "url": "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/10m_physical/ne_10m_coastline.shp",
+          "sha256": "459a4a97c09db19aadf5244026612de9d43748be27f83a360242b99f7fabb3c1"
+        },
+        {
+          "name": "ne_10m_coastline.dbf",
+          "url": "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/10m_physical/ne_10m_coastline.dbf",
+          "sha256": "9ccc214342fe400bf8c7d91d7a5b276b0457b0ada03e8d4be16ac5ba13037f3b"
+        }
+      ]
+    },
+    {
+      "id": "ne-10m-rivers",
+      "kind": "vector",
+      "layer": "rivers",
+      "version": "5.1.2",
+      "source": "Natural Earth",
+      "licence": "Public-Domain",
+      "attribution": "Made with Natural Earth.",
+      "creditRequired": false,
+      "files": [
+        {
+          "name": "ne_10m_rivers_lake_centerlines.shp",
+          "url": "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/10m_physical/ne_10m_rivers_lake_centerlines.shp",
+          "sha256": "f9a1cf6d9f58c0a6f182a7f25771a03e0a48026253d4484aab782b2586354d78"
+        },
+        {
+          "name": "ne_10m_rivers_lake_centerlines.dbf",
+          "url": "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/10m_physical/ne_10m_rivers_lake_centerlines.dbf",
+          "sha256": "68079fde5fde6167d0c7c4f03e498164badcc3b687a93c436278ade83882b564"
+        }
+      ]
+    },
+    {
+      "id": "ne-10m-lakes",
+      "kind": "vector",
+      "layer": "lakes",
+      "version": "5.1.2",
+      "source": "Natural Earth",
+      "licence": "Public-Domain",
+      "attribution": "Made with Natural Earth.",
+      "creditRequired": false,
+      "files": [
+        {
+          "name": "ne_10m_lakes.shp",
+          "url": "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/10m_physical/ne_10m_lakes.shp",
+          "sha256": "11064fa55ed91b56a0d86733643c1a5bfcc137fdf044e83f471978a5b86617e1"
+        },
+        {
+          "name": "ne_10m_lakes.dbf",
+          "url": "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/10m_physical/ne_10m_lakes.dbf",
+          "sha256": "0edaa87f76c2221c986f0796ce0b54b1c418e9032afba46f8e302edc41193495"
+        }
+      ]
+    },
+    {
+      "id": "ne-10m-populated-places",
+      "kind": "vector",
+      "layer": "places",
+      "version": "5.1.2",
+      "source": "Natural Earth",
+      "licence": "Public-Domain",
+      "attribution": "Made with Natural Earth.",
+      "creditRequired": false,
+      "files": [
+        {
+          "name": "ne_10m_populated_places_simple.shp",
+          "url": "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/10m_cultural/ne_10m_populated_places_simple.shp",
+          "sha256": "c613fb222b623b33abeaa2da835c05ee7c000bf0e573aeca399d4a32ba3b529b"
+        },
+        {
+          "name": "ne_10m_populated_places_simple.dbf",
+          "url": "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/10m_cultural/ne_10m_populated_places_simple.dbf",
+          "sha256": "db147a148f529ce783d2b839f1f81e71d501a11e63c2d01af128314cd6527654"
+        }
+      ]
+    },
+    {
+      "id": "ne-10m-shaded-relief",
+      "kind": "raster",
+      "layer": "relief",
+      "version": "5.1.2",
+      "source": "Natural Earth",
+      "licence": "Public-Domain",
+      "attribution": "Made with Natural Earth.",
+      "creditRequired": false,
+      "files": [
+        {
+          "name": "SR_HR.zip",
+          "url": "https://naciscdn.org/naturalearth/10m/raster/SR_HR.zip",
+          "sha256": "",
+          "extract": "SR_HR.tif"
+        }
+      ]
+    }
+  ]
+}

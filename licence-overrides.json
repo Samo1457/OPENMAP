@@ -44,6 +44,16 @@
       "package": "spdx-ranges",
       "licence": "(MIT AND CC-BY-3.0)",
       "reason": "SPDX licence ranges (MIT code, attribution-only data). Dev-only: used by license-checker-rseidelsohn itself; not shipped."
+    },
+    {
+      "package": "pako",
+      "licence": "(MIT AND Zlib)",
+      "reason": "Permissive MIT plus zlib licence (no copyleft). Dev-only: transitive dependency of geotiff, used by the basemap data pipeline (Story 1.8); not shipped."
+    },
+    {
+      "package": "xml-utils",
+      "licence": "CC0-1.0",
+      "reason": "Public-domain dedication (CC0). Dev-only: transitive dependency of geotiff, used by the basemap data pipeline (Story 1.8); not shipped."
     }
   ]
 }

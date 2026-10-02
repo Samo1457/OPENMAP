@@ -3,10 +3,11 @@
 // fixture tree, so the fixtures never pollute the normal lint/typecheck/depcruise runs.
 
 import { spawnSync } from 'node:child_process'
-import { cpSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { afterAll, describe, expect, it } from 'vitest'
+import { loadManifest, LicenceError } from '../../pipeline/sources.ts'
 import { checkPackages, classifyLicence, parseOverrides } from '../../scripts/check-licences.mjs'
 import { readSnapshot, schemaSnapshotIssues } from './schema-check'
 
@@ -282,5 +283,42 @@ describe('schema snapshot check (AD-9)', () => {
   it('fails when the current version has no snapshot yet', () => {
     const issues = schemaSnapshotIssues({ dir: join(SCHEMA_FIXTURES, 'drifted'), currentVersion: 2, schema: {}, migrationVersions: [1] })
     expect(issues).toContain('project-v2.schema.json is missing: run npm run schema:snapshot and commit it.')
+  })
+})
+
+describe('basemap data licence gate (AD-17, Story 1.8)', () => {
+  const pipelineFixture = (name: string) => join(FIXTURES, 'pipeline', name)
+  const dataDir = mkdtempSync(join(tmpdir(), 'openmap-pipeline-'))
+  workDirs.push(dataDir)
+
+  it.each([
+    ['sources-noncommercial.json', 'nc-dataset', 'CC-BY-NC-4.0'],
+    ['sources-odbl.json', 'odbl-dataset', 'ODbL-1.0'],
+    ['sources-sharealike.json', 'share-alike-dataset', 'CC-BY-SA-4.0'],
+  ])('%s is refused, naming the source', (file, id, licence) => {
+    expect(() => loadManifest(pipelineFixture(file))).toThrow(LicenceError)
+    expect(() => loadManifest(pipelineFixture(file))).toThrow(new RegExp(`${id}.*${licence}`))
+  })
+
+  it('a road layer is refused', () => {
+    expect(() => loadManifest(pipelineFixture('sources-roads.json'))).toThrow(/infrastructure/)
+  })
+
+  it('the pipeline command exits non-zero before downloading or writing anything', () => {
+    const out = join(dataDir, 'out')
+    const cache = join(dataDir, 'cache')
+    const result = run(ROOT, process.execPath, [
+      'pipeline/build-basemap.ts',
+      '--manifest',
+      pipelineFixture('sources-noncommercial.json'),
+      '--out',
+      out,
+      '--cache',
+      cache,
+    ])
+    expect(result.status).not.toBe(0)
+    expect(result.output).toContain('nc-dataset')
+    expect(existsSync(out)).toBe(false)
+    expect(existsSync(cache)).toBe(false)
   })
 })

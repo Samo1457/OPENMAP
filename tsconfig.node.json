@@ -26,6 +26,6 @@
     "allowJs": true,
     "checkJs": true
   },
-  "include": ["vite.config.ts", "vitest.config.ts", "playwright.config.ts", "scripts", "tests"],
-  "exclude": ["tests/guardrails/fixtures", "tests/e2e"]
+  "include": ["vite.config.ts", "vitest.config.ts", "playwright.config.ts", "scripts", "tests", "pipeline"],
+  "exclude": ["tests/guardrails/fixtures", "tests/e2e", "pipeline/fixtures", "pipeline/out", "pipeline/cache"]
 }

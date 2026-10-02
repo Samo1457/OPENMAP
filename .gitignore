@@ -36,3 +36,6 @@ playwright/.cache
 
 # Cloudflare
 .wrangler
+pipeline/out/
+pipeline/cache/
+pipeline/out.tmp/
