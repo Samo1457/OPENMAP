@@ -39,3 +39,6 @@ playwright/.cache
 pipeline/out/
 pipeline/cache/
 pipeline/out.tmp/
+pipeline/out-geo/
+pipeline/out-geo.tmp/
+pipeline/out-geo.old/

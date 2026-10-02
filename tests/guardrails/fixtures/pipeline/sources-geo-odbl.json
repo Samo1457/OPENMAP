@@ -1,0 +1,23 @@
+{
+  "cliopatriaRelease": "0.2.0",
+  "sources": [
+    {
+      "id": "odbl-borders",
+      "kind": "geo",
+      "layer": "borders",
+      "version": "0.2.0",
+      "source": "Cliopatria (Seshat Global History Databank)",
+      "licence": "ODbL-1.0",
+      "attribution": "Historical borders: Cliopatria, Seshat Global History Databank, CC BY 4.0.",
+      "creditRequired": true,
+      "files": [
+        {
+          "name": "cliopatria.geojson.zip",
+          "url": "https://raw.githubusercontent.com/Seshat-Global-History-Databank/cliopatria/v0.2.0/cliopatria.geojson.zip",
+          "sha256": "d01ae3a20d358cc5d54f69d9d725d390767d9c8759ac89ad6f90c58d106f3370",
+          "extract": "cliopatria_polities_only.geojson"
+        }
+      ]
+    }
+  ]
+}

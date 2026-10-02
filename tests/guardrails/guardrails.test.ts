@@ -7,7 +7,7 @@ import { cpSync, existsSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeF
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { afterAll, describe, expect, it } from 'vitest'
-import { loadManifest, LicenceError } from '../../pipeline/sources.ts'
+import { loadGeoManifest, loadManifest, LicenceError } from '../../pipeline/sources.ts'
 import { checkPackages, classifyLicence, parseOverrides } from '../../scripts/check-licences.mjs'
 import { readSnapshot, schemaSnapshotIssues } from './schema-check'
 
@@ -318,6 +318,30 @@ describe('basemap data licence gate (AD-17, Story 1.8)', () => {
     ])
     expect(result.status).not.toBe(0)
     expect(result.output).toContain('nc-dataset')
+    expect(existsSync(out)).toBe(false)
+    expect(existsSync(cache)).toBe(false)
+  })
+})
+
+describe('historical borders licence gate (AD-17, Story 1.9)', () => {
+  const pipelineFixture = (name: string) => join(FIXTURES, 'pipeline', name)
+  const dataDir = mkdtempSync(join(tmpdir(), 'openmap-geo-pipeline-'))
+  workDirs.push(dataDir)
+
+  it.each([
+    ['sources-geo-noncommercial.json', 'nc-borders', 'CC-BY-NC-4.0'],
+    ['sources-geo-odbl.json', 'odbl-borders', 'ODbL-1.0'],
+  ])('%s is refused, naming the source', (file, id, licence) => {
+    expect(() => loadGeoManifest(pipelineFixture(file))).toThrow(LicenceError)
+    expect(() => loadGeoManifest(pipelineFixture(file))).toThrow(new RegExp(`${id}.*${licence}`))
+  })
+
+  it('the geo pipeline command exits non-zero before downloading or writing anything', () => {
+    const out = join(dataDir, 'out-geo')
+    const cache = join(dataDir, 'cache')
+    const result = run(ROOT, process.execPath, ['pipeline/build-geo.ts', '--manifest', pipelineFixture('sources-geo-odbl.json'), '--out', out, '--cache', cache])
+    expect(result.status).not.toBe(0)
+    expect(result.output).toContain('odbl-borders')
     expect(existsSync(out)).toBe(false)
     expect(existsSync(cache)).toBe(false)
   })

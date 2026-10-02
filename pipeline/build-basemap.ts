@@ -41,7 +41,7 @@ export interface BuildReport {
   totalBytes: number
 }
 
-const formatBytes = (n: number): string => (n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MiB` : `${(n / 1024).toFixed(1)} KiB`)
+export const formatBytes = (n: number): string => (n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MiB` : `${(n / 1024).toFixed(1)} KiB`)
 
 /** Aggregates the metadata of every source behind a dataset: a required credit is never dropped. */
 function datasetMeta(list: Pick<Source, 'source' | 'licence' | 'attribution' | 'creditRequired'>[]) {
@@ -55,16 +55,16 @@ function datasetMeta(list: Pick<Source, 'source' | 'licence' | 'attribution' | '
 }
 
 /** The output directory is replaced wholesale, so only a directory this pipeline made (or an empty one) may be. */
-export function assertReplaceable(outDir: string): void {
+export function assertReplaceable(outDir: string, marker = 'library/v1/datasets.json', what = 'basemap'): void {
   if (!existsSync(outDir)) return
   if (!statSync(outDir).isDirectory()) throw new Error(`${outDir} exists and is not a directory`)
-  if (readdirSync(outDir).length > 0 && !existsSync(join(outDir, 'library/v1/datasets.json'))) {
-    throw new Error(`refusing to replace ${outDir}: it is not empty and is not a basemap pipeline output (no library/v1/datasets.json)`)
+  if (readdirSync(outDir).length > 0 && !existsSync(join(outDir, marker))) {
+    throw new Error(`refusing to replace ${outDir}: it is not empty and is not a ${what} pipeline output (no ${marker})`)
   }
 }
 
 /** Swaps `staging` in for `outDir`; the previous output survives any failure. */
-function swapIn(staging: string, outDir: string): void {
+export function swapIn(staging: string, outDir: string): void {
   const backup = `${outDir}.old`
   rmSync(backup, { recursive: true, force: true })
   const hadPrevious = existsSync(outDir)

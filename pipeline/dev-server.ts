@@ -13,6 +13,8 @@ export type Middleware = (req: IncomingMessage, res: ServerResponse, next: () =>
 export interface DataMiddlewareOptions {
   /** Pipeline output directory. */
   outDir?: string
+  /** Historical borders pipeline output directory (Story 1.9). */
+  geoOutDir?: string
   /** One-line hints for missing output. */
   hint?: (message: string) => void
 }
@@ -48,6 +50,7 @@ const SAFE_SEGMENT = /^[\w .-]+$/
 
 export function createDataMiddleware(options: DataMiddlewareOptions = {}): Middleware {
   const outDir = resolve(options.outDir ?? join(import.meta.dirname, 'out'))
+  const geoOutDir = resolve(options.geoOutDir ?? join(import.meta.dirname, 'out-geo'))
   const hint = options.hint ?? ((message: string) => console.warn(message))
   const hinted = new Set<string>()
   const archives = new Map<string, { mtimeMs: number; archive: PMTiles }>()
@@ -60,6 +63,16 @@ export function createDataMiddleware(options: DataMiddlewareOptions = {}): Middl
     res.statusCode = 404
     res.setHeader('Content-Type', 'text/plain; charset=utf-8')
     res.end('Basemap data not built')
+  }
+
+  const missingGeo = (res: ServerResponse) => {
+    if (!hinted.has('geo')) {
+      hinted.add('geo')
+      hint('[openmap] No historical borders data: run "npm run pipeline:geo" once.')
+    }
+    res.statusCode = 404
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8')
+    res.end('Historical borders data not built')
   }
 
   const archiveFor = (id: TilesetId): PMTiles | undefined => {
@@ -92,6 +105,23 @@ export function createDataMiddleware(options: DataMiddlewareOptions = {}): Middl
     const fail = (error: unknown) => {
       res.statusCode = 500
       res.end(error instanceof Error ? error.message : String(error))
+    }
+
+    // Historical borders: the index and one file per entity state. Anything else below
+    // the prefix is a 404 here, never a fall-through to the app.
+    if (pathname === '/library/v1/geo' || pathname.startsWith('/library/v1/geo/')) {
+      const route = /^\/library\/v1\/geo\/(?:(index)\.json|([a-z0-9][a-z0-9.-]*)\/(-?\d+)\.json)$/.exec(pathname)
+      const notFound = () => {
+        res.statusCode = 404
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8')
+        res.end('Not found')
+      }
+      if (!route || (route[2] !== undefined && route[2].includes('..'))) return notFound()
+      const geoRoot = join(geoOutDir, 'library/v1/geo')
+      if (!existsSync(join(geoRoot, 'index.json'))) return missingGeo(res)
+      const path = route[1] ? join(geoRoot, 'index.json') : join(geoRoot, route[2], `${route[3]}.json`)
+      if (!existsSync(path)) return notFound()
+      return sendFile(res, path, 'application/json; charset=utf-8')
     }
 
     const tile = /^\/(natural-earth(?:-relief)?-v1)\/(\d+)\/(\d+)\/(\d+)\.(mvt|webp)$/.exec(pathname)

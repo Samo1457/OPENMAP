@@ -20,6 +20,7 @@ const build = (type: 'mvt' | 'webp', tiles: { z: number; x: number; y: number; d
 const root = mkdtempSync(join(tmpdir(), 'openmap-dev-'))
 const out = join(root, 'out')
 const empty = join(root, 'empty')
+const geoOut = join(root, 'out-geo')
 let server: Server
 let empty_server: Server
 let base = ''
@@ -27,9 +28,9 @@ let emptyBase = ''
 const hints: string[] = []
 const emptyHints: string[] = []
 
-const listen = (dir: string, hint: (m: string) => void) =>
+const listen = (dir: string, hint: (m: string) => void, geoOutDir = join(dir, 'no-geo')) =>
   new Promise<{ server: Server; base: string }>((resolve) => {
-    const middleware = createDataMiddleware({ outDir: dir, hint })
+    const middleware = createDataMiddleware({ outDir: dir, geoOutDir, hint })
     const s = createServer((req, res) => middleware(req, res, () => {
       res.statusCode = 418
       res.end('next')
@@ -47,7 +48,11 @@ beforeAll(async () => {
   writeFileSync(join(out, 'library/v1/datasets.json'), '{"datasets":[]}')
   writeFileSync(join(out, 'library/v1/glyphs/Test Font/0-255.pbf'), encode('pbf'))
   writeFileSync(join(root, 'secret.txt'), 'secret')
-  ;({ server, base } = await listen(out, (m) => hints.push(m)))
+  mkdirSync(join(geoOut, 'library/v1/geo/han-861af5'), { recursive: true })
+  writeFileSync(join(geoOut, 'library/v1/geo/index.json'), '{"entities":[]}')
+  writeFileSync(join(geoOut, 'library/v1/geo/han-861af5/-404.json'), '{"type":"Feature"}')
+  writeFileSync(join(geoOut, 'library/v1/geo/han-861af5/12.json'), '{"type":"Feature","n":12}')
+  ;({ server, base } = await listen(out, (m) => hints.push(m), geoOut))
   ;({ server: empty_server, base: emptyBase } = await listen(empty, (m) => emptyHints.push(m)))
 })
 afterAll(() => {
@@ -122,6 +127,26 @@ describe('data middleware with a built tileset', () => {
   })
 })
 
+describe('historical borders routes', () => {
+  it('serves the index and state files (BCE years negative) with a JSON type', async () => {
+    const index = await fetch(`${base}/library/v1/geo/index.json`)
+    expect(index.status).toBe(200)
+    expect(index.headers.get('content-type')).toContain('application/json')
+    expect(await index.text()).toBe('{"entities":[]}')
+    const bce = await fetch(`${base}/library/v1/geo/han-861af5/-404.json`)
+    expect(bce.headers.get('content-type')).toContain('application/json')
+    expect(await bce.text()).toBe('{"type":"Feature"}')
+    expect(await (await fetch(`${base}/library/v1/geo/han-861af5/12.json`)).json()).toMatchObject({ n: 12 })
+  })
+
+  it('404s an unknown id or year and refuses traversal, never falling through to the app', async () => {
+    for (const path of ['nope/-404.json', 'han-861af5/13.json', 'han-861af5/abc.json', '..%2f..%2fsecret/12.json', 'han-861af5/..%2f..%2f..%2f..%2fsecret.json', 'han-861af5/-404.txt', 'x', '']) {
+      const res = await fetch(`${base}/library/v1/geo${path === '' ? '' : `/${path}`}`)
+      expect(res.status, path).toBe(404)
+    }
+  })
+})
+
 describe('data middleware without a build', () => {
   it('404s with a one-line console hint, once per missing output', async () => {
     const res = await fetch(`${emptyBase}/natural-earth-v1/0/0/0.mvt`)
@@ -132,6 +157,14 @@ describe('data middleware without a build', () => {
     expect(emptyHints).toHaveLength(2)
     expect(emptyHints[0]).toMatch(/^[^\n]+$/)
     expect(emptyHints[0]).toContain('npm run pipeline:basemap')
+  })
+
+  it('answers 404 for historical borders with one hint naming the command', async () => {
+    emptyHints.length = 0
+    expect((await fetch(`${emptyBase}/library/v1/geo/index.json`)).status).toBe(404)
+    expect((await fetch(`${emptyBase}/library/v1/geo/a/1.json`)).status).toBe(404)
+    expect(emptyHints).toHaveLength(1)
+    expect(emptyHints[0]).toContain('npm run pipeline:geo')
   })
 
   it('does not touch the disk when nothing requests data', () => {

@@ -2,7 +2,7 @@
 title: 'Story 1.9: Historical borders pipeline (Cliopatria)'
 type: 'feature'
 created: '2026-10-02'
-status: 'in-progress'
+status: 'done'
 baseline_commit: '488938f28b988561fec346a4e54054b9694ba2da'
 route: 'dispatch'
 review_loop_iteration: 0
@@ -59,12 +59,12 @@ context:
 ## Tasks & Acceptance
 
 **Execution:**
-- [ ] `pipeline/sources-geo.json` + gate wiring in `pipeline/sources.ts` (+ test) -- pinned Cliopatria source, licence gate
-- [ ] `pipeline/geo.ts` (+ test) -- rows to entities and states, ids, kinds, simplification, rounding, winding, invariants
-- [ ] `pipeline/build-geo.ts` (+ test) -- orchestration, safe output swap, index, sizes; `npm run pipeline:geo`
-- [ ] `pipeline/dev-server.ts` (+ test) -- geo routes
-- [ ] `tests/guardrails` -- violating geo manifest fixtures asserted (licence, CLI exit)
-- [ ] `pipeline/README.md` (French), `.gitignore`, `package.json`
+- [x] `pipeline/sources-geo.json` + gate wiring in `pipeline/sources.ts` (+ test) -- pinned Cliopatria source, licence gate
+- [x] `pipeline/geo.ts` (+ test) -- rows to entities and states, ids, kinds, simplification, rounding, winding, invariants
+- [x] `pipeline/build-geo.ts` (+ test) -- orchestration, safe output swap, index, sizes; `npm run pipeline:geo`
+- [x] `pipeline/dev-server.ts` (+ test) -- geo routes
+- [x] `tests/guardrails` -- violating geo manifest fixtures asserted (licence, CLI exit)
+- [x] `pipeline/README.md` (French), `.gitignore`, `package.json`
 
 **Acceptance Criteria:**
 - Given `npm run check`, when it runs, then all guardrails and tests pass with fixtures only (no network).
@@ -72,9 +72,37 @@ context:
 
 ## Implementation Notes
 
+- `sources.ts` gains `kind: 'geo'`, `validateGeoManifest`/`loadGeoManifest` (one source, pinned checksum, version equals `cliopatriaRelease`); the licence gate is the same `assertLicences`. `build-geo.ts` reuses `assertReplaceable` (optional marker file and label), `swapIn` and `formatBytes` from `build-basemap.ts`.
+- `.group` only on parenthesised POLITY rows; relations get no suffix. Wikidata, Wikipedia and SeshatID vary across rows of one entity: the index keeps the first non-empty value in chronological order; `memberOf` and `components` are the sorted union across rows; relations always have `memberOf: []`.
+- Index shape: `{schemaVersion: 1, dataset: {id, version, source, licence, attribution, creditRequired, simplification, counts}, entities: [...]}`. Zero-area rings are dropped after rounding.
+- Real run (sandbox): 1,633 entities (1,540 polities, 43 groups, 50 relations), 13,765 states, byte-identical second run, about 13 s. `index.json` 437 KiB, state files 64.3 MiB (22.7 MiB gzipped), about 105 MiB on disk by `du` (block overhead on 13,765 small files), 43 MiB cached zip.
+- Known: the geo CLI shares `parseArgs` and ignores `--vector-only`/`--pin`; the 3.6 M-point JSON is parsed in memory (peak measured at about 1.3 GB RSS).
+
 ## Spec Change Log
 
 ## Review Triage Log
+
+| # | Source | Finding | Verdict | Evidence / route |
+|---|--------|---------|---------|------------------|
+| 1 | edge | Ring can end unclosed after rounding/dedupe; open source ring passes through | low | Real build: 0 unclosed of 116,071 rings; code path real. patch |
+| 2 | edge | Null feature, non-numeric Area, non-finite coordinate not rejected | low | Real data clean; would corrupt silently. patch |
+| 3 | edge | Manifest URL tag not tied to the release label | low | Mislabel risk only on manifest edit. patch |
+| 4 | blind, edge | Licence gate runs after the directory check, contrary to its comment | low | `build-geo.ts` order. patch |
+| 5 | blind | Dropped rings/polygons are not counted | low | No count in report. patch |
+| 6 | blind | Geo CLI accepts and ignores `--vector-only`, `--pin` | low | Shared `parseArgs`. patch |
+| 7 | edge | `/library/v1/geo` without slash falls through to the app | low | Prefix check needs trailing slash. patch |
+| 8 | blind, edge | Weak assertions; network-error test ignores the cache dir; README top commands lack `pipeline:geo` | low | Direct fixes. patch |
+| 9 | blind | Memory peak unmeasured | low | Measured 1.1 GB peak; documented via patch 8. patch |
+| 10 | blind | Antimeridian handling undocumented | low | Measured: max |lon| 180, 0 rings with a lon jump over 180; documented via patch 8. patch |
+| 11 | blind, edge | Topological validity after simplification unchecked | low | Not verifiable cheaply; documented as unchecked. reject |
+| 12 | blind | Empty slug for non-Latin names aborts a future release; hash suffix renames ids across releases | low | Loud failure on a pinned release; versions pin ids. reject |
+| 13 | blind | Year pattern accepts `-0`/`012`; dead `..` check; no Cache-Control in dev | low | Harmless aliases, dev only. reject |
+| 14 | blind | Feature `id` identical across an entity's states | false | Spec: id is the canonical entity key. reject |
+| 15 | blind | `Source.kind` widened, `as string` cast | low | Runtime validation guards it; refactor adds surface. reject |
+| 16 | blind | Concurrent runs share staging | low | Single-user local tool. reject |
+| 17 | edge | Touching states (end year = next start) abort the run | false | Inclusive years: overlap is correct to refuse; real run passes. reject |
+| 18 | gap | No test for a failure inside `swapIn` | low | Swap logic shared and tested with the basemap pipeline. reject |
+| 19 | blind | Spec status, empty triage log, `.old` ignore | false | Log filled by this step. reject |
 
 ## Design Notes
 

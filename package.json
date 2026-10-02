@@ -17,6 +17,7 @@
     "test": "vitest run",
     "schema:snapshot": "node scripts/schema-snapshot.mjs",
     "pipeline:basemap": "node pipeline/build-basemap.ts",
+    "pipeline:geo": "node pipeline/build-geo.ts",
     "e2e": "playwright test",
     "check": "npm run typecheck && npm run lint && npm run depcruise && npm run licences && npm run test && npm run build && npm run e2e"
   },
