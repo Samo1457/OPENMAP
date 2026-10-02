@@ -2,7 +2,8 @@
 title: 'Story 1.7: Keyboard and accessibility foundation'
 type: 'feature'
 created: '2026-10-02'
-status: 'draft'
+status: 'in-progress'
+baseline_commit: '083a5aeeb239ccd4442a4f3972016bf602bf88d7'
 route: 'dispatch'
 review_loop_iteration: 0
 context:
@@ -38,11 +39,12 @@ context:
 | Reduced motion | `prefers-reduced-motion: reduce` | no chrome animation or transition | N/A |
 | Dialog open | `v`, Alt+2, `?` with Settings open | nothing behind the dialog | N/A |
 
+**Decisions (owner, 2026-10-02):**
+- axe: add `axe-core` and `@axe-core/playwright` (MPL-2.0) as unmodified devDependencies, never shipped, each with a `licence-overrides.json` entry; extend the AGENTS.md MPL-2.0 line to name them (option A).
+- Full spec kept (~2,000 tokens).
+- Planning defaults accepted: Alt+N focuses the region container; `?` help on Home too; « Ctrl » shown on every platform; help lists only registered shortcuts; collisions documented in `docs/keyboard.md`.
+
 </frozen-after-approval>
-
-## Open Questions
-
-- **axe licence.** `axe-core` and `@axe-core/playwright` are MPL-2.0; AGENTS.md allows MPL-2.0 only for Mediabunny and lightningcss, while spine AD-17 says "MPL-2.0 only for unmodified dependencies (Mediabunny)". Options: (A, recommended) add both as unmodified devDependencies, never shipped, with `licence-overrides.json` entries, and extend the AGENTS.md MPL line to name them (AGENTS.md is not a planning artifact) — the AC is met literally; (B) use IBM `accessibility-checker-engine` (Apache-2.0) instead — no policy change, but the AC says axe, so the epic wording would need `bmad-correct-course`; (C) no automated checker, hand-written ARIA assertions only — fails the AC.
 
 ## Code Map
 
