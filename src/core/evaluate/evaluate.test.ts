@@ -4,7 +4,8 @@ import { BASEMAP_IDS, OUTPUT_FRAME_SIZES, type OutputFormat } from '../model/pro
 import { adjustColour } from '../basemap/adjust-colour'
 import { mapColors } from '../basemap/palettes'
 import { blankProject } from '../testing/fixtures'
-import { fitBounds, WORLD_BOUNDS } from './camera'
+import { clampCenterLat, fitBounds, minEditZoom, WORLD_BOUNDS } from './camera'
+import { NO_PAN_KEYS, PAN_FAST_FACTOR, PAN_SPEED, panVelocity } from './edit-camera'
 import { evaluate } from './evaluate'
 import { frameRect, frameScale, scaleSize, zoomOffset } from './frame'
 import { layerZ, Z_BANDS } from './z-bands'
@@ -173,5 +174,51 @@ describe('output frame and scale (AD-23)', () => {
     const rect = frameRect({ width: 10, height: 10 }, '16:9')
     expect(rect.width / rect.height).toBeCloseTo(16 / 9, 10)
     expect(rect.width).toBeGreaterThan(0)
+  })
+})
+
+describe('edit camera limits (AD-1, AD-23)', () => {
+  const formats: OutputFormat[] = ['16:9', '9:16', '1:1']
+
+  it.each(formats)('%s: the lowest zoom is the default view', (format) => {
+    const frame = OUTPUT_FRAME_SIZES[format]
+    expect(minEditZoom(frame)).toBe(evaluate(blankProject(), 0, ctx(format)).camera.zoom)
+  })
+
+  it.each(formats)('%s: the frame never leaves the world vertically', (format) => {
+    const frame = OUTPUT_FRAME_SIZES[format]
+    const zoom = minEditZoom(frame) + 1
+    const half = frame.height / 2 / (512 * 2 ** zoom) // in world heights
+    const limit = (Math.atan(Math.sinh(Math.PI * (1 - 2 * half))) * 180) / Math.PI
+    expect(clampCenterLat(89, zoom, 0, frame)).toBeCloseTo(limit, 6)
+    expect(clampCenterLat(-89, zoom, 0, frame)).toBeCloseTo(-limit, 6)
+    expect(clampCenterLat(10, zoom, 0, frame)).toBeCloseTo(10, 9)
+  })
+
+  it('leaves no vertical room at the lowest zoom of a frame as tall as the world', () => {
+    const frame = OUTPUT_FRAME_SIZES['1:1']
+    expect(clampCenterLat(40, minEditZoom(frame), 0, frame)).toBeCloseTo(0, 6)
+    // 16:9 at its lowest zoom keeps ±70° of latitude visible: the centre can still move.
+    const wide = OUTPUT_FRAME_SIZES['16:9']
+    expect(clampCenterLat(10, minEditZoom(wide), 0, wide)).toBeCloseTo(10, 9)
+  })
+
+  it('counts the rotated frame when clamping', () => {
+    const frame = OUTPUT_FRAME_SIZES['16:9']
+    const zoom = minEditZoom(frame) + 1
+    expect(Math.abs(clampCenterLat(89, zoom, 90, frame))).toBeLessThan(Math.abs(clampCenterLat(89, zoom, 0, frame)))
+  })
+
+  it('pans at a constant speed, diagonals included, faster with Shift', () => {
+    const keys = { ...NO_PAN_KEYS }
+    expect(panVelocity(keys, false)).toEqual({ x: 0, y: 0 })
+    expect(panVelocity({ ...keys, right: true }, false)).toEqual({ x: PAN_SPEED, y: 0 })
+    expect(panVelocity({ ...keys, up: true }, false)).toEqual({ x: 0, y: -PAN_SPEED })
+    const diagonal = panVelocity({ ...keys, left: true, down: true }, false)
+    expect(Math.hypot(diagonal.x, diagonal.y)).toBeCloseTo(PAN_SPEED, 9)
+    expect(diagonal.x).toBeLessThan(0)
+    expect(diagonal.y).toBeGreaterThan(0)
+    expect(panVelocity({ ...keys, right: true }, true).x).toBeCloseTo(PAN_SPEED * PAN_FAST_FACTOR, 9)
+    expect(panVelocity({ left: true, right: true, up: false, down: false }, false)).toEqual({ x: 0, y: 0 })
   })
 })

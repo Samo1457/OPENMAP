@@ -43,3 +43,11 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-1-6-settings-dialog-and-browser-gate.md`
   summary: Add an e2e test that a schema upgrade from a second page makes the open app tab flush and reload (AD-9), covering the handler registration in main.tsx.
   evidence: Only the persistence unit test covers versionchange with its own handler; nothing loads main.tsx's registration.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-10-display-the-stylized-basemap-and-the-output-frame.md`
+  summary: Epic 3 must reconcile ←/→ (previous/next Step, EXPERIENCE.md context 4) with the Map panning that the owner chose for the arrow keys in Story 1.10, and Epic 2 with arrow nudging of a selection.
+  evidence: Story 1.10 owner decision: with the Map focused, arrows and ZQSD pan the edit camera; EXPERIENCE.md reserves ←/→ on the Map for Steps and arrows for nudging a selection.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-10-display-the-stylized-basemap-and-the-output-frame.md`
+  summary: With a rotated edit camera (Shift+wheel) the minimum zoom and the vertical clamp ignore the rotated frame, so a blank band or a repeated Earth can show inside the frame.
+  evidence: Edge-case and verification-gap reviewers; `minEditZoom(frame)` takes no bearing and `clampCenterLat` only keeps the centre inside the world. Rotation is rare today; fix before camera presets and Step framing (Epic 3) rely on rotated frames.

@@ -1,4 +1,5 @@
 export * from './camera'
+export * from './edit-camera'
 export * from './evaluate'
 export * from './frame'
 export * from './scene'

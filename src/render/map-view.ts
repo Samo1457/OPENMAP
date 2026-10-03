@@ -8,7 +8,7 @@ import { LngLat, Map as MapLibreMap, Point, setWorkerUrl, type PaddingOptions } 
 import 'maplibre-gl/dist/maplibre-gl.css'
 // MapLibre 6 runs its worker from a separate module that imports a shared chunk: Vite bundles both into one worker file served by the app origin.
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
-import { frameScale, zoomOffset, type Rect, type Scene, type SceneCamera, type Size } from '@/core'
+import { clampCenterLat, frameScale, minEditZoom, zoomOffset, type Rect, type Scene, type SceneCamera, type Size } from '@/core'
 import { OVERLAY_MODE } from './overlay-mode'
 import { fallbackStyle, loadBasemapStyle, paintTargets, type BasemapStyle } from './style'
 
@@ -39,8 +39,10 @@ export interface MapView {
   getCamera(): SceneCamera
   /** Zoom steps around the frame centre (keyboard and buttons). */
   zoomBy(delta: number): void
-  /** Moves the view by screen px (Ctrl + arrows). */
+  /** Moves the view by screen px. */
   panPixels(dx: number, dy: number): void
+  /** Pans continuously at `x`, `y` screen px/s until set to zero (held arrow or Z/Q/S/D keys). */
+  setPanVelocity(x: number, y: number): void
   /** Size factor of the frame for deck.gl sizes (`s`, AD-23). */
   getScale(): number
   destroy(): void
@@ -50,9 +52,11 @@ setWorkerUrl(workerUrl)
 
 const MIN_ZOOM = -2
 const MAX_ZOOM = 22
-const MAX_LATITUDE = 85.0511287798
 /** Degrees of rotation per wheel delta unit with Shift. */
 const ROTATE_PER_WHEEL = 0.1
+
+const sameCamera = (a: SceneCamera, b: SceneCamera) =>
+  Math.abs(a.center[0] - b.center[0]) < 1e-9 && Math.abs(a.center[1] - b.center[1]) < 1e-9 && Math.abs(a.zoom - b.zoom) < 1e-9 && Math.abs(a.bearing - b.bearing) < 1e-9
 
 function padding(layout: MapLayout): PaddingOptions {
   const { area, frame } = layout
@@ -84,6 +88,8 @@ export function createMapView(options: MapViewOptions): MapView {
   let loadToken = 0
   const aborter = new AbortController()
 
+  /** `transformConstrain` runs during construction, before `map` exists. */
+  let constructed = false
   const map = new MapLibreMap({
     container,
     style: fallbackStyle(scene.basemap) as never,
@@ -104,13 +110,17 @@ export function createMapView(options: MapViewOptions): MapView {
     touchPitch: false,
     scrollZoom: true,
     touchZoomRotate: true,
-    // MapLibre's default keeps the world covering the viewport; the whole world fitted in a frame
-    // smaller than the Map area (AD-23) needs to zoom out past that, so only the poles are clamped.
-    transformConstrain: (center, zoom) => ({
-      center: new LngLat(center.lng, Math.min(MAX_LATITUDE, Math.max(-MAX_LATITUDE, center.lat))),
-      zoom: Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom)),
-    }),
+    // MapLibre's default keeps the world covering the viewport of the whole Map area; the output frame
+    // is what matters here: no zoom below the default view, and the frame never leaves the world
+    // vertically. Longitude is free: the world copies stay on so a map can cross the antimeridian.
+    transformConstrain: (center, zoom) => {
+      const offset = zoomOffset(layout.frame)
+      const clamped = Math.min(MAX_ZOOM, Math.max(minEditZoom(scene.frame) + offset, zoom))
+      const lat = clampCenterLat(center.lat, clamped - offset, constructed ? map.getBearing() : camera.bearing, scene.frame)
+      return { center: new LngLat(center.lng, lat), zoom: clamped }
+    },
   })
+  constructed = true
   styleBasemap = scene.basemap.id
   // The canvas is decoration for assistive tech: the Map region is the named, focusable element.
   const canvas = map.getCanvas()
@@ -160,12 +170,20 @@ export function createMapView(options: MapViewOptions): MapView {
       },
       { programmatic: true },
     )
+    // The limits may have moved the view (a higher lowest zoom after a change of Output Format).
+    const actual = readCamera()
+    if (!sameCamera(actual, camera)) {
+      camera = actual
+      onEditCamera(actual)
+    }
     publish()
   }
 
   /** The user's own motion: remember it and report it as the edit camera. */
   function userMoved() {
-    camera = readCamera()
+    const next = readCamera()
+    if (sameCamera(next, camera)) return
+    camera = next
     publish()
     onEditCamera(camera)
   }
@@ -261,21 +279,25 @@ export function createMapView(options: MapViewOptions): MapView {
   keyTarget.addEventListener('blur', resetSpace)
   window.addEventListener('blur', resetSpace)
 
-  let drag: { id: number; startX: number; startY: number; startCenter: Point } | undefined
+  let drag: { id: number; lastX: number; lastY: number } | undefined
   const surface = map.getCanvasContainer()
   const onPointerDown = (event: PointerEvent) => {
     const middle = event.button === 1
     if (!(middle || (event.button === 0 && spaceDown))) return
     event.preventDefault() // no browser autoscroll on the middle button
     surface.setPointerCapture(event.pointerId)
-    drag = { id: event.pointerId, startX: event.clientX, startY: event.clientY, startCenter: map.project(map.getCenter()) }
+    drag = { id: event.pointerId, lastX: event.clientX, lastY: event.clientY }
     surface.style.cursor = 'grabbing'
   }
   const onPointerMove = (event: PointerEvent) => {
     if (!drag || event.pointerId !== drag.id) return
-    const target = drag.startCenter.sub(new Point(event.clientX - drag.startX, event.clientY - drag.startY))
-    map.jumpTo({ center: map.unproject(target) }, { programmatic: true })
-    userMoved()
+    // The content follows the pointer 1:1: each move pans by the pointer's step since the last event
+    // (the centre moves the other way), measured against the map as it is now.
+    const dx = event.clientX - drag.lastX
+    const dy = event.clientY - drag.lastY
+    drag.lastX = event.clientX
+    drag.lastY = event.clientY
+    panBy(-dx, -dy)
   }
   const onPointerEnd = (event: PointerEvent) => {
     if (!drag || event.pointerId !== drag.id) return
@@ -300,6 +322,24 @@ export function createMapView(options: MapViewOptions): MapView {
     userMoved()
   }
   keyTarget.addEventListener('wheel', onWheel, { capture: true, passive: false })
+
+  // --- Held keys pan continuously at a constant screen speed, one jumpTo per frame (no easing).
+  let velocity = { x: 0, y: 0 }
+  let frameId: number | undefined
+  let lastTime = 0
+  function panFrame(time: number) {
+    frameId = undefined
+    if (destroyed || (velocity.x === 0 && velocity.y === 0)) return
+    const seconds = Math.min(0.05, (time - lastTime) / 1000)
+    lastTime = time
+    if (seconds > 0) panBy(velocity.x * seconds, velocity.y * seconds)
+    frameId = requestAnimationFrame(panFrame)
+  }
+  function panBy(dx: number, dy: number) {
+    const target = map.project(map.getCenter()).add(new Point(dx, dy))
+    map.jumpTo({ center: map.unproject(target) }, { programmatic: true })
+    userMoved()
+  }
 
   return {
     setScene(next) {
@@ -327,14 +367,20 @@ export function createMapView(options: MapViewOptions): MapView {
       map.jumpTo({ zoom: map.getZoom() + delta }, { programmatic: true })
       userMoved()
     },
-    panPixels(dx, dy) {
-      const target = map.project(map.getCenter()).add(new Point(dx, dy))
-      map.jumpTo({ center: map.unproject(target) }, { programmatic: true })
-      userMoved()
+    panPixels: panBy,
+    setPanVelocity(x, y) {
+      if (destroyed) return
+      const wasMoving = velocity.x !== 0 || velocity.y !== 0
+      const moving = x !== 0 || y !== 0
+      velocity = { x, y }
+      // A pending frame may be older than this press: restart the clock so the first step is not a jump.
+      if (moving && !wasMoving) lastTime = performance.now()
+      if (frameId === undefined && moving) frameId = requestAnimationFrame(panFrame)
     },
     getScale: () => frameScale(layout.frame),
     destroy() {
       destroyed = true
+      if (frameId !== undefined) cancelAnimationFrame(frameId)
       aborter.abort()
       canvasObserver.disconnect()
       keyTarget.removeEventListener('keydown', onKeyDown)

@@ -39,11 +39,14 @@ context:
 | UI theme | light ↔ dark | Map canvas pixel-identical | N/A |
 | Output Format | 16:9, 9:16, 1:1 | frame recomputed at exact ratio, margin ≥ 24 px, 55 % mask, no border | N/A |
 | Edit camera | wheel, pinch, Space + drag, middle button, Shift + wheel rotate, Shift+1 | camera moves, Project and Scene camera unchanged | N/A |
-| Keyboard camera | Map focused | `+` / `-` zoom, Ctrl+arrows pan, Shift+1 recentre; bottom-left buttons +, −, recentre do the same with the pointer | arrows alone left to later stories |
+| Keyboard camera | Map focused | ←/↑/↓/→ and Z/Q/S/D (physical W/A/S/D positions) pan continuously while held, Shift faster; `+` / `-` zoom, Shift+1 recentres; bottom-left buttons do the same with the pointer | no key reaches the Map when a text field or dialog has the focus |
 | Scale | 562×316 frame, 56 px label | about 16.4 px | N/A |
 
 **Decisions (owner, 2026-10-02):**
-- Keyboard camera (option B): with the Map focused, `+` / `-` zoom, Ctrl+←/↑/↓/→ pan, Shift+1 recentres on the output frame; three on-screen buttons (+, −, recentre) sit bottom-left of the Map area. Plain arrows and Shift+arrows stay free for Steps, frames and nudging (Epics 2 and 3); the keys are listed in the `?` help and `docs/keyboard.md`.
+- Keyboard camera, first choice (option B, Ctrl+arrows) was replaced by the camera revision below.
+- Camera revision (owner, after trying the first build, supersedes the Ctrl+arrows choice): with the Map focused, the four arrows and Z/Q/S/D pan continuously while held (diagonals combine, Shift is faster); Z/Q/S/D are the physical positions of W/A/S/D, so they work on AZERTY and QWERTY alike (movement keys follow the physical key, unlike mnemonic shortcuts); `+` / `-` zoom, Shift+1 recentres; Ctrl+arrows are removed. Epic 3 must later share ←/→ with Step navigation (recorded in deferred-work.md).
+- Wheel / drag (owner): the owner found moving by pressing the mouse wheel and dragging far too fast. Root cause (found by measurement, fixed): each pointer move was measured against the drag start but projected through the map as it had already moved, so a 100 px drag moved the centre 550 px; the drag is now incremental and follows the pointer 1:1 (also Space + left drag). The mouse-wheel zoom rate is unchanged.
+- No repeated Earth (owner): the edit camera cannot zoom out beyond the default view (the world covers the output frame) and cannot be panned so that the frame leaves the world vertically; horizontally the map wraps continuously across the antimeridian, so the Earth never appears twice inside the frame (a few dimmed pixels of the wrapped neighbour may show in the margin around the frame).
 - Default framing (option C, after review): the world covers the output frame, zoom = larger of width-fit and height-fit; in 16:9 and 1:1 the world's width fills the frame (16:9 shows about ±70° of latitude), in 9:16 the world's height fills it and about 55 % of the longitudes show; the user can pan and zoom out freely.
 - Full spec kept (~2,800 tokens); Sonnet subagents for implementation and review.
 
@@ -126,6 +129,24 @@ context:
 | 20 | edge | View creation failure, shortcuts while view absent, recreated view vs store | low | Fallback colour is the specified behaviour; WebGL is gated earlier (AD-19). reject |
 | 21 | edge | Numeric field accepts `1e1`; `inputMode` without minus | low | Desktop-only product. reject |
 | 22 | edge | Array-form sprite URLs | low | Styles have no sprite. reject |
+
+### Follow-up round (owner feedback: keys, drag speed, repeated Earth)
+
+| # | Source | Finding | Verdict | Evidence / route |
+|---|--------|---------|---------|------------------|
+| 23 | owner, measured | Middle-button / Space drag moved 5.5x too fast (compounding) | high | 100 px drag moved the centre 550 px. fixed |
+| 24 | edge | Stale `lastTime` makes the first pan frame jump | low | `setPanVelocity` restart. patch |
+| 25 | edge | Held pan key continues when a dialog opens or a modifier is pressed; focusout inside the Map stops the pan | medium | `map-pan.ts` guards run on keydown only once. patch |
+| 26 | blind, edge | Zoom limit reached is silent, guard reads lagging React state | medium | Definition of Done requires announcements. patch |
+| 27 | blind | Help row says WASD for AZERTY users | low | i18n. patch |
+| 28 | blind, gap | Stale sentence in `docs/keyboard.md` | low | Doc. patch |
+| 29 | verification-gap | Re-clamp after an Output Format change untested; a test asserts nothing | medium | Pre-verified. patch |
+| 30 | blind, edge | Rotated frame can show a blank band or a repeated Earth (zoom floor ignores bearing) | medium | Shift+wheel rotation is rare; fixing needs rotated-extent clamping. defer |
+| 31 | edge | Clamp at a limit absorbs drag movement, reversing moves the map at once | low | Standard clamped-map behaviour. reject |
+| 32 | blind | Pan reservation for Z/Q/S/D only in docs, not in code | low | `listOnly` entry plus doc; guardrail adds surface. reject |
+| 33 | blind | Timing-based e2e tests | low | Stable over repeated runs. reject |
+| 34 | blind | Per-frame React update from `userMoved` | low | Not measurable at this scale. reject |
+| 35 | blind | Wheel complaint "pending" in the spec | false | Resolved above (drag bug). reject |
 
 ## Design Notes
 

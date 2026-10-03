@@ -47,3 +47,26 @@ export function fitBounds(bounds: Bounds, frame: Size, mode: 'contain' | 'cover'
   const centerY = (mercatorY(south) + mercatorY(north)) / 2
   return { center: [lonOf(centerX), latOf(centerY)], zoom, bearing: 0, pitch: 0 }
 }
+
+/** The lowest zoom of the edit camera: the default view, where the world covers the output frame (reference zoom). */
+export function minEditZoom(frame: Size): number {
+  return fitBounds(DEFAULT_BOUNDS, frame, 'cover').zoom
+}
+
+/**
+ * Clamps a centre latitude so that the output frame (rotated by `bearing`) never leaves the world
+ * vertically at `zoom`: no blank band inside the frame. Longitude is left alone (the map wraps across
+ * the antimeridian). When the frame is as tall as the world, the centre is the equator's.
+ */
+export function clampCenterLat(lat: number, zoom: number, bearing: number, frame: Size): number {
+  const radians = (bearing * Math.PI) / 180
+  const extent = frame.height * Math.abs(Math.cos(radians)) + frame.width * Math.abs(Math.sin(radians))
+  const half = extent / 2 / (TILE_SIZE * 2 ** zoom)
+  const [, south, , north] = WORLD_BOUNDS
+  const top = mercatorY(north)
+  const bottom = mercatorY(south)
+  const lowest = top + half
+  const highest = bottom - half
+  if (lowest >= highest) return latOf((top + bottom) / 2)
+  return latOf(Math.min(highest, Math.max(lowest, mercatorY(lat))))
+}

@@ -130,7 +130,8 @@
       "zoomedIn": "Zoomed in",
       "zoomedOut": "Zoomed out",
       "panned": "Map moved",
-      "recentred": "Recentred on the frame"
+      "recentred": "Recentred on the frame",
+      "lowestZoom": "Lowest zoom reached"
     },
     "basemap": {
       "title": "Basemap",
@@ -186,12 +187,7 @@
         "zoomIn": "Zoom the Map in",
         "zoomOut": "Zoom the Map out",
         "recentre": "Recentre the Map on the frame",
-        "pan": {
-          "left": "Pan the Map left",
-          "up": "Pan the Map up",
-          "right": "Pan the Map right",
-          "down": "Pan the Map down"
-        }
+        "pan": "Pan the Map: arrow keys or WASD (ZQSD on an AZERTY keyboard)"
       }
     }
   },

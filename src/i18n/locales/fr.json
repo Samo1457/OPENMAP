@@ -130,7 +130,8 @@
       "zoomedIn": "Zoom avant",
       "zoomedOut": "Zoom arrière",
       "panned": "Carte déplacée",
-      "recentred": "Recentré sur le cadre"
+      "recentred": "Recentré sur le cadre",
+      "lowestZoom": "Zoom minimal atteint"
     },
     "basemap": {
       "title": "Fond de carte",
@@ -186,12 +187,7 @@
         "zoomIn": "Zoomer sur la carte",
         "zoomOut": "Dézoomer la carte",
         "recentre": "Recentrer la carte sur le cadre",
-        "pan": {
-          "left": "Déplacer la carte vers la gauche",
-          "up": "Déplacer la carte vers le haut",
-          "right": "Déplacer la carte vers la droite",
-          "down": "Déplacer la carte vers le bas"
-        }
+        "pan": "Déplacer la Carte : flèches ou ZQSD (WASD sur un clavier QWERTY)"
       }
     }
   },

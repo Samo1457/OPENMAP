@@ -565,46 +565,294 @@ test.describe('Edit camera', () => {
     await expectProjectUntouched(page, scene)
   })
 
-  test('with the Map focused, + and - zoom, Ctrl+arrows pan, Shift+1 recentres; plain arrows are left alone', async ({ page }) => {
+  /** A key event with the given `key` and physical `code`, sent to the focused element (what another layout would send). */
+  async function sendKey(page: Page, type: 'keydown' | 'keyup', code: string, key: string) {
+    await page.evaluate(([eventType, eventCode, eventKey]) => {
+      document.activeElement?.dispatchEvent(new KeyboardEvent(eventType, { code: eventCode, key: eventKey, bubbles: true, cancelable: true }))
+    }, [type, code, key] as const)
+  }
+
+  /** Zooms in once so the camera has room to move in every direction. */
+  async function zoomedIn(page: Page) {
+    await page.keyboard.press('Alt+4')
+    await expect(mapRegion(page)).toBeFocused()
+    await page.keyboard.press('+')
+    await page.keyboard.press('+')
+    return camera(page)
+  }
+
+  test('with the Map focused, + and - zoom (- stops at the default view) and Shift+1 recentres', async ({ page }) => {
     await ready(page)
     const scene = await sceneCamera(page)
     const start = await camera(page)
     await page.keyboard.press('Alt+4')
     await expect(mapRegion(page)).toBeFocused()
 
+    await page.keyboard.press('-') // already at the lowest zoom
+    expect((await camera(page)).zoom).toBeCloseTo(start.zoom, 6)
+    await expect(page.getByRole('status').filter({ hasText: 'Lowest zoom reached' })).toHaveCount(1)
+    await expect(mapRegion(page).getByRole('button', { name: 'Zoom out' })).toHaveAccessibleDescription('Lowest zoom reached')
     await page.keyboard.press('+')
     expect((await camera(page)).zoom).toBeCloseTo(start.zoom + 0.5, 3)
+    await page.keyboard.press('+')
     await page.keyboard.press('-')
-    await page.keyboard.press('-')
-    expect((await camera(page)).zoom).toBeCloseTo(start.zoom - 0.5, 3)
-
+    expect((await camera(page)).zoom).toBeCloseTo(start.zoom + 0.5, 3)
     await page.keyboard.press('Shift+1')
     expect((await camera(page)).zoom).toBeCloseTo(start.zoom, 3)
-    await page.keyboard.press('+')
-    await page.keyboard.press('Control+ArrowRight')
-    const east = await camera(page)
-    expect(east.center[0]).toBeGreaterThan(start.center[0])
-    await page.keyboard.press('Control+ArrowLeft')
-    await page.keyboard.press('Control+ArrowLeft')
-    expect((await camera(page)).center[0]).toBeLessThan(east.center[0])
-    await page.keyboard.press('Control+ArrowUp')
-    expect((await camera(page)).center[1]).toBeGreaterThan(east.center[1])
-    await page.keyboard.press('Control+ArrowDown')
-    await page.keyboard.press('Control+ArrowDown')
-    const south = (await camera(page)).center[1]
-    expect(south).toBeLessThan(east.center[1])
+    await expectProjectUntouched(page, scene)
+  })
 
-    const beforeArrows = await camera(page)
-    await page.keyboard.press('ArrowLeft')
-    await page.keyboard.press('Shift+ArrowUp')
-    expect(await camera(page)).toEqual(beforeArrows)
+  test('the arrows pan while held: the camera keeps moving, and stops on release', async ({ page }) => {
+    await ready(page)
+    const scene = await sceneCamera(page)
+    const start = await zoomedIn(page)
+    await page.keyboard.down('ArrowRight')
+    await expect.poll(async () => (await camera(page)).center[0]).toBeGreaterThan(start.center[0] + 0.5)
+    const first = (await camera(page)).center[0]
+    await page.waitForTimeout(250)
+    const second = (await camera(page)).center[0]
+    expect(second).toBeGreaterThan(first) // still moving while held
+    await page.keyboard.up('ArrowRight')
+    await page.waitForTimeout(100)
+    const stopped = (await camera(page)).center[0]
+    await page.waitForTimeout(300)
+    expect((await camera(page)).center[0]).toBe(stopped) // and still once released
 
-    // Out of the Map the keys belong to their own context: a text field types them.
+    // Up, down and left; diagonals combine; Shift is faster.
+    const beforeUp = (await camera(page)).center[1]
+    await page.keyboard.down('ArrowUp')
+    await page.waitForTimeout(300)
+    await page.keyboard.up('ArrowUp')
+    expect((await camera(page)).center[1]).toBeGreaterThan(beforeUp)
+    const beforeDown = (await camera(page)).center[1]
+    await page.keyboard.down('ArrowDown')
+    await page.waitForTimeout(300)
+    await page.keyboard.up('ArrowDown')
+    expect((await camera(page)).center[1]).toBeLessThan(beforeDown)
+
+    const slow = await camera(page)
+    await page.keyboard.down('ArrowLeft')
+    await page.waitForTimeout(400)
+    await page.keyboard.up('ArrowLeft')
+    const slowMove = slow.center[0] - (await camera(page)).center[0]
+    const fastStart = (await camera(page)).center[0]
+    await page.keyboard.down('Shift')
+    await page.keyboard.down('ArrowLeft')
+    await page.waitForTimeout(400)
+    await page.keyboard.up('ArrowLeft')
+    await page.keyboard.up('Shift')
+    expect(fastStart - (await camera(page)).center[0]).toBeGreaterThan(slowMove * 1.5)
+
+    const diagonalStart = await camera(page)
+    await page.keyboard.down('ArrowRight')
+    await page.keyboard.down('ArrowUp')
+    await page.waitForTimeout(300)
+    await page.keyboard.up('ArrowUp')
+    await page.keyboard.up('ArrowRight')
+    const diagonal = await camera(page)
+    expect(diagonal.center[0]).toBeGreaterThan(diagonalStart.center[0])
+    expect(diagonal.center[1]).toBeGreaterThan(diagonalStart.center[1])
+    await expectProjectUntouched(page, scene)
+  })
+
+  test('Z/Q/S/D pan by physical key (KeyW/KeyA/KeyS/KeyD), whatever character the layout types', async ({ page }) => {
+    await ready(page)
+    const start = await zoomedIn(page)
+    const hold = async (code: string, key: string) => {
+      const before = await camera(page)
+      await sendKey(page, 'keydown', code, key)
+      await page.waitForTimeout(300)
+      await sendKey(page, 'keyup', code, key)
+      return { before, after: await camera(page) }
+    }
+    let moved = await hold('KeyD', 'd') // QWERTY
+    expect(moved.after.center[0]).toBeGreaterThan(moved.before.center[0])
+    moved = await hold('KeyA', 'q') // AZERTY: Q is where A is
+    expect(moved.after.center[0]).toBeLessThan(moved.before.center[0])
+    moved = await hold('KeyW', 'z') // AZERTY: Z is where W is
+    expect(moved.after.center[1]).toBeGreaterThan(moved.before.center[1])
+    moved = await hold('KeyS', 's')
+    expect(moved.after.center[1]).toBeLessThan(moved.before.center[1])
+    moved = await hold('KeyD', 'e') // Dvorak types E on that key: still the physical D position
+    expect(moved.after.center[0]).toBeGreaterThan(moved.before.center[0])
+    // The typed letters alone, on other physical keys, do nothing.
+    const before = await camera(page)
+    await sendKey(page, 'keydown', 'KeyZ', 'w')
+    await page.waitForTimeout(250)
+    await sendKey(page, 'keyup', 'KeyZ', 'w')
+    expect(await camera(page)).toEqual(before)
+    // The pan keys moved the camera: east, west, north, south and east again net out to a different centre.
+    expect(before.center).not.toEqual(start.center)
+  })
+
+  test('Ctrl+arrows no longer pan; the keys do nothing from a text field or with Ctrl, and stop when the Map loses the focus', async ({ page }) => {
+    await ready(page)
+    const scene = await sceneCamera(page)
+    await zoomedIn(page)
+    const before = await camera(page)
+    await page.keyboard.down('Control')
+    await page.keyboard.down('ArrowRight')
+    await page.waitForTimeout(300)
+    await page.keyboard.up('ArrowRight')
+    await page.keyboard.up('Control')
+    expect(await camera(page)).toEqual(before)
+
+    // A text field types its own keys.
     const name = page.getByRole('textbox', { name: 'Project name' })
     await name.focus()
+    await page.keyboard.down('ArrowRight')
+    await page.keyboard.press('d')
+    await page.waitForTimeout(250)
+    await page.keyboard.up('ArrowRight')
     await page.keyboard.press('+')
-    expect(await camera(page)).toEqual(beforeArrows)
-    await expectProjectUntouched(page, scene)
+    expect(await camera(page)).toEqual(before)
+
+    // A held key stops when the focus leaves the Map.
+    await mapRegion(page).focus()
+    await page.keyboard.down('ArrowRight')
+    await expect.poll(async () => (await camera(page)).center[0]).toBeGreaterThan(before.center[0])
+    await name.focus()
+    await page.waitForTimeout(100)
+    const left = (await camera(page)).center[0]
+    await page.waitForTimeout(300)
+    expect((await camera(page)).center[0]).toBe(left)
+    await page.keyboard.up('ArrowRight')
+    expect(await sceneCamera(page)).toBe(scene) // the name was typed, the Scene camera is untouched
+  })
+
+  test('the pan keys do nothing while a dialog is open', async ({ page }) => {
+    await ready(page)
+    await zoomedIn(page)
+    const before = await camera(page)
+    await page.keyboard.press('?')
+    await expect(page.getByRole('dialog', { name: 'Keyboard shortcuts' })).toBeVisible()
+    await page.keyboard.down('ArrowRight')
+    await page.waitForTimeout(250)
+    await page.keyboard.up('ArrowRight')
+    expect(await camera(page)).toEqual(before)
+  })
+
+  test('the Earth never shows twice: zooming out stops at the default view, in every Output Format', async ({ page }) => {
+    await ready(page)
+    for (const format of ['16:9', '9:16', '1:1']) {
+      await panel(page).getByRole('radio', { name: format, exact: true }).click()
+      await page.keyboard.press('Alt+4')
+      await page.keyboard.press('Shift+1')
+      const lowest = (await camera(page)).zoom
+      await page.keyboard.press('+')
+      await page.keyboard.press('+')
+      for (let i = 0; i < 6; i++) await page.keyboard.press('-')
+      expect((await camera(page)).zoom, format).toBeCloseTo(lowest, 3)
+      // The wheel cannot go further either.
+      const area = await box(mapRegion(page))
+      await page.mouse.move(area.x + area.width / 2, area.y + area.height / 2)
+      await page.mouse.wheel(0, 3000)
+      await page.waitForTimeout(600)
+      expect((await camera(page)).zoom, format).toBeCloseTo(lowest, 3)
+      await expect(mapRegion(page).getByRole('button', { name: 'Zoom out' })).toHaveAttribute('aria-disabled', 'true')
+      // One Earth in the frame: the world is at least as large as the frame on both axes.
+      const frameBox = await box(frame(page))
+      const worldPx = 512 * 2 ** ((await camera(page)).zoom + Math.log2(Math.min(frameBox.width, frameBox.height) / 1080))
+      expect(worldPx, format).toBeGreaterThanOrEqual(Math.max(frameBox.width, frameBox.height) - 0.5)
+      // And the pixels agree: the same coast at the left and the right edge of the frame is not drawn twice,
+      // i.e. land at (0, 0) is land and the frame corners are inside the world (sea or land, never the page).
+      const centre = project(0, 0, await camera(page), frameBox)
+      await expectColourAt(page, centre.x, centre.y, PARCHMENT.land)
+    }
+  })
+
+  test('a change of Output Format re-clamps the zoom to the new lowest, without Shift+1', async ({ page }) => {
+    await ready(page)
+    const radioFor = (format: string) => panel(page).getByRole('radio', { name: format, exact: true })
+    const zoomOut = mapRegion(page).getByRole('button', { name: 'Zoom out' })
+    // 1:1 has the lowest default zoom; zoom out to it, then go to formats whose lowest zoom is higher.
+    await radioFor('1:1').click()
+    await page.keyboard.press('Alt+4')
+    await page.keyboard.press('Shift+1')
+    const square = (await camera(page)).zoom
+    await page.keyboard.press('+')
+    await page.keyboard.press('-')
+    expect((await camera(page)).zoom).toBeCloseTo(square, 6)
+    for (const format of ['16:9', '9:16']) {
+      await radioFor(format).click()
+      const lowest = JSON.parse((await mapRegion(page).getAttribute('data-scene-camera'))!).zoom as number
+      expect(lowest).toBeGreaterThan(square)
+      await expect.poll(async () => (await camera(page)).zoom).toBeCloseTo(lowest, 3)
+      await expect(zoomOut).toHaveAttribute('aria-disabled', 'true')
+    }
+    await radioFor('1:1').click() // and back to the lowest of 1:1: the zoom-out button is still disabled at that view
+    await expect.poll(async () => (await camera(page)).zoom).toBeGreaterThanOrEqual(square - 1e-6)
+  })
+
+  test('the frame cannot leave the world vertically; horizontally the map wraps across the antimeridian', async ({ page }) => {
+    await ready(page)
+    const start = await zoomedIn(page)
+    await page.keyboard.down('ArrowUp')
+    await page.waitForTimeout(2500)
+    await page.keyboard.up('ArrowUp')
+    const top = (await camera(page)).center[1]
+    expect(top).toBeGreaterThan(start.center[1])
+    expect(top).toBeLessThan(85.06)
+    // The frame's top edge is at (or below) the north edge of the world: the centre stops short of the pole.
+    const frameBox = await box(frame(page))
+    const north = project(0, 85.0511, await camera(page), frameBox)
+    expect(north.y).toBeLessThanOrEqual(frameBox.y + 1.5)
+    const stopped = top
+    await page.keyboard.down('ArrowUp')
+    await page.waitForTimeout(400)
+    await page.keyboard.up('ArrowUp')
+    expect((await camera(page)).center[1]).toBeCloseTo(stopped, 6)
+
+    // East for a long while: the centre crosses ±180° and keeps going (the world wraps).
+    await page.keyboard.down('Shift')
+    await page.keyboard.down('ArrowRight')
+    await expect.poll(async () => Math.abs((await camera(page)).center[0]), { timeout: 20000 }).toBeGreaterThan(179)
+    await page.keyboard.up('ArrowRight')
+    await page.keyboard.up('Shift')
+  })
+
+  test('dragging with the middle button or Space + left moves the map 1:1 with the pointer, at any zoom and bearing, with no inertia', async ({ page }) => {
+    await ready(page)
+    await mapRegion(page).focus()
+    const frameBox = await box(frame(page))
+    const area = await box(mapRegion(page))
+    const centre = { x: area.x + area.width / 2, y: area.y + area.height / 2 }
+    const mercatorY = (lat: number) => Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360)) / (2 * Math.PI)
+    /** How far the centre moved, in screen px (the map content moves the other way). */
+    const moved = (a: Camera, b: Camera) => {
+      const world = 512 * 2 ** (b.zoom + Math.log2(Math.min(frameBox.width, frameBox.height) / 1080))
+      return Math.hypot(((b.center[0] - a.center[0]) / 360) * world, (mercatorY(b.center[1]) - mercatorY(a.center[1])) * world)
+    }
+    async function drag(how: 'middle' | 'space', steps: number) {
+      const before = await camera(page)
+      if (how === 'space') await page.keyboard.down('Space')
+      await page.mouse.move(centre.x, centre.y)
+      await page.mouse.down({ button: how === 'middle' ? 'middle' : 'left' })
+      for (let i = 1; i <= steps; i++) await page.mouse.move(centre.x - (100 * i) / steps, centre.y)
+      await page.mouse.up({ button: how === 'middle' ? 'middle' : 'left' })
+      if (how === 'space') await page.keyboard.up('Space')
+      const after = await camera(page)
+      await page.waitForTimeout(400)
+      expect(await camera(page)).toEqual(after) // no momentum after the release
+      expect(after.zoom).toBeCloseTo(before.zoom, 6) // and the press did not zoom
+      return moved(before, after)
+    }
+    for (const zoomSteps of [0, 4, 8]) {
+      await page.keyboard.press('Shift+1')
+      for (let i = 0; i < zoomSteps; i++) await page.keyboard.press('+')
+      for (const [how, steps] of [['middle', 10], ['middle', 3], ['space', 10]] as const) {
+        expect(await drag(how, steps), `${how}, ${steps} steps, zoom +${zoomSteps / 2}`).toBeCloseTo(100, 0)
+      }
+    }
+    // Rotated: the same distance, in the rotated direction.
+    await page.keyboard.press('Shift+1')
+    for (let i = 0; i < 4; i++) await page.keyboard.press('+')
+    await page.mouse.move(centre.x, centre.y)
+    await page.keyboard.down('Shift')
+    await page.mouse.wheel(0, 400)
+    await page.keyboard.up('Shift')
+    await expect.poll(async () => Math.abs((await camera(page)).bearing)).toBeGreaterThan(10)
+    expect(await drag('middle', 10)).toBeCloseTo(100, 0)
   })
 
   test('the buttons at the bottom left of the Map do the same with the pointer', async ({ page }) => {
@@ -618,11 +866,14 @@ test.describe('Edit camera', () => {
     // Bottom left of the Map area, below the frame (never over it).
     expect(buttonBox.y).toBeGreaterThan(frameBox.y + frameBox.height)
 
+    const zoomOut = group.getByRole('button', { name: 'Zoom out' })
+    await expect(zoomOut).toHaveAttribute('aria-disabled', 'true') // the default view is the lowest zoom
     await zoomIn.click()
     expect((await camera(page)).zoom).toBeCloseTo(start.zoom + 0.5, 3)
-    await group.getByRole('button', { name: 'Zoom out' }).click()
-    await group.getByRole('button', { name: 'Zoom out' }).click()
-    expect((await camera(page)).zoom).toBeCloseTo(start.zoom - 0.5, 3)
+    await expect(zoomOut).not.toHaveAttribute('aria-disabled')
+    await zoomOut.click()
+    await zoomOut.click({ force: true }) // disabled at the default view: nothing happens
+    expect((await camera(page)).zoom).toBeCloseTo(start.zoom, 6)
     await group.getByRole('button', { name: 'Recentre on the frame' }).click()
     expect((await camera(page)).zoom).toBeCloseTo(start.zoom, 3)
     await zoomIn.hover()
@@ -654,11 +905,10 @@ test.describe('Edit camera', () => {
     await ready(page)
     await page.keyboard.press('?')
     const help = page.getByRole('dialog', { name: 'Keyboard shortcuts' })
-    for (const name of ['Zoom the Map in', 'Zoom the Map out', 'Recentre the Map on the frame', 'Pan the Map left', 'Pan the Map down']) {
+    for (const name of ['Zoom the Map in', 'Zoom the Map out', 'Recentre the Map on the frame', 'Pan the Map: arrow keys or WASD (ZQSD on an AZERTY keyboard)']) {
       await expect(help.getByText(name)).toBeVisible()
     }
     await expect(help.getByText('Shift+1')).toBeVisible()
-    await expect(help.getByText('Ctrl+←')).toBeVisible()
   })
 })
 

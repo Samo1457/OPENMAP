@@ -1,13 +1,14 @@
 import { Crosshair, Minus, Plus } from 'lucide-react'
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FRAME_MASK_OPACITY, frameRect, mapColors, type OutputFormat, type Scene, type SceneCamera, type Size } from '@/core'
+import { FRAME_MASK_OPACITY, frameRect, mapColors, minEditZoom, type OutputFormat, type Scene, type SceneCamera, type Size } from '@/core'
 import { loadMapView, type MapView } from '@/render'
 import { buttonClass, iconProps } from '@/ui/components/button'
 import { Tooltip } from '@/ui/components/Tooltip'
 import { announce } from '@/ui/keyboard/announcer'
 import { KEYBOARD_ZOOM_STEP, mapShortcuts, RECENTRE_COMBO, ZOOM_IN_COMBOS, ZOOM_OUT_COMBOS } from '@/ui/keyboard/map-shortcuts'
 import { regionProps } from '@/ui/keyboard/regions'
+import { installMapPan } from '@/ui/keyboard/map-pan'
 import { registerShortcuts } from '@/ui/keyboard/registry'
 import { cn } from '@/ui/lib/utils'
 import { monoColors } from '@/ui/theme/tokens'
@@ -119,17 +120,23 @@ export function MapArea({ scene, outputFormat }: { scene?: Scene; outputFormat?:
     if (camera && camera !== reported.current) view.setCamera(camera)
   }, [view, editCamera, sceneCameraKey])
 
+  // The lowest zoom is the default view for the current Output Format (reference zoom): below it the
+  // Earth would show twice. The zoom-out button and `-` stop there.
+  const lowestZoom = scene ? minEditZoom(scene.frame) : 0
+  const shownZoom = (editCamera ?? scene?.camera)?.zoom ?? lowestZoom
+  const atLowestZoom = shownZoom <= lowestZoom + 1e-6
+  const lowestId = useId()
+
   const zoom = useCallback(
     (delta: number) => {
+      // The live camera, not React state, which can lag a gesture in progress.
+      const sceneFrame = latest.current.scene?.frame
+      if (delta < 0 && view && sceneFrame && view.getCamera().zoom <= minEditZoom(sceneFrame) + 1e-6) {
+        announce(t('editor.camera.lowestZoom'))
+        return
+      }
       view?.zoomBy(delta)
       announce(t(delta > 0 ? 'editor.camera.zoomedIn' : 'editor.camera.zoomedOut'))
-    },
-    [view, t],
-  )
-  const pan = useCallback(
-    (dx: number, dy: number) => {
-      view?.panPixels(dx, dy)
-      announce(t('editor.camera.panned'))
     },
     [view, t],
   )
@@ -142,7 +149,20 @@ export function MapArea({ scene, outputFormat }: { scene?: Scene; outputFormat?:
     announce(t('editor.camera.recentred'))
   }, [view, t])
 
-  useEffect(() => registerShortcuts(mapShortcuts({ zoom, pan, recentre })), [zoom, pan, recentre])
+  useEffect(() => registerShortcuts(mapShortcuts({ zoom, recentre })), [zoom, recentre])
+
+  // Arrows and Z/Q/S/D pan while held; the screen reader hears it once per press.
+  useEffect(() => {
+    if (!view) return
+    let moving = false
+    const uninstall = installMapPan(window, (x, y) => {
+      view.setPanVelocity(x, y)
+      const now = x !== 0 || y !== 0
+      if (now && !moving) announce(t('editor.camera.panned'))
+      moving = now
+    })
+    return uninstall
+  }, [view, t])
 
   const disabled = view === undefined
   const land = scene?.basemap.colours.land ?? LOADING_LAND
@@ -183,9 +203,18 @@ export function MapArea({ scene, outputFormat }: { scene?: Scene; outputFormat?:
             </button>
           )}
         </Tooltip>
-        <Tooltip label={t('editor.camera.zoomOut')} shortcut={ZOOM_OUT_COMBOS[0]}>
+        {atLowestZoom && (
+          <span id={lowestId} className="sr-only">
+            {t('editor.camera.lowestZoom')}
+          </span>
+        )}
+        <Tooltip
+          label={atLowestZoom ? `${t('editor.camera.zoomOut')} · ${t('editor.camera.lowestZoom')}` : t('editor.camera.zoomOut')}
+          shortcut={ZOOM_OUT_COMBOS[0]}
+          describedBy={atLowestZoom ? lowestId : undefined}
+        >
           {(tip) => (
-            <button {...tip} type="button" aria-label={t('editor.camera.zoomOut')} aria-disabled={disabled || undefined} aria-keyshortcuts="-" className={controlClass} onClick={() => !disabled && zoom(-KEYBOARD_ZOOM_STEP)}>
+            <button {...tip} type="button" aria-label={t('editor.camera.zoomOut')} aria-disabled={disabled || atLowestZoom || undefined} aria-keyshortcuts="-" className={cn(controlClass, atLowestZoom && 'control-disabled')} onClick={() => !disabled && zoom(-KEYBOARD_ZOOM_STEP)}>
               <Minus {...iconProps} />
             </button>
           )}

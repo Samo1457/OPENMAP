@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { KEYBOARD_PAN_STEP, KEYBOARD_ZOOM_STEP, mapHasFocus, mapShortcuts } from './map-shortcuts'
+import { KEYBOARD_ZOOM_STEP, mapHasFocus, mapShortcuts } from './map-shortcuts'
 import { comboParts, resolveShortcut, type ShortcutEvent } from './registry'
 
 const press = (key: string, modifiers: Partial<ShortcutEvent> = {}): ShortcutEvent => ({
@@ -13,7 +13,7 @@ const press = (key: string, modifiers: Partial<ShortcutEvent> = {}): ShortcutEve
 })
 
 function handlers() {
-  return { zoom: vi.fn<(delta: number) => void>(), pan: vi.fn<(dx: number, dy: number) => void>(), recentre: vi.fn<() => void>() }
+  return { zoom: vi.fn<(delta: number) => void>(), recentre: vi.fn<() => void>() }
 }
 
 /** Stands in for the page: the Map region holds the focus or not. */
@@ -35,13 +35,10 @@ describe('Map camera keys', () => {
     expect(id(press('-'))).toBe('map.zoomOut')
   })
 
-  it('pans with Ctrl+arrows only: plain and Shift arrows stay free', () => {
-    expect(id(press('ArrowLeft', { ctrlKey: true }))).toBe('map.pan.left')
-    expect(id(press('ArrowUp', { ctrlKey: true }))).toBe('map.pan.up')
-    expect(id(press('ArrowRight', { metaKey: true }))).toBe('map.pan.right')
-    expect(id(press('ArrowDown', { ctrlKey: true }))).toBe('map.pan.down')
-    expect(id(press('ArrowLeft'))).toBeUndefined()
-    expect(id(press('ArrowLeft', { shiftKey: true }))).toBeUndefined()
+  it('leaves the arrows and Ctrl+arrows to the continuous pan (map-pan.ts), not to a shortcut', () => {
+    for (const modifiers of [{}, { ctrlKey: true }, { shiftKey: true }]) expect(id(press('ArrowLeft', modifiers))).toBeUndefined()
+    const pan = mapShortcuts(handlers()).find((shortcut) => shortcut.id === 'map.pan')
+    expect(pan?.listOnly).toBe(true) // listed in the help only
   })
 
   it('recentres with Shift on the physical 1 key, never with 1 alone', () => {
@@ -56,11 +53,8 @@ describe('Map camera keys', () => {
     const byId = Object.fromEntries(mapShortcuts(run).map((shortcut) => [shortcut.id, shortcut]))
     byId['map.zoomIn'].run()
     byId['map.zoomOut'].run()
-    byId['map.pan.left'].run()
-    byId['map.pan.down'].run()
     byId['map.recentre'].run()
     expect(run.zoom.mock.calls).toEqual([[KEYBOARD_ZOOM_STEP], [-KEYBOARD_ZOOM_STEP]])
-    expect(run.pan.mock.calls).toEqual([[-KEYBOARD_PAN_STEP, 0], [0, KEYBOARD_PAN_STEP]])
     expect(run.recentre).toHaveBeenCalledTimes(1)
   })
 
@@ -68,13 +62,12 @@ describe('Map camera keys', () => {
     focusOnMap(false)
     expect(mapHasFocus()).toBe(false)
     expect(id(press('+'))).toBeUndefined()
-    expect(id(press('ArrowLeft', { ctrlKey: true }))).toBeUndefined()
   })
 
   it('shows arrows as glyphs and Shift+1 in the help', () => {
     const translate = (key: string) => ({ 'keyboard.keys.ctrl': 'Ctrl', 'keyboard.keys.shift': 'Shift' })[key] ?? key
     const keys = Object.fromEntries(mapShortcuts(handlers()).map((shortcut) => [shortcut.id, shortcut.keys[0]]))
-    expect(comboParts(keys['map.pan.left'], translate)).toEqual(['Ctrl', '←'])
+    expect(comboParts(keys['map.pan'], translate)).toEqual(['←'])
     expect(comboParts(keys['map.recentre'], translate)).toEqual(['Shift', '1'])
     expect(comboParts(keys['map.zoomIn'], translate)).toEqual(['+'])
   })

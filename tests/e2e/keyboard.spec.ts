@@ -134,10 +134,7 @@ test.describe('shortcuts help (UX-DR110)', () => {
       // The edit-camera keys (Story 1.10), registered while the Map is open.
       'Zoom the Map in',
       'Zoom the Map out',
-      'Pan the Map left',
-      'Pan the Map up',
-      'Pan the Map right',
-      'Pan the Map down',
+      'Pan the Map: arrow keys or WASD (ZQSD on an AZERTY keyboard)',
       'Recentre the Map on the frame',
       'Show the shortcuts',
       'Close, cancel or go back one step',
