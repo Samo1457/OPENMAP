@@ -1,5 +1,6 @@
 import { createCanvas, loadImage } from '@napi-rs/canvas'
-import { expect, test, type Locator, type Page } from '@playwright/test'
+import { type Locator, type Page } from '@playwright/test'
+import { expect, test } from './fixtures'
 
 // Story 1.10: the stylized Basemap, the output frame, the edit camera, the Basemap picker and sliders.
 // The data origin is mocked: no test depends on `pipeline/out`, and no request leaves the app origin.

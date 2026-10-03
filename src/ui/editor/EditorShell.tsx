@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { useTranslation } from 'react-i18next'
-import { type Command, createDispatcher, type Dispatcher, type DispatcherState, evaluate, type MapLocale, OUTPUT_FRAME_SIZES, type OutputFormat, type Scene } from '@/core'
+import { type Command, createDispatcher, type Dispatcher, type DispatcherState, evaluate, formatYear, type MapLocale, OUTPUT_FRAME_SIZES, type OutputFormat, type Scene } from '@/core'
 import { type Autosave, createAutosave, openStoredProject } from '@/persistence'
 import { Banner } from '@/ui/components/Banner'
 import { useToast } from '@/ui/components/toast'
@@ -17,6 +17,7 @@ import { EditorTopBar } from './EditorTopBar'
 import { OptionsBar, PanelSkeleton, PropertiesPanel, TimelineArea, ToolRail } from './EditorRegions'
 import { clearBasemapPreview, useBasemapPreview } from './basemap-preview-store'
 import { MapArea } from './MapArea'
+import { useGeodata } from './use-geodata'
 import { ProjectSettingsPanel } from './ProjectSettingsPanel'
 import { createSaveIndicator, type SaveIndicatorStore } from './save-status'
 
@@ -75,6 +76,24 @@ export function EditorShell({ projectId }: { projectId: string }) {
   const dispatcher = state.kind === 'editable' ? state.dispatcher : NO_DISPATCHER
   const current: DispatcherState | undefined = useSyncExternalStore(dispatcher.subscribe, dispatcher.getState)
 
+  // The historical data of the pinned version for the Reference Date (Story 1.11), cached in Dexie.
+  const geoProject = state.kind === 'editable' ? current?.project : undefined
+  const geoLoad = useGeodata(geoProject?.pins.geo, geoProject?.referenceDate.year)
+
+  // The Scene the Map draws (AD-1): the Project at t = 0 with a slider drag's live values laid over
+  // its Basemap adjustments. The drag itself is UI state; the Command comes on release. While a new
+  // Reference Date loads, the Scene keeps the date its data was loaded for (the previous Territories stay).
+  const preview = useBasemapPreview()
+  const project = state.kind === 'editable' ? current?.project : undefined
+  const scene = useMemo<Scene | undefined>(() => {
+    if (!project) return undefined
+    let shown = preview ? { ...project, map: { ...project.map, basemap: { ...project.map.basemap, adjustments: preview } } } : project
+    if (geoLoad.year !== undefined && geoLoad.year !== project.referenceDate.year) shown = { ...shown, referenceDate: { year: geoLoad.year } }
+    return evaluate(shown, 0, { geodata: geoLoad.geodata, frame: OUTPUT_FRAME_SIZES[project.outputFormat] })
+  }, [project, preview, geoLoad])
+  // A preview never outlives its Project or the Editor.
+  useEffect(() => clearBasemapPreview, [projectId])
+
   const model = useMemo<EditorModel>(() => {
     if (state.kind === 'editable' && current) {
       const { project } = current
@@ -84,6 +103,9 @@ export function EditorShell({ projectId }: { projectId: string }) {
         outputFormat: project.outputFormat,
         mapLocale: project.mapLocale,
         basemap: project.map.basemap,
+        referenceDate: project.referenceDate,
+        dataDate: scene?.dataDate,
+        geo: geoLoad.status,
         readOnly: current.readOnly,
         canUndo: current.canUndo,
         canRedo: current.canRedo,
@@ -93,19 +115,18 @@ export function EditorShell({ projectId }: { projectId: string }) {
       return { loading: false, name: state.name, outputFormat: state.outputFormat, mapLocale: state.mapLocale, readOnly: true, canUndo: false, canRedo: false }
     }
     return { loading: true, readOnly: true, canUndo: false, canRedo: false }
-  }, [state, current])
+  }, [state, current, scene, geoLoad.status])
 
-  // The Scene the Map draws (AD-1): the Project at t = 0 with a slider drag's live values laid over
-  // its Basemap adjustments. The drag itself is UI state; the Command comes on release.
-  const preview = useBasemapPreview()
-  const project = state.kind === 'editable' ? current?.project : undefined
-  const scene = useMemo<Scene | undefined>(() => {
-    if (!project) return undefined
-    const shown = preview ? { ...project, map: { ...project.map, basemap: { ...project.map.basemap, adjustments: preview } } } : project
-    return evaluate(shown, 0, { geodata: {}, frame: OUTPUT_FRAME_SIZES[project.outputFormat] })
-  }, [project, preview])
-  // A preview never outlives its Project or the Editor.
-  useEffect(() => clearBasemapPreview, [projectId])
+  // « Données les plus proches : 2024 » is announced once each time the shown data stops being exact
+  // or changes year while inexact; the chip itself is not live.
+  const dataDate = scene?.dataDate
+  const nearestKey = dataDate && !dataDate.exact ? dataDate.year : undefined
+  const announcedNearest = useRef<number | undefined>(undefined)
+  useEffect(() => {
+    if (nearestKey === announcedNearest.current) return
+    announcedNearest.current = nearestKey
+    if (nearestKey !== undefined && project) announce(t('editor.referenceDate.nearest', { date: formatYear(nearestKey, project.mapLocale) }))
+  }, [nearestKey, project, t])
 
   /** « Annulé » / « Rétabli » for screen readers; `n` makes a repeated message be read again. */
   const announcement = useAnnouncement()
@@ -198,7 +219,7 @@ export function EditorShell({ projectId }: { projectId: string }) {
       </div>
       <ToolRail disabled={model.loading} />
       <main className="flex min-h-0 min-w-0 flex-col [grid-area:scene]">
-        <OptionsBar outputFormat={model.outputFormat} />
+        <OptionsBar outputFormat={model.outputFormat} dataDate={model.dataDate} mapLocale={model.mapLocale} />
         <MapArea scene={scene} outputFormat={model.outputFormat} />
       </main>
       <PropertiesPanel>{model.loading ? <PanelSkeleton /> : <ProjectSettingsPanel model={model} actions={actions} />}</PropertiesPanel>

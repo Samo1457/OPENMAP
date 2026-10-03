@@ -1,4 +1,5 @@
-import { devices, expect, test, type Page } from '@playwright/test'
+import { devices, type Page } from '@playwright/test'
+import { expect, test } from './fixtures'
 
 // Story 1.6: the Settings dialog (UX-DR134, UX-DR67), banners (UX-DR66, UX-DR148) and the browser
 // gate (AD-19, NFR-4, UX-DR135).

@@ -243,7 +243,18 @@ describe('schema snapshot check (AD-9)', () => {
   const committedV1 = readSnapshot(join(ROOT, 'schemas/project-v1.schema.json'))
 
   it('the committed v1 snapshot passes the check it is compared against below', () => {
-    expect(schemaSnapshotIssues({ dir: join(ROOT, 'schemas'), currentVersion: 1, schema: committedV1, migrationVersions: [] })).toEqual([])
+    // A directory with the v1 snapshot alone, as at the time v1 was current.
+    const dir = mkdtempSync(join(tmpdir(), 'openmap-schema-v1-'))
+    workDirs.push(dir)
+    writeFileSync(join(dir, 'project-v1.schema.json'), JSON.stringify(committedV1))
+    expect(schemaSnapshotIssues({ dir, currentVersion: 1, schema: committedV1, migrationVersions: [] })).toEqual([])
+  })
+
+  it('the committed v1 and v2 snapshots pass the check for the current version, with the v1 → v2 migration', () => {
+    const committedV2 = readSnapshot(join(ROOT, 'schemas/project-v2.schema.json'))
+    expect(schemaSnapshotIssues({ dir: join(ROOT, 'schemas'), currentVersion: 2, schema: committedV2, migrationVersions: [1] })).toEqual([])
+    // Without the migration the same snapshots fail: a version bump needs its migration (AD-9).
+    expect(schemaSnapshotIssues({ dir: join(ROOT, 'schemas'), currentVersion: 2, schema: committedV2, migrationVersions: [] })).toEqual(['The v1 → v2 migration is missing (AD-9).'])
   })
 
   it('drifted: a v1 snapshot that differs from the v1 schema fails with instructions', () => {

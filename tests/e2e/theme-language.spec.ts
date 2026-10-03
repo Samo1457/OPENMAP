@@ -1,4 +1,5 @@
-import { expect, test, type Page } from '@playwright/test'
+import { type Page } from '@playwright/test'
+import { expect, test } from './fixtures'
 
 /** Reads one row of the Dexie `preferences` table straight from IndexedDB. */
 function storedPreference(page: Page, key: string) {

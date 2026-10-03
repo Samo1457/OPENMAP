@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright'
-import { devices, expect, test, type Page } from '@playwright/test'
+import { devices, type Page } from '@playwright/test'
+import { expect, test } from './fixtures'
 
 // Story 1.7: automated axe check (WCAG 2.2 AA, UX-DR157) on Home, the Editor, Settings, the
 // shortcuts help and the gate pages, in light and dark. Every later screen adds itself here.
@@ -75,6 +76,53 @@ for (const scheme of ['light', 'dark'] as const) {
       await page.keyboard.press('Shift+ArrowRight')
       await expect(panel.getByRole('slider', { name: 'Brightness' })).toHaveValue('10')
       await expectNoViolations(page, 'Editor Basemap settings (Dark, brightness 10)')
+    })
+
+    test('the Reference Date field with its error, the nearest-data chip and the unavailable caption', async ({ page }) => {
+      await page.route('**/library/v1/styles/*.json', (route) =>
+        route.fulfill({ json: { version: 8, sources: {}, layers: [{ id: 'background', type: 'background', paint: { 'background-color': '#FF00FF' } }] } }),
+      )
+      const square = { type: 'Polygon', coordinates: [[[0, 0], [10, 0], [10, 10], [0, 10], [0, 0]]] }
+      await page.route('**/library/v1/geo/**', (route) => {
+        const path = new URL(route.request().url()).pathname
+        if (path.endsWith('/index.json')) {
+          return route.fulfill({
+            json: { schemaVersion: 1, dataset: { id: 'cliopatria', version: '0.2.0' }, entities: [{ id: 'a', name: 'A', kind: 'polity', memberOf: [], states: [[1900, 1900]] }] },
+          })
+        }
+        return route.fulfill({ json: { type: 'Feature', id: 'cliopatria@0.2.0:a', properties: { fromYear: 1900, toYear: 1900, area: 1 }, geometry: square } })
+      })
+      await openEditor(page)
+      const field = page.getByRole('textbox', { name: 'Reference date' })
+      await expect(field).toHaveValue('1900')
+      await field.fill('2030')
+      await field.press('Enter')
+      await expect(page.getByTestId('nearest-data-chip')).toHaveCount(2)
+      await field.fill('0')
+      await field.press('Enter')
+      await expect(page.getByTestId('reference-date-error')).toBeVisible()
+      await expectNoViolations(page, 'Reference Date field with an error and the nearest-data chip')
+      // Without data (and an empty Library cache): the caption under the field.
+      await page.evaluate(
+        () =>
+          new Promise<void>((resolve, reject) => {
+            const open = indexedDB.open('openmap')
+            open.onerror = () => reject(open.error)
+            open.onsuccess = () => {
+              const transaction = open.result.transaction('libraryCache', 'readwrite')
+              transaction.objectStore('libraryCache').clear()
+              transaction.oncomplete = () => {
+                open.result.close()
+                resolve()
+              }
+            }
+          }),
+      )
+      await page.unroute('**/library/v1/geo/**')
+      await page.route('**/library/v1/geo/**', (route) => route.fulfill({ status: 404, contentType: 'text/plain', body: 'Data not built' }))
+      await page.reload()
+      await expect(page.getByTestId('geo-unavailable')).toBeVisible()
+      await expectNoViolations(page, 'Reference Date field with the unavailable caption')
     })
 
     test('Settings (each tab) and the shortcuts help', async ({ page }) => {

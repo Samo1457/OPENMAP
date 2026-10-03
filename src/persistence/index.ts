@@ -180,6 +180,35 @@ export function getStorageStatus(): Promise<StorageStatus> {
   return readStorageStatus(globalThis.navigator?.storage)
 }
 
+// ---------------------------------------------------------------- Library cache (AD-27)
+
+/**
+ * The cached Library files among `keys`. Resolves to what could be read (nothing when IndexedDB is
+ * unavailable); it never rejects, so a broken cache only means fetching again.
+ */
+export async function readLibraryCache(keys: readonly string[]): Promise<Map<string, unknown>> {
+  try {
+    const rows = await db().libraryCache.bulkGet([...keys])
+    const found = new Map<string, unknown>()
+    for (const row of rows) if (row) found.set(row.key, row.value)
+    return found
+  } catch (error) {
+    report('reading the Library cache', error)
+    return new Map()
+  }
+}
+
+/** Stores a validated Library file; `false` when it could not be stored (the data still shows this session). */
+export async function writeLibraryCache(key: string, value: unknown): Promise<boolean> {
+  try {
+    await db().libraryCache.put({ key, value, storedAt: now() })
+    return true
+  } catch (error) {
+    report('writing the Library cache', error)
+    return false
+  }
+}
+
 // ---------------------------------------------------------------- Preferences
 
 export type ThemePreference = 'system' | 'light' | 'dark'

@@ -2,7 +2,7 @@
 title: 'Story 1.11: Reference date and historical GeoEntities'
 type: 'feature'
 created: '2026-10-03'
-status: 'in-progress'
+status: 'done'
 baseline_commit: '9b3745ac99243bb35dbacb484299d4732a346781'
 route: 'dispatch'
 review_loop_iteration: 0
@@ -63,15 +63,15 @@ context:
 ## Tasks & Acceptance
 
 **Execution:**
-- [ ] `src/core/dates/` compare, `src/core/format/` format and parse (+ tests: BCE, year 0, year-only, fr and en, NBSP)
-- [ ] `src/core/model/project.ts`, `schema/`, `blank-project.ts`, `schemas/project-v2.schema.json` -- schema v2 with the pin, migration and fixture, guardrail updated
-- [ ] `src/persistence/` -- `libraryCache` table and API (+ tests)
-- [ ] `src/library/` -- index and state client with validation, cache, bounded parallel fetch (+ tests with a fake fetch)
-- [ ] `src/core/evaluate/` -- data date, entity selection per the answer, Territory items, `dataDate` (+ tests: determinism, nearest data, view level, z, scale)
-- [ ] `src/render/map-view.ts` -- deck.gl outlines from the Scene
-- [ ] `src/ui/editor/` -- date field, errors, caption, chip, loading wiring in `EditorShell`; announcements
-- [ ] `src/i18n/locales/{fr,en}.json`, `docs/keyboard.md` if keys are added
-- [ ] tests -- unit as above; e2e for every matrix row with the data origin mocked (fixture index and states), axe on the new controls, no request leaving the app origin
+- [x] `src/core/dates/` compare, `src/core/format/` format and parse (+ tests: BCE, year 0, year-only, fr and en, NBSP)
+- [x] `src/core/model/project.ts`, `schema/`, `blank-project.ts`, `schemas/project-v2.schema.json` -- schema v2 with the pin, migration and fixture, guardrail updated
+- [x] `src/persistence/` -- `libraryCache` table and API (+ tests)
+- [x] `src/library/` -- index and state client with validation, cache, bounded parallel fetch (+ tests with a fake fetch)
+- [x] `src/core/evaluate/` -- data date, entity selection per the answer, Territory items, `dataDate` (+ tests: determinism, nearest data, view level, z, scale)
+- [x] `src/render/map-view.ts` -- deck.gl outlines from the Scene
+- [x] `src/ui/editor/` -- date field, errors, caption, chip, loading wiring in `EditorShell`; announcements
+- [x] `src/i18n/locales/{fr,en}.json`, `docs/keyboard.md` if keys are added
+- [x] tests -- unit as above; e2e for every matrix row with the data origin mocked (fixture index and states), axe on the new controls, no request leaving the app origin
 
 **Acceptance Criteria:**
 - Given `npm run check`, when it runs, then everything passes without `pipeline/out-geo`.
@@ -79,9 +79,40 @@ context:
 
 ## Implementation Notes
 
+- Dates: `compareHistoricalDates` (`src/core/dates/compare.ts`); `src/core/format` writes years with `project.mapLocale` (« 52 av. J.-C. » with non-breaking spaces, "52 BC") and parses the field (`year_zero`, `not_a_year`). Schema v2 adds `pins.geo` with a frozen v1 → v2 migration, `schemas/project-v2.schema.json`, v1 snapshot kept.
+- `src/core/geo` holds the index and state validators and the entity selection (nearest data at dataset level, earlier year on a tie; a group that is itself a member of a larger valid group is hidden too, which gives the 112 outlines at 1500 of decision A). `evaluate` stays pure: `ctx.geodata = {index?, states?}`, Scene `dataDate {year, exact}`, outline-only Territory items in the Territories Layer band (1.5 reference px, adjusted `coast` colour); a hidden or missing Territories Layer yields no items.
+- `src/persistence` `libraryCache` table (Dexie version 3); `src/library/geo.ts` fetches with parallelism 8, validates, reads the cache ever after; all or nothing per date.
+- UI: `ReferenceDateField`, `NearestDataChip` (options bar and under the field, announced through the shared announcer), `use-geodata.ts` (previous Territories stay while loading). e2e specs import `test`/`expect` from `tests/e2e/fixtures.ts`, which serves an empty geo dataset by default.
+- Test hooks `data-territories`, `data-territory-keys`, `data-outline-width` on the Map container.
+- Sandbox check with the real `pipeline/out-geo`: 1453, 1900, 52 BC and 2030 show 104, 76, 43 and 190 outlines; 2030 shows the chip « 2024 »; no console error.
+
 ## Spec Change Log
 
 ## Review Triage Log
+
+| # | Source | Finding | Verdict | Evidence / route |
+|---|--------|---------|---------|------------------|
+| 1 | blind, edge | Hidden Territories Layer still draws; missing Layer falls back to Layer 0's z | medium | AD-24: hidden Layers are absent from the Scene. patch |
+| 2 | blind | Migration v1 to v2 reads the mutable default pin | medium | A future default would mislabel old Projects. patch |
+| 3 | blind, edge | Date field wipes a refused entry; blur can clear the error; IME Enter; stuck skip flag | medium | UX-DR147 keeps the previous value, not the user's chance to fix. patch |
+| 4 | blind | No `loading` status on a later date change, stale caption | low | `use-geodata.ts`. patch |
+| 5 | edge | Nearest-data chip announced only if mounted live | low | Definition of Done (announcements). patch |
+| 6 | blind, edge | Entity id alphabet unrestricted; unclosed rings accepted | low | Cache keys and URLs use the id. patch |
+| 7 | blind, edge | Cache errors throw; aborted loads keep fetching; invalid JSON reported as fetch | low | `src/library/geo.ts`. patch |
+| 8 | verification-gap | Ctrl+S in the date field untested; pixel test cannot tell fill from outline | medium | Pre-verified. patch |
+| 9 | verification-gap | Writer (pipeline) and reader (client) never tested together | low | Contract drift risk. patch |
+| 10 | verification-gap | Previous Territories kept while loading not pinned by a test | low | Covered with row 4. patch |
+| 11 | blind | `-51` ambiguity (astronomical vs 51 BC) | low | Spec Always lists « -51 » as accepted. reject |
+| 12 | blind | Committing a year drops month and day | low | Input is year precision by spec. reject |
+| 13 | blind | Library cache without eviction, quota handling | low | Immutable, about 100 small files. reject |
+| 14 | blind, edge | Outline style read from the first item; colour format assumptions | low | One style today. reject |
+| 15 | blind | `@deck.gl/layers` dependency, dev server, sprint status missing from the diff | false | Direct dependency since Story 1.10; the dev server serves geo since Story 1.9; sprint sync at the present step. reject |
+| 16 | blind | Same chip twice | low | Specified: options bar and under the field. reject |
+| 17 | blind | `compareHistoricalDates` has no caller | low | Required by the AC (compare). reject |
+| 18 | edge | Member hidden while the group file is missing | low | The load is all or nothing. reject |
+| 19 | edge | `useGeodata` state kept when the Project changes | false | `EditorShell` is keyed by project id. reject |
+| 20 | edge | Migration overwrites an existing `pins` | false | v1 is strict: no `pins` key can exist. reject |
+| 21 | edge | A group inside a larger valid group is also hidden | low | Matches the 112 outlines at 1500 of decision A. noted |
 
 ## Design Notes
 

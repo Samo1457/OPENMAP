@@ -14,6 +14,12 @@ export type DomainErrorCode =
   | 'schema_too_new'
   /** A loaded document is not a valid Project of any known schemaVersion (AD-9). */
   | 'invalid_document'
+  /** A year typed by the user is « 0 » (1 BCE is year 0 internally but has no year 0 on the page; AD-13). */
+  | 'year_zero'
+  /** A typed text is not a year, or is outside the supported years (UX-DR147). */
+  | 'not_a_year'
+  /** Library data cannot be loaded: not found, not JSON, invalid, or another version (AD-12, AD-27). */
+  | 'geo_unavailable'
 
 export type DomainErrorParams = Readonly<Record<string, string | number | boolean>>
 

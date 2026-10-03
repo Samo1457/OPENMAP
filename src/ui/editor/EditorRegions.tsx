@@ -1,11 +1,12 @@
 import { MousePointer2 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { OUTPUT_FRAME_SIZES, type OutputFormat } from '@/core'
+import { type DataDate, type MapLocale, OUTPUT_FRAME_SIZES, type OutputFormat } from '@/core'
 import { cn } from '@/ui/lib/utils'
 import { Tooltip } from '@/ui/components/Tooltip'
 import { announce } from '@/ui/keyboard/announcer'
 import { regionProps } from '@/ui/keyboard/regions'
+import { NearestDataChip } from './NearestDataChip'
 import { setTool, useTool } from '@/ui/keyboard/tool-store'
 
 // The named regions of the Editor (EXPERIENCE.md Accessibility Floor): top bar, tool rail, options
@@ -47,13 +48,14 @@ export function ToolRail({ disabled }: { disabled: boolean }) {
 
 /**
  * The tool options bar (UX-DR32), above the Map and never over it. Left: the current Step reminder
- * (from Epic 3) and the tool options; right: the read-only Output Format label.
+ * (from Epic 3), the tool options and the nearest-data chip; right: the read-only Output Format label.
  */
-export function OptionsBar({ outputFormat }: { outputFormat?: OutputFormat }) {
+export function OptionsBar({ outputFormat, dataDate, mapLocale }: { outputFormat?: OutputFormat; dataDate?: DataDate; mapLocale?: MapLocale }) {
   const { t } = useTranslation()
   const size = outputFormat && OUTPUT_FRAME_SIZES[outputFormat]
   return (
     <section aria-label={t('editor.regions.toolOptions')} {...regionProps('options')} className="flex h-tool-options-bar-height shrink-0 items-center gap-2.5 bg-om-background px-4">
+      {mapLocale && <NearestDataChip dataDate={dataDate} mapLocale={mapLocale} />}
       <span className="flex-1" />
       {outputFormat && size && (
         <span data-testid="frame-size" className="type-caption whitespace-nowrap text-om-text-muted">

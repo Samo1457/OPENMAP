@@ -3,6 +3,9 @@
 export * from './result'
 export * from './ids'
 export * from './dates/historical-date'
+export * from './dates/compare'
+export * from './format'
+export * from './geo'
 export * from './model/project'
 export * from './model/blank-project'
 export {

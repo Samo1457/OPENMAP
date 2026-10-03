@@ -71,7 +71,7 @@ describe('persistence adapter (AD-8, AD-9)', () => {
     const reload = vi.fn<() => void>()
     persistence.setVersionChangeHandler(reload)
     const upgraded = new Dexie(DATABASE_NAME)
-    upgraded.version(3).stores({ preferences: '&key', projects: '&id, updatedAt', media: '&sha256', pendingSaves: '&key, projectId', extra: '&id' })
+    upgraded.version(4).stores({ preferences: '&key', projects: '&id, updatedAt', media: '&sha256', pendingSaves: '&key, projectId', libraryCache: '&key', extra: '&id' })
     await upgraded.open()
 
     expect(reload).toHaveBeenCalledTimes(1)

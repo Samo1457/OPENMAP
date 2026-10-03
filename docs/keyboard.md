@@ -67,3 +67,7 @@ The edit camera is how the creator looks at the Map; it is UI state and never en
 - The keys fire only while the focus is on the Map region or a control inside it, so they never steal anything from a text field, a slider or a menu.
 
 **Keys now taken on the focused Map: ←, ↑, ↓, →, Z, Q, S, D, `+`, `=`, `-` and Shift+1.** Future tool keys must avoid Z, Q, S and D (and a tool that needs the arrows must say so here). Epic 3 must share ←/→ with Step navigation: that conflict is recorded in `deferred-work.md`. Ctrl+arrows are not bound any more.
+
+## Reference Date field (Story 1.11)
+
+The « Date de référence » text field in Project settings (Alt+5, then Tab) registers no shortcut of its own: it is a text field, so every unmodified key reaches it. Enter or leaving the field (Tab, a click elsewhere) commits the year as one undoable `SET_REFERENCE_DATE`; Escape restores the previous date and leaves the field; Ctrl+S still saves (an unusable entry is refused first and keeps the previous date). An invalid entry shows its message under the field (`role="alert"`) and `aria-invalid`; a committed date is announced « Date de référence : 1453 » and the nearest-data chip in the options bar is a polite status. No key collision: nothing new is bound outside the field.

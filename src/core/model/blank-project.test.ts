@@ -8,9 +8,9 @@ const ids = () => generateBlankProjectIds(createDeterministicIdSource('p'))
 describe('createBlankProject', () => {
   const project = createBlankProject({ ...ids(), name: 'Projet sans titre', mapLocale: 'fr' })
 
-  it('creates the v1 default document', () => {
+  it('creates the v2 default document', () => {
     expect(project).toEqual({
-      schemaVersion: 1,
+      schemaVersion: 2,
       id: 'p00000000000000000001',
       seed: 'p00000000000000000002',
       revision: 0,
@@ -28,10 +28,11 @@ describe('createBlankProject', () => {
         { id: 'p00000000000000000008', kind: 'images', hidden: false, locked: false },
       ],
       factions: [],
+      pins: { geo: { dataset: 'cliopatria', version: '0.2.0' } },
     })
   })
 
-  it('validates against the v1 schema and is deeply frozen', () => {
+  it('validates against the current schema and is deeply frozen', () => {
     expect(validate(project)).toEqual({ ok: true, value: project })
     expect(Object.isFrozen(project)).toBe(true)
     expect(Object.isFrozen(project.map.basemap)).toBe(true)

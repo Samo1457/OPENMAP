@@ -8,11 +8,12 @@ import { isSaveKey } from '@/ui/keyboard/registry'
 import { cn } from '@/ui/lib/utils'
 import type { EditorActions, EditorModel } from './editor-model'
 import { BasemapSettings } from './BasemapSettings'
+import { ReferenceDateField } from './ReferenceDateField'
 import { MoreOptions } from './MoreOptions'
 
 /**
  * The panel when nothing is selected: Project settings (UX-DR35). Essential settings only (NFR-9):
- * name, Output Format, Map language and Basemap (picker, brightness, saturation, tint); Reference Date and Region join in later stories.
+ * name, Reference Date, Output Format, Map language and Basemap (picker, brightness, saturation, tint); Region joins in a later story.
  * Every change is one Command, applied at once with no « Appliquer » button.
  */
 export function ProjectSettingsPanel({ model, actions }: { model: EditorModel; actions?: EditorActions }) {
@@ -38,6 +39,16 @@ export function ProjectSettingsPanel({ model, actions }: { model: EditorModel; a
           onCommit={(name) => actions?.dispatch({ type: 'SET_PROJECT_NAME', payload: { name } }) ?? false}
           onPageHide={actions?.saveOnPageHide}
         />
+        {model.referenceDate && model.mapLocale && (
+          <ReferenceDateField
+            year={model.referenceDate.year}
+            mapLocale={model.mapLocale}
+            readOnly={!editable}
+            geo={model.geo}
+            dataDate={model.dataDate}
+            onCommit={(year) => actions?.dispatch({ type: 'SET_REFERENCE_DATE', payload: { referenceDate: { year } } }) ?? false}
+          />
+        )}
         <div className="flex flex-col gap-1.5">
           <span id={formatLabel} className="type-label text-om-text-secondary">
             {t('editor.outputFormat')}

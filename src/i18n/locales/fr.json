@@ -119,6 +119,14 @@
     "export": "Exporter",
     "projectSettings": "Paramètres du Projet",
     "mapLocale": "Langue de la carte",
+    "referenceDate": {
+      "label": "Date de référence",
+      "yearZero": "L'année 0 n'existe pas. Saisissez 1 av. J.-C. ou 1.",
+      "notAYear": "Saisissez une année, par exemple 1463 ou 52 av. J.-C.",
+      "announce": "Date de référence : {{date}}",
+      "unavailable": "Données historiques indisponibles.",
+      "nearest": "Données les plus proches : {{date}}"
+    },
     "moreOptions": "Plus d'options",
     "timeline": "Timeline",
     "unknownValue": "Inconnu",

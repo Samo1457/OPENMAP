@@ -180,3 +180,35 @@ describe('buildGeo', () => {
     expect(() => buildGeo([empty], DATASET)).toThrow(/entity "Tiny": state 7\.\.9 has no polygon/)
   })
 })
+
+describe('writer and reader agree (Story 1.11)', () => {
+  it('the index and states the pipeline builds pass the app validators and the entity selection', async () => {
+    const { parseGeoIndex, parseGeoState, selectGeoEntities } = await import('../src/core/geo/index.ts')
+    const rows = [
+      row('Rome', 100, 200),
+      row('Gaul', 100, 200, { memberOf: ['(Empire)'] }),
+      row('(Empire)', 150, 200),
+      row('Alliance', 100, 200, { type: 'RELATION', components: ['Rome', 'Gaul'] }),
+      row('Âu Lạc', 300, 310),
+    ]
+    const build = buildGeo(rows, DATASET)
+    const pin = { dataset: 'cliopatria', version: '0.2.0' }
+    const index = parseGeoIndex(JSON.parse(JSON.stringify(build.index)), pin)
+    if (!index.ok) throw new Error(`index refused: ${JSON.stringify(index.error)}`)
+    // Every state file the index lists exists at its path and is accepted by the reader.
+    for (const entity of index.value.entities) {
+      for (const [from] of entity.states) {
+        const file = build.states.find((state) => state.path === `${entity.id}/${from}.json`)
+        expect(file, `${entity.id}/${from}`).toBeDefined()
+        expect(parseGeoState(JSON.parse(file!.data), pin, entity.id, from)).toMatchObject({ ok: true })
+      }
+    }
+    expect(build.states).toHaveLength(index.value.entities.reduce((n, entity) => n + entity.states.length, 0))
+    // Countries view: Gaul is hidden once its group exists; the relation never shows.
+    const at = (year: number) => selectGeoEntities(index.value, year)?.entities.map(({ entity }) => entity.id)
+    expect(at(120)).toEqual(['gaul', 'rome'])
+    expect(at(170)).toEqual(['empire.group', 'rome'])
+    expect(at(305)).toEqual(['au-lac'])
+    expect(selectGeoEntities(index.value, 250)?.dataDate).toEqual({ year: 200, exact: false })
+  })
+})

@@ -4,7 +4,7 @@
 import { freeze } from 'immer'
 import type { HistoricalDate } from '../dates/historical-date'
 import { type IdSource, type LayerId, type ProjectId, type ProjectSeed, type StepId, toLayerId, toProjectId, toProjectSeed, toStepId } from '../ids'
-import { LAYER_KINDS, type LayerKind, type MapLocale, type Project, type ProjectName, projectNameSchema } from './project'
+import { DEFAULT_GEO_PIN, LAYER_KINDS, type LayerKind, type MapLocale, type Project, type ProjectName, projectNameSchema } from './project'
 
 export const DEFAULT_REFERENCE_DATE: HistoricalDate = { year: 1900 }
 
@@ -32,7 +32,7 @@ export function generateBlankProjectIds(source: IdSource): BlankProjectIds {
 }
 
 /**
- * A v1 blank Project: revision 0, reference date 1900, parchment Basemap without adjustment
+ * A blank Project: revision 0, the geo data pin, reference date 1900, parchment Basemap without adjustment
  * overrides, 16:9, one Step (Step 0), one Layer per element kind, no Factions or members.
  * Throws on a programmer error (invalid name or ids); UI input goes through SET_PROJECT_NAME.
  */
@@ -42,7 +42,7 @@ export function createBlankProject(input: BlankProjectInput): Project {
   if (layerIds.size !== LAYER_KINDS.length) throw new Error('Layer ids must be distinct.')
   return freeze(
     {
-      schemaVersion: 1,
+      schemaVersion: 2,
       id: toProjectId(input.id),
       seed: toProjectSeed(input.seed),
       revision: 0,
@@ -54,6 +54,7 @@ export function createBlankProject(input: BlankProjectInput): Project {
       steps: [{ id: toStepId(input.stepId) }],
       layers: LAYER_KINDS.map((kind) => ({ id: toLayerId(input.layerIds[kind]), kind, hidden: false, locked: false })),
       factions: [],
+      pins: { geo: { ...DEFAULT_GEO_PIN } },
     } satisfies Project,
     true,
   )

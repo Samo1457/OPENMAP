@@ -1,14 +1,15 @@
 // The MapLibre adapter (AD-1, AD-6): draws the Basemap of a Scene with MapLibre GL JS and hosts the
-// deck.gl overlay that will draw every Project element. It animates nothing by itself: the Scene
+// deck.gl overlay that draws every Project element (the neutral Territories, from Story 1.11). It animates nothing by itself: the Scene
 // camera is applied with `jumpTo`, and only the user's own wheel, drag or pinch motion moves the
 // edit camera (UI state, never in the Project). Loaded lazily by the Editor (`loadMapView`).
 
+import { GeoJsonLayer } from '@deck.gl/layers'
 import { MapLibreOverlay } from '@deck.gl/maplibre'
 import { LngLat, Map as MapLibreMap, Point, setWorkerUrl, type PaddingOptions } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 // MapLibre 6 runs its worker from a separate module that imports a shared chunk: Vite bundles both into one worker file served by the app origin.
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
-import { clampCenterLat, frameScale, minEditZoom, zoomOffset, type Rect, type Scene, type SceneCamera, type Size } from '@/core'
+import { clampCenterLat, frameScale, minEditZoom, zoomOffset, type Rect, type Scene, type SceneCamera, type SceneTerritory, type Size } from '@/core'
 import { OVERLAY_MODE } from './overlay-mode'
 import { fallbackStyle, loadBasemapStyle, paintTargets, type BasemapStyle } from './style'
 
@@ -54,6 +55,11 @@ const MIN_ZOOM = -2
 const MAX_ZOOM = 22
 /** Degrees of rotation per wheel delta unit with Shift. */
 const ROTATE_PER_WHEEL = 0.1
+
+function hexToRgba(hex: string): [number, number, number, number] {
+  const value = Number.parseInt(hex.slice(1), 16)
+  return [(value >> 16) & 255, (value >> 8) & 255, value & 255, 255]
+}
 
 const sameCamera = (a: SceneCamera, b: SceneCamera) =>
   Math.abs(a.center[0] - b.center[0]) < 1e-9 && Math.abs(a.center[1] - b.center[1]) < 1e-9 && Math.abs(a.zoom - b.zoom) < 1e-9 && Math.abs(a.bearing - b.bearing) < 1e-9
@@ -137,6 +143,52 @@ export function createMapView(options: MapViewOptions): MapView {
   const overlay = new MapLibreOverlay({ interleaved: OVERLAY_MODE === 'interleaved', layers: [] })
   map.addControl(overlay as never)
 
+  // --- Territories: one GeoJsonLayer, outline only (AD-6). The Scene gives sizes in reference px; they
+  // are scaled by `s` here, so a new Output Format or window size redraws them at the right width.
+  let territories: { readonly items: readonly SceneTerritory[]; readonly features: GeoJSON.Feature[] } = { items: [], features: [] }
+
+  function territoryItems(source: Scene): SceneTerritory[] {
+    return source.items.filter((item): item is SceneTerritory => item.kind === 'territory').sort((a, b) => a.z - b.z)
+  }
+
+  function drawTerritories() {
+    const items = territoryItems(scene)
+    const unchanged = items.length === territories.items.length && items.every((item, i) => item.geometry === territories.items[i].geometry && item.key === territories.items[i].key)
+    // The same geometry objects keep the same `data`, so deck.gl does not tessellate them again.
+    if (!unchanged) {
+      territories = {
+        items,
+        features: items.map((item) => ({ type: 'Feature', properties: { key: item.key }, geometry: item.geometry as unknown as GeoJSON.Geometry })),
+      }
+    }
+    const style = items[0]?.outline
+    const colour: [number, number, number, number] = style ? hexToRgba(style.colour) : [0, 0, 0, 255]
+    const width = (style?.width ?? 0) * frameScale(layout.frame)
+    overlay.setProps({
+      layers:
+        items.length === 0
+          ? []
+          : [
+              new GeoJsonLayer({
+                id: 'territories',
+                data: territories.features,
+                stroked: true,
+                filled: false,
+                getLineColor: colour,
+                getLineWidth: width,
+                lineWidthUnits: 'pixels',
+                lineJointRounded: true,
+                pickable: false,
+                updateTriggers: { getLineColor: [colour.join()], getLineWidth: [width] },
+              }),
+            ],
+    })
+    container.dataset.territories = String(items.length)
+    container.dataset.territoryKeys = items.map((item) => item.key).join(' ')
+    container.dataset.outlineWidth = width.toFixed(3)
+    busy()
+  }
+
   function publish() {
     container.dataset.camera = JSON.stringify({
       center: camera.center.map((value) => Math.round(value * 1e4) / 1e4),
@@ -151,7 +203,7 @@ export function createMapView(options: MapViewOptions): MapView {
   }
 
   /** `data-idle` tells tests (and nothing else) that the Map has drawn everything it was asked to. */
-  const busy = () => {
+  function busy() {
     container.dataset.idle = 'false'
     map.triggerRepaint()
   }
@@ -257,6 +309,7 @@ export function createMapView(options: MapViewOptions): MapView {
 
   container.dataset.style = 'loading'
   container.dataset.basemap = scene.basemap.id
+  drawTerritories()
   void loadStyle(scene.basemap.id)
   apply()
 
@@ -353,10 +406,12 @@ export function createMapView(options: MapViewOptions): MapView {
         if (!sameStructure) void loadStyle(next.basemap.id)
       }
       paint()
+      drawTerritories()
     },
     setLayout(next) {
       layout = next
       apply()
+      drawTerritories()
     },
     setCamera(next) {
       camera = next

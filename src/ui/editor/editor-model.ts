@@ -1,4 +1,5 @@
-import type { Basemap, Command, MapLocale, OutputFormat } from '@/core'
+import type { Basemap, Command, DataDate, HistoricalDate, MapLocale, OutputFormat } from '@/core'
+import type { GeoStatus } from './use-geodata'
 
 /** What the Editor shell shows of the open Project. */
 export interface EditorModel {
@@ -8,6 +9,11 @@ export interface EditorModel {
   readonly outputFormat?: OutputFormat
   readonly mapLocale?: MapLocale
   readonly basemap?: Basemap
+  readonly referenceDate?: HistoricalDate
+  /** The year of the data on the Map and whether it is the Reference Date's own (nearest-data chip). */
+  readonly dataDate?: DataDate
+  /** Whether the historical data is loading, shown or could not be loaded. */
+  readonly geo?: GeoStatus
   /** Editing is off: loading, a document newer than the app (AD-9), or a read-only dispatcher. */
   readonly readOnly: boolean
   readonly canUndo: boolean

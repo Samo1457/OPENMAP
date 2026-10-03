@@ -46,21 +46,35 @@ export interface MediaRow {
   licence?: unknown
 }
 
+/**
+ * One row of the `libraryCache` table (AD-27): a Library file as fetched and validated, keyed by its
+ * versioned immutable path (`cliopatria@0.2.0/index`, `cliopatria@0.2.0/rome/1000`). Read from here
+ * ever after: the paths are immutable, so a row is never invalidated.
+ */
+export interface LibraryCacheRow {
+  key: string
+  value: unknown
+  /** When it was stored, ms since the epoch (information only). */
+  storedAt: number
+}
+
 export const DATABASE_NAME = 'openmap'
 
 /**
  * The single OPENMAP IndexedDB database (AD-8). Later stories add tables
- * (Personal Kits, Library cache) through new `version()` declarations.
+ * (Personal Kits…) through new `version()` declarations.
  */
 export class OpenmapDatabase extends Dexie {
   preferences!: EntityTable<PreferenceRow, 'key'>
   projects!: EntityTable<ProjectRow, 'id'>
   media!: EntityTable<MediaRow, 'sha256'>
   pendingSaves!: EntityTable<PendingSaveRow, 'key'>
+  libraryCache!: EntityTable<LibraryCacheRow, 'key'>
 
   constructor(name = DATABASE_NAME) {
     super(name)
     this.version(1).stores({ preferences: '&key' })
     this.version(2).stores({ preferences: '&key', projects: '&id, updatedAt', media: '&sha256', pendingSaves: '&key, projectId' })
+    this.version(3).stores({ preferences: '&key', projects: '&id, updatedAt', media: '&sha256', pendingSaves: '&key, projectId', libraryCache: '&key' })
   }
 }

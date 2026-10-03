@@ -119,6 +119,14 @@
     "export": "Export",
     "projectSettings": "Project settings",
     "mapLocale": "Map language",
+    "referenceDate": {
+      "label": "Reference date",
+      "yearZero": "Year 0 does not exist. Enter 1 BC or 1.",
+      "notAYear": "Enter a year, for example 1463 or 52 BC.",
+      "announce": "Reference date: {{date}}",
+      "unavailable": "Historical data unavailable.",
+      "nearest": "Nearest available data: {{date}}"
+    },
     "moreOptions": "More options",
     "timeline": "Timeline",
     "unknownValue": "Unknown",

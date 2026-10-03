@@ -30,10 +30,10 @@ describe('preferences (AD-8)', () => {
     expect(await getPreference('language')).toBeUndefined()
   })
 
-  it('declares the single openmap database with a preferences table keyed by key (projects, media and pendingSaves from v2)', () => {
+  it('declares the single openmap database with a preferences table keyed by key (projects, media and pendingSaves from v2, libraryCache from v3)', () => {
     const db = new OpenmapDatabase()
     expect(db.name).toBe('openmap')
-    expect(db.tables.map((table) => table.name)).toEqual(['preferences', 'projects', 'media', 'pendingSaves'])
+    expect(db.tables.map((table) => table.name)).toEqual(['preferences', 'projects', 'media', 'pendingSaves', 'libraryCache'])
     expect(db.preferences.schema.primKey.keyPath).toBe('key')
     db.close()
   })

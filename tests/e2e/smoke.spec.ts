@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './fixtures'
 
 test('the app loads Home with self-hosted fonts only', async ({ page, baseURL }) => {
   const problems: string[] = []

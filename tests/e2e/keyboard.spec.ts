@@ -1,4 +1,5 @@
-import { expect, test, type Page } from '@playwright/test'
+import { type Page } from '@playwright/test'
+import { expect, test } from './fixtures'
 
 // Story 1.7: the central shortcut registry, the Escape chain, `?` help, Alt+1..6 region jumps,
 // tooltips and reduced motion (UX-DR64, UX-DR110–113, UX-DR116, UX-DR154–158).

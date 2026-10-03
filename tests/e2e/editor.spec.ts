@@ -1,4 +1,5 @@
-import { expect, test, type Page } from '@playwright/test'
+import { type Page } from '@playwright/test'
+import { expect, test } from './fixtures'
 
 // Story 1.5: the Editor shell, Project settings through Commands, undo/redo, save status, Ctrl+S.
 
@@ -369,7 +370,7 @@ test.describe('read-only document (AD-9)', () => {
   test('a newer document opens the shell read-only with the banner, every editing control disabled', async ({ page }) => {
     await page.goto('/')
     await expect(page.getByRole('heading', { level: 1, name: 'Projects' })).toBeVisible()
-    const document = { schemaVersion: 2, id: 'newerDocument00000001', name: 'From the future', mapLocale: 'fr' }
+    const document = { schemaVersion: 3, id: 'newerDocument00000001', name: 'From the future', mapLocale: 'fr' }
     await putRow(page, { id: 'newerDocument00000001', document, name: 'From the future', outputFormat: '9:16', updatedAt: Date.now(), lockEpoch: 0 })
     await page.goto('/#/p/newerDocument00000001')
 
@@ -426,6 +427,8 @@ test.describe('keyboard and focus (UX-DR27, UX-DR8)', () => {
         page.getByRole('button', { name: 'Zoom out' }),
         page.getByRole('button', { name: 'Recentre on the frame' }),
         nameField(page),
+        // The Reference Date field follows the name (Story 1.11).
+        panel(page).getByRole('textbox', { name: 'Reference date' }),
         formatGroup(page).getByRole('radio', { name: '16:9' }),
         localeGroup(page).getByRole('radio', { name: 'English' }),
       ]
