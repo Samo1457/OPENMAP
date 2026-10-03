@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 09-30-2026 08:56
-last_updated: 10-02-2026 21:00
+last_updated: 10-03-2026 12:00
 project: OPENMAP
 project_key: NOKEY
 tracking_system: file-system
@@ -45,8 +45,8 @@ development_status:
   1-7-keyboard-and-accessibility-foundation: done
   1-8-basemap-data-pipeline-natural-earth: done
   1-9-historical-borders-pipeline-cliopatria: done
-  1-10-display-the-stylized-basemap-and-the-output-frame: review
-  1-11-reference-date-and-historical-geoentities: backlog
+  1-10-display-the-stylized-basemap-and-the-output-frame: done
+  1-11-reference-date-and-historical-geoentities: in-progress
   1-12-search-for-a-place: backlog
   1-13-sources-licences-and-map-credit: backlog
   1-14-one-editing-tab-per-project: backlog

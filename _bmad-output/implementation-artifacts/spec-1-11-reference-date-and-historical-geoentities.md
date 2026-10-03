@@ -2,7 +2,8 @@
 title: 'Story 1.11: Reference date and historical GeoEntities'
 type: 'feature'
 created: '2026-10-03'
-status: 'draft'
+status: 'in-progress'
+baseline_commit: '9b3745ac99243bb35dbacb484299d4732a346781'
 route: 'dispatch'
 review_loop_iteration: 0
 context:
@@ -41,11 +42,11 @@ context:
 | Old Project | stored v1 document | migrated to v2 with the pin, opens normally | N/A |
 | Output Format change | 16:9 → 9:16 | outlines recomputed with the new frame scale | N/A |
 
+**Decisions (owner, 2026-10-03):**
+- Displayed entities (option A, « countries view »): the evaluator shows `polity` and `group` entities valid at the data date, hides every polity that is a member (`memberOf`) of a group also valid at that date, and hides every `relation`; at 1500 that is 112 outlines. Epic 2 can expand a group into its members later.
+- Full spec kept (~3,400 tokens); Sonnet subagents for implementation and review.
+
 </frozen-after-approval>
-
-## Open Questions
-
-1. **Which Cliopatria entities does the neutral Map outline?** Story 1.9 kept every row, so at 1500 there are 130 polities, 7 « groups » (umbrellas such as « (Kingdom of France) » whose member polities, e.g. « County of Nevers », are also rows) and 4 relations. Drawing everything doubles the outlines. (A, recommended) « countries view »: show groups and plain polities, hide the members of a group that is valid at that date and hide relations: 112 outlines at 1500, France and the Holy Roman Empire appear as one shape each; Epic 2 can expand a group into its members later. (B) « detailed view »: show every polity, hide groups and relations: 130 outlines at 1500, counties and duchies appear separately, France is a patchwork. (C) everything, relations included: double outlines and overlays, shown for debugging only.
 
 ## Code Map
 
