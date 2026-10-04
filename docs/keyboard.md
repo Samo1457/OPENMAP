@@ -12,7 +12,7 @@ Every shortcut is registered in `src/ui/keyboard/registry.ts` with an i18n name 
   2. A composite widget has the focus (menu, radiogroup, tablist, slider, listbox, combobox, grid, tree, spinbutton): arrows, Home/End, Page keys, Space and Enter follow its ARIA pattern.
   3. A modal dialog is open: nothing behind it reacts (the dialog handles its own keys).
   4. Everywhere else: the registered shortcuts.
-- Escape does one thing per press, by priority: a shown tooltip (100), menu and popover (own handler), dialog (own handler), then steps that later stories register through `registerEscapeStep` (drawing, drawer, selection), and last "back to Select" (0).
+- Escape does one thing per press, by priority: a shown tooltip (100), menu and popover (own handler), dialog (own handler), then steps that later stories register through `registerEscapeStep` (drawing, drawer), the selected GeoEntity (10, Story 1.12), and last "back to Select" (0). In the place search field Escape first closes the results (or the « Aucun lieu trouvé » message), then leaves the field.
 
 ## Shortcuts
 
@@ -25,6 +25,7 @@ Every shortcut is registered in `src/ui/keyboard/registry.ts` with an i18n name 
 | + (or =), − | Zoom the Map in, out by half a level around the output frame; − stops at the default view | Editor, Map focused |
 | ←, ↑, ↓, → or Z, Q, S, D (physical W, A, S, D) | Pan the Map continuously while held; Shift is faster | Editor, Map focused |
 | Shift+1 | Recentre the Map on the output frame (back to the Scene camera) | Editor, Map focused |
+| / | Focus the place search field (its text is selected) | Editor, not in a text field or a dialog |
 | Alt+1 | Top bar | Editor |
 | Alt+2 | Tool rail | Editor |
 | Alt+3 | Tool options bar | Editor |
@@ -34,7 +35,7 @@ Every shortcut is registered in `src/ui/keyboard/registry.ts` with an i18n name 
 | ? | Shortcuts help | Home and Editor |
 | Escape | Close, cancel or go back one step | everywhere |
 
-Alt+N focuses the region container itself (tabIndex -1, the Map 0), which a screen reader announces by name; Tab then enters it. Tab order follows the visual order: top bar, rail, options bar, Map, panel, Timeline. F6 is not used (Chrome and Edge take it for the address bar). `/` (place search) arrives in Story 1.12.
+Alt+N focuses the region container itself (tabIndex -1, the Map 0), which a screen reader announces by name; Tab then enters it. Tab order follows the visual order: top bar, rail, options bar, Map, panel, Timeline. F6 is not used (Chrome and Edge take it for the address bar).
 
 ## Alt+digit collisions
 
@@ -71,3 +72,14 @@ The edit camera is how the creator looks at the Map; it is UI state and never en
 ## Reference Date field (Story 1.11)
 
 The « Date de référence » text field in Project settings (Alt+5, then Tab) registers no shortcut of its own: it is a text field, so every unmodified key reaches it. Enter or leaving the field (Tab, a click elsewhere) commits the year as one undoable `SET_REFERENCE_DATE`; Escape restores the previous date and leaves the field; Ctrl+S still saves (an unusable entry is refused first and keeps the previous date). An invalid entry shows its message under the field (`role="alert"`) and `aria-invalid`; a committed date is announced « Date de référence : 1453 » and the nearest-data chip in the options bar is a polite status. No key collision: nothing new is bound outside the field.
+
+## Place search (Story 1.12)
+
+The search field in the top bar is an ARIA combobox (`role="combobox"`, `aria-expanded`, `aria-controls`, `aria-activedescendant`, a listbox of options grouped under « Pays », « Entités historiques », « Villes »). Registered shortcut: `/` (`search.focus`, group Navigation, listed in the `?` help).
+
+- **`/`** matches the typed character, so AZERTY (Shift+:) and QWERTY behave alike. It focuses the field and selects its text. It is ignored in a text field (the `/` is typed there: the Project name, the Reference Date, the search field itself), while a dialog is open, and while the Project is opening (the field is inert). Firefox's quick find is prevented, as the registry always prevents a handled key.
+- **In the field** (an IME composition owns every key while it composes): ↓ and ↑ move through the results and wrap; Home and End jump to the first and the last result (while the list is open; with no list they move the caret); Enter picks the active result, or the first one when none is active; Escape closes the list, then leaves the field (the registry's text-field rule); Tab leaves and closes the list. ↓ reopens a list closed by Escape. Typing needs two characters before anything shows. The mouse hovers (active) and clicks (picks).
+- **Picking** centres the edit camera (never a Preset or the Project) and moves the focus to the Map, so that the arrows pan and Escape clears the selection. A GeoEntity result is also selected (UI-only selection, outlined on the Map in ink on a halo): the first Escape on the Map clears it (« Sélection retirée »), in its place in the Escape order above. A menu or a dialog open over it takes that Escape first.
+- **Announcements** (polite): « 3 résultats » / « Aucun lieu trouvé » / « La recherche de lieux est indisponible. » once typing pauses, « Carte centrée sur Londres » or « Ottoman Empire sélectionné » on a pick.
+
+No key collision: `/` is bound nowhere else, and in a text field it stays text. No other browser binding on Chrome or Edge (Firefox's quick find is prevented by the page).

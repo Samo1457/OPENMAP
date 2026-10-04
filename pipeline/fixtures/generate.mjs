@@ -103,6 +103,51 @@ writeFileSync(
   dbfFile([{ name: 'name', type: 'C', length: 30 }, { name: 'scalerank', type: 'N', length: 3 }, { name: 'labelrank', type: 'N', length: 3 }, { name: 'pop_max', type: 'N', length: 10 }, { name: 'adm0name', type: 'C', length: 20 }], places.map((p) => ({ ...p, adm0name: 'Dropped' }))),
 )
 
+// Place search fixtures (Story 1.12): two countries (the first in two parts, the large one being the
+// main landmass) and three places, with the Natural Earth field names the search pipeline reads.
+const countries = [
+  { parts: [ring(10, 10, 30, 30), ring(60, 60, 62, 62)], NAME: 'Alphaland', NAME_EN: 'Alphaland', NAME_FR: 'Alphalande', ADM0_A3: 'ALP', ADMIN: 'Alphaland', LABEL_X: 20.5, LABEL_Y: 21.25, POP_EST: 5000000 },
+  { parts: [ring(-30, -30, -10, -10)], NAME: 'Betaland', NAME_EN: 'Betaland', NAME_FR: 'Betaland', ADM0_A3: 'BET', ADMIN: 'Betaland', LABEL_X: -20, LABEL_Y: -20, POP_EST: 800000 },
+]
+writeFileSync(`${dir}/tiny-countries.shp`, shpFile(5, countries))
+writeFileSync(
+  `${dir}/tiny-countries.dbf`,
+  dbfFile(
+    [
+      { name: 'NAME', type: 'C', length: 30 },
+      { name: 'NAME_EN', type: 'C', length: 30 },
+      { name: 'NAME_FR', type: 'C', length: 30 },
+      { name: 'ADM0_A3', type: 'C', length: 5 },
+      { name: 'ADMIN', type: 'C', length: 30 },
+      { name: 'LABEL_X', type: 'N', length: 12 },
+      { name: 'LABEL_Y', type: 'N', length: 12 },
+      { name: 'POP_EST', type: 'N', length: 12 },
+    ],
+    countries,
+  ),
+)
+
+const namedPlaces = [
+  { x: 20.1234, y: 21.4321, NAME: 'Alphaville', NAME_EN: 'Alphaville', NAME_FR: 'Alphaville-sur-Mer', ADM0_A3: 'ALP', ADM0NAME: 'Alphaland', POP_MAX: 120000 },
+  { x: -19.5, y: -20.25, NAME: 'Betatown', NAME_EN: 'Betatown', NAME_FR: 'Betatown', ADM0_A3: 'BET', ADM0NAME: 'Betaland', POP_MAX: 4500 },
+  { x: 100, y: 10, NAME: 'Faraway', NAME_EN: 'Faraway', NAME_FR: 'Éloigné', ADM0_A3: 'ZZZ', ADM0NAME: 'Zedland', POP_MAX: 10 },
+]
+writeFileSync(`${dir}/tiny-places-names.shp`, shpFile(1, namedPlaces))
+writeFileSync(
+  `${dir}/tiny-places-names.dbf`,
+  dbfFile(
+    [
+      { name: 'NAME', type: 'C', length: 30 },
+      { name: 'NAME_EN', type: 'C', length: 30 },
+      { name: 'NAME_FR', type: 'C', length: 30 },
+      { name: 'ADM0_A3', type: 'C', length: 5 },
+      { name: 'ADM0NAME', type: 'C', length: 20 },
+      { name: 'POP_MAX', type: 'N', length: 10 },
+    ],
+    namedPlaces,
+  ),
+)
+
 const W = 64
 const H = 32
 const values = new Uint8Array(W * H)

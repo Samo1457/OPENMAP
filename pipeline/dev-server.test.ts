@@ -21,6 +21,7 @@ const root = mkdtempSync(join(tmpdir(), 'openmap-dev-'))
 const out = join(root, 'out')
 const empty = join(root, 'empty')
 const geoOut = join(root, 'out-geo')
+const searchOut = join(root, 'out-search')
 let server: Server
 let empty_server: Server
 let base = ''
@@ -28,9 +29,9 @@ let emptyBase = ''
 const hints: string[] = []
 const emptyHints: string[] = []
 
-const listen = (dir: string, hint: (m: string) => void, geoOutDir = join(dir, 'no-geo')) =>
+const listen = (dir: string, hint: (m: string) => void, geoOutDir = join(dir, 'no-geo'), searchOutDir = join(dir, 'no-search')) =>
   new Promise<{ server: Server; base: string }>((resolve) => {
-    const middleware = createDataMiddleware({ outDir: dir, geoOutDir, hint })
+    const middleware = createDataMiddleware({ outDir: dir, geoOutDir, searchOutDir, hint })
     const s = createServer((req, res) => middleware(req, res, () => {
       res.statusCode = 418
       res.end('next')
@@ -52,7 +53,10 @@ beforeAll(async () => {
   writeFileSync(join(geoOut, 'library/v1/geo/index.json'), '{"entities":[]}')
   writeFileSync(join(geoOut, 'library/v1/geo/han-861af5/-404.json'), '{"type":"Feature"}')
   writeFileSync(join(geoOut, 'library/v1/geo/han-861af5/12.json'), '{"type":"Feature","n":12}')
-  ;({ server, base } = await listen(out, (m) => hints.push(m), geoOut))
+  mkdirSync(join(searchOut, 'library/v1/search'), { recursive: true })
+  writeFileSync(join(searchOut, 'library/v1/search/index.json'), '{"schemaVersion":1}')
+  writeFileSync(join(searchOut, 'library/v1/search/other.json'), '{"other":true}')
+  ;({ server, base } = await listen(out, (m) => hints.push(m), geoOut, searchOut))
   ;({ server: empty_server, base: emptyBase } = await listen(empty, (m) => emptyHints.push(m)))
 })
 afterAll(() => {
@@ -143,6 +147,37 @@ describe('historical borders routes', () => {
     for (const path of ['nope/-404.json', 'han-861af5/13.json', 'han-861af5/abc.json', '..%2f..%2fsecret/12.json', 'han-861af5/..%2f..%2f..%2f..%2fsecret.json', 'han-861af5/-404.txt', 'x', '']) {
       const res = await fetch(`${base}/library/v1/geo${path === '' ? '' : `/${path}`}`)
       expect(res.status, path).toBe(404)
+    }
+  })
+})
+
+describe('place search route', () => {
+  it('serves the index with a JSON type', async () => {
+    const res = await fetch(`${base}/library/v1/search/index.json`)
+    expect(res.status).toBe(200)
+    expect(res.headers.get('content-type')).toContain('application/json')
+    expect(await res.text()).toBe('{"schemaVersion":1}')
+  })
+
+  it('serves nothing else below the prefix and never falls through to the app', async () => {
+    for (const path of ['other.json', 'index.json/x', '..%2fother.json', 'index.txt', 'x/y', '']) {
+      const res = await fetch(`${base}/library/v1/search${path === '' ? '' : `/${path}`}`)
+      expect(res.status, path).toBe(404)
+    }
+    expect((await fetch(`${base}/library/v1/search/index.json`, { method: 'POST' })).status).toBe(418)
+  })
+
+  it('answers 404 with one hint naming the command when the index is not built', async () => {
+    const hints: string[] = []
+    const bare = await listen(empty, (m) => hints.push(m))
+    try {
+      expect((await fetch(`${bare.base}/library/v1/search/index.json`)).status).toBe(404)
+      expect((await fetch(`${bare.base}/library/v1/search/index.json`)).status).toBe(404)
+      expect(hints).toHaveLength(1)
+      expect(hints[0]).toMatch(/^[^\n]+$/)
+      expect(hints[0]).toContain('npm run pipeline:search')
+    } finally {
+      bare.server.close()
     }
   })
 })

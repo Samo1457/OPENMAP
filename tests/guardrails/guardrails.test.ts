@@ -7,7 +7,7 @@ import { cpSync, existsSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeF
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { afterAll, describe, expect, it } from 'vitest'
-import { loadGeoManifest, loadManifest, LicenceError } from '../../pipeline/sources.ts'
+import { loadGeoManifest, loadManifest, loadSearchManifest, LicenceError } from '../../pipeline/sources.ts'
 import { checkPackages, classifyLicence, parseOverrides } from '../../scripts/check-licences.mjs'
 import { readSnapshot, schemaSnapshotIssues } from './schema-check'
 
@@ -353,6 +353,31 @@ describe('historical borders licence gate (AD-17, Story 1.9)', () => {
     const result = run(ROOT, process.execPath, ['pipeline/build-geo.ts', '--manifest', pipelineFixture('sources-geo-odbl.json'), '--out', out, '--cache', cache])
     expect(result.status).not.toBe(0)
     expect(result.output).toContain('odbl-borders')
+    expect(existsSync(out)).toBe(false)
+    expect(existsSync(cache)).toBe(false)
+  })
+})
+
+describe('place search licence gate (AD-17, Story 1.12)', () => {
+  const pipelineFixture = (name: string) => join(FIXTURES, 'pipeline', name)
+  const dataDir = mkdtempSync(join(tmpdir(), 'openmap-search-pipeline-'))
+  workDirs.push(dataDir)
+
+  it.each([
+    ['sources-search-noncommercial.json', 'nc-names', 'CC-BY-NC-4.0'],
+    ['sources-search-odbl.json', 'odbl-names', 'ODbL-1.0'],
+    ['sources-search-sharealike.json', 'sa-names', 'CC-BY-SA-4.0'],
+  ])('%s is refused, naming the source', (file, id, licence) => {
+    expect(() => loadSearchManifest(pipelineFixture(file))).toThrow(LicenceError)
+    expect(() => loadSearchManifest(pipelineFixture(file))).toThrow(new RegExp(`${id}.*${licence}`))
+  })
+
+  it('the search pipeline command exits non-zero before downloading or writing anything', () => {
+    const out = join(dataDir, 'out-search')
+    const cache = join(dataDir, 'cache')
+    const result = run(ROOT, process.execPath, ['pipeline/build-search.ts', '--manifest', pipelineFixture('sources-search-odbl.json'), '--out', out, '--cache', cache])
+    expect(result.status).not.toBe(0)
+    expect(result.output).toContain('odbl-names')
     expect(existsSync(out)).toBe(false)
     expect(existsSync(cache)).toBe(false)
   })

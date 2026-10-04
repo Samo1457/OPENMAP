@@ -1,6 +1,6 @@
 # Pipeline de données OPENMAP
 
-Construit hors ligne les données du fond de carte à partir de Natural Earth (domaine public). Les sorties ne sont jamais commitées : `pipeline/out/` et `pipeline/cache/` sont ignorés par Git. Les frontières historiques viennent de Cliopatria (CC BY 4.0) ; leur sortie est `pipeline/out-geo/` (aussi ignoré par Git), voir la section « Frontières historiques ».
+Construit hors ligne les données du fond de carte à partir de Natural Earth (domaine public). Les sorties ne sont jamais commitées : `pipeline/out/` et `pipeline/cache/` sont ignorés par Git. Les frontières historiques viennent de Cliopatria (CC BY 4.0) ; leur sortie est `pipeline/out-geo/` (aussi ignoré par Git), voir la section « Frontières historiques ». L'index de recherche de lieux vient de Natural Earth ; sa sortie est `pipeline/out-search/` (aussi ignoré par Git), voir la section « Recherche de lieux ».
 
 ## Commandes
 
@@ -14,6 +14,7 @@ npm run pipeline:basemap -- --pin         # enregistre les empreintes SHA-256 la
 
 ```
 npm run pipeline:geo                     # frontières historiques (Cliopatria), voir la section dédiée plus bas
+npm run pipeline:search                  # index de recherche de lieux (Natural Earth), voir la section dédiée plus bas
 ```
 
 Options : `--out <dossier>` (défaut `pipeline/out`), `--cache <dossier>` (défaut `pipeline/cache`), `--manifest <fichier>`. Chaque option demande une valeur, une option inconnue est refusée, et un dossier de sortie existant, non vide et qui n'est pas une sortie du pipeline n'est jamais remplacé.
@@ -51,7 +52,7 @@ Soit environ 148 Mio sur disque pour une construction complète. Mesure : `du -s
 
 ## Tests
 
-`npm test` exécute `pipeline/**/*.test.ts` avec de petits jeux de test versionnés dans `pipeline/fixtures/` (un shapefile et un GeoTIFF fabriqués à la main, régénérables avec `node pipeline/fixtures/generate.mjs`). Aucun accès réseau.
+`npm test` exécute `pipeline/**/*.test.ts` avec de petits jeux de test versionnés dans `pipeline/fixtures/` (des shapefiles, dont deux pour la recherche de lieux, et un GeoTIFF fabriqués à la main, régénérables avec `node pipeline/fixtures/generate.mjs`). Aucun accès réseau.
 
 ## Frontières historiques (Cliopatria)
 
@@ -81,3 +82,27 @@ La commande affiche aussi le nombre d'anneaux et de polygones supprimés par la 
 **Limites connues.** Mémoire : le pic mesuré est d'environ 1,3 Go (le JSON de 165 Mo est lu en mémoire). Antiméridien : aucun polygone de cette version ne le franchit (les longitudes restent dans ±180, mesuré), donc rien n'est coupé ni déroulé. La validité topologique des anneaux simplifiés (auto-intersections, trous) n'est pas vérifiée. Les identifiants d'entités sont stables pour une version donnée de Cliopatria ; une version ultérieure peut renommer un identifiant en collision, c'est pourquoi les Projects figent la version.
 
 Sans construction préalable, l'application démarre normalement et les chemins `/library/v1/geo/…` répondent 404 avec une ligne d'aide dans la console. Un identifiant ou une année inconnus répondent 404, et un chemin avec `..` est refusé.
+
+## Recherche de lieux (Natural Earth)
+
+```
+npm run pipeline:search
+```
+
+Options : `--out <dossier>` (défaut `pipeline/out-search`), `--cache <dossier>` (défaut `pipeline/cache`), `--manifest <fichier>` (défaut `sources-search.json`). La sortie a son propre dossier : la construction du fond de carte ne l'efface jamais (ni celle des frontières). Comme pour les autres pipelines, un dossier de sortie non vide qui n'est pas une sortie de ce pipeline (pas de `library/v1/search/index.json`) n'est jamais remplacé, et la sortie précédente survit à tout échec. `--vector-only` et `--pin` ne concernent que `pipeline:basemap` et sont refusés ici.
+
+**Sources et licence.** Natural Earth `v5.1.2` (domaine public, crédit non obligatoire), quatre fichiers `10m_cultural` de `nvkelso/natural-earth-vector`, SHA-256 figés dans `sources-search.json` : `ne_10m_admin_0_countries` (`.shp` 8,8 Mo, `.dbf` 0,9 Mo ; 258 pays) et `ne_10m_populated_places` (`.shp` 205 Ko, `.dbf` 48 Mo ; 7 342 lieux). Le fichier complet des lieux est nécessaire : seul il porte `NAME_FR` (la variante `_simple` du fond de carte n'a pas de nom français). La licence est vérifiée avant tout téléchargement, avec la même barrière que les autres pipelines (NC, SA et ODbL refusés, code de sortie différent de 0, rien d'écrit). Les téléchargements sont mis en cache dans `pipeline/cache/` (49 Mio de plus, une seule fois).
+
+**Ce qui est produit** (sous `pipeline/out-search/library/v1/search/`, servi par `npm run dev` à `/library/v1/search/index.json`) : un seul fichier JSON compact.
+
+| Champ | Contenu |
+| --- | --- |
+| `schemaVersion`, `dataset` | `1` ; `{id: "places-search", version: "1", source, licence, attribution, creditRequired}` (`Natural Earth`, `Public-Domain`, `Made with Natural Earth.`, `false`) |
+| `countries[]` | `{en, fr, lon, lat, bounds, pop}` : `NAME_EN`, `NAME_FR` (`""` quand il est égal à l'anglais), le point d'étiquette (`LABEL_X`, `LABEL_Y`), l'emprise `[ouest, sud, est, nord]` de la **terre principale** (le polygone de plus grande surface : ni la Guyane ni l'Alaska ne dézooment la caméra), la population estimée (`POP_EST`) ; triés par nom anglais |
+| `places[]` | `[en, fr, lon, lat, popMax, pays]` : `NAME_EN`, `NAME_FR` (`""` quand il est égal), les coordonnées, `POP_MAX`, le pays (indice dans `countries` quand `ADM0_A3` ou `ADM0NAME` le désigne, sinon son nom anglais en texte) ; triés par nom, puis coordonnées |
+
+Les coordonnées sont arrondies à 3 décimales (environ 100 m), les emprises à 2 (environ 1 km). Le nom anglais retombe sur `NAME` quand `NAME_EN` est vide ; les champs texte des tables Natural Earth sont complétés par des caractères NUL, retirés ici. Un lieu ou un pays sans nom ou sans géométrie utilisable est écarté et compté, un doublon exact aussi. La sortie est déterministe : les lignes sont triées, et un second passage avec le même cache produit un fichier identique octet pour octet (SHA-256 vérifié).
+
+**Taille mesurée** (construction réelle, Linux, Node 24) : 258 pays, 7 342 lieux dont 1 336 ont un nom français différent de l'anglais, aucun écarté ni en double, 2 lieux dont le pays est hors de la liste (Atafu, Longyearbyen : le nom du pays reste en texte) ; `index.json` 327,9 Kio (141,1 Kio compressés en gzip), construit en 6 s. Le client le charge au premier focus du champ de recherche (jamais à l'ouverture de l'Éditeur) et le garde dans le cache de la Bibliothèque (Dexie), d'où il est relu ensuite, y compris hors ligne.
+
+**Limites connues.** Seuls les noms anglais et français de Natural Earth sont indexés ; les noms historiques (« Constantinople », « Stalingrad ») n'y sont pas (alias de l'Epic 10). Les entités historiques (Cliopatria) ne viennent pas de cet index : le client les cherche dans les données chargées à la date de référence. Sans construction préalable, l'application démarre normalement et `/library/v1/search/index.json` répond 404 avec une ligne d'aide dans la console ; la recherche cherche alors seulement les entités historiques et affiche « La recherche de lieux est indisponible. » quand rien d'autre ne correspond.

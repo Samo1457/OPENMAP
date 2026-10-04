@@ -1,6 +1,6 @@
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { assertLicences, LicenceError, loadGeoManifest, loadManifest, ManifestError, validateGeoManifest, validateManifest, type Manifest } from './sources.ts'
+import { assertLicences, LicenceError, loadGeoManifest, loadManifest, loadSearchManifest, ManifestError, validateGeoManifest, validateManifest, validateSearchManifest, type Manifest } from './sources.ts'
 
 const real = loadManifest(join(import.meta.dirname, 'sources.json'))
 
@@ -107,5 +107,55 @@ describe('Cliopatria manifest', () => {
   it('is not accepted as a Natural Earth manifest, nor the reverse', () => {
     expect(() => validateManifest(geo)).toThrow(ManifestError)
     expect(() => validateGeoManifest(real)).toThrow(ManifestError)
+  })
+})
+
+describe('place search manifest', () => {
+  const search = loadSearchManifest(join(import.meta.dirname, 'sources-search.json'))
+  const edit = (change: (m: typeof search) => void) => {
+    const m = structuredClone(search)
+    change(m)
+    return m
+  }
+
+  it('pins Natural Earth 5.1.2 countries and populated places, public domain, checksums pinned', () => {
+    expect(search.naturalEarthRelease).toBe('5.1.2')
+    expect(search.sources.map((s) => s.layer).sort()).toEqual(['countries', 'places'])
+    for (const source of search.sources) {
+      expect(source).toMatchObject({ kind: 'search', licence: 'Public-Domain', creditRequired: false, source: 'Natural Earth', version: '5.1.2' })
+      expect(source.files.map((f) => f.name.split('.').pop()).sort()).toEqual(['dbf', 'shp'])
+      for (const file of source.files) {
+        expect(file.url).toContain('/natural-earth-vector/v5.1.2/10m_cultural/')
+        expect(file.sha256).toMatch(/^[0-9a-f]{64}$/)
+      }
+    }
+    expect(search.sources.flatMap((s) => s.files.map((f) => f.name)).sort()).toEqual([
+      'ne_10m_admin_0_countries.dbf',
+      'ne_10m_admin_0_countries.shp',
+      'ne_10m_populated_places.dbf',
+      'ne_10m_populated_places.shp',
+    ])
+  })
+
+  it.each(['CC-BY-NC-4.0', 'ODbL-1.0', 'CC-BY-SA-4.0', 'GPL-3.0-only', 'MIT'])('refuses %s through the shared gate', (licence) => {
+    expect(() => assertLicences(edit((m) => (m.sources[1].licence = licence)))).toThrow(LicenceError)
+  })
+
+  it('rejects unpinned URLs, other hosts, unpinned checksums, version drift and the wrong layers', () => {
+    expect(() => validateSearchManifest(edit((m) => (m.sources[0].files[0].url = m.sources[0].files[0].url.replace('v5.1.2', 'master'))))).toThrow(/pinned Natural Earth URL/)
+    expect(() => validateSearchManifest(edit((m) => (m.sources[0].files[0].url = 'https://example.com/v5.1.2/x.shp')))).toThrow(/pinned/)
+    expect(() => validateSearchManifest(edit((m) => (m.sources[0].files[0].sha256 = '')))).toThrow(/must be pinned/)
+    expect(() => validateSearchManifest(edit((m) => (m.sources[0].version = '5.1.1')))).toThrow(/differs/)
+    expect(() => validateSearchManifest(edit((m) => (m.sources[0].files[0].url = m.sources[0].files[0].url.replace('v5.1.2', 'v5.1.1'))))).toThrow(/pinned to tag v5\.1\.1, not release v5\.1\.2/)
+    expect(() => validateSearchManifest(edit((m) => (m.sources[0].layer = 'places')))).toThrow(/exactly one "countries"/)
+    expect(() => validateSearchManifest(edit((m) => m.sources[0].files.pop()))).toThrow(/one \.shp and one \.dbf/)
+    expect(() => validateSearchManifest(edit((m) => m.sources.pop()))).toThrow(/exactly one source/)
+    expect(() => validateSearchManifest({})).toThrow(ManifestError)
+  })
+
+  it('is not accepted as another pipeline manifest, nor the reverse', () => {
+    expect(() => validateManifest(search)).toThrow(ManifestError)
+    expect(() => validateGeoManifest(search)).toThrow(ManifestError)
+    expect(() => validateSearchManifest(real)).toThrow(ManifestError)
   })
 })

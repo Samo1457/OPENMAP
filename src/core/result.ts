@@ -20,6 +20,8 @@ export type DomainErrorCode =
   | 'not_a_year'
   /** Library data cannot be loaded: not found, not JSON, invalid, or another version (AD-12, AD-27). */
   | 'geo_unavailable'
+  /** The place search index cannot be loaded: not found, not JSON, or invalid (AD-16, AD-27). */
+  | 'search_unavailable'
 
 export type DomainErrorParams = Readonly<Record<string, string | number | boolean>>
 

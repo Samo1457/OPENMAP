@@ -51,3 +51,13 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-1-10-display-the-stylized-basemap-and-the-output-frame.md`
   summary: With a rotated edit camera (Shift+wheel) the minimum zoom and the vertical clamp ignore the rotated frame, so a blank band or a repeated Earth can show inside the frame.
   evidence: Edge-case and verification-gap reviewers; `minEditZoom(frame)` takes no bearing and `clampCenterLat` only keeps the centre inside the world. Rotation is rare today; fix before camera presets and Step framing (Epic 3) rely on rotated frames.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-12-search-for-a-place.md`
+  summary: The search index in the Library cache is never revalidated: a corrected index published at the same `/library/v1/search/index.json` path is not picked up by browsers that cached the old one. Add a cache key or version bump (or a dataset version in the key) when the index is rebuilt for a new Natural Earth release.
+  evidence: `src/library/search.ts` reads the cache first and never refetches (spec: « reads it from there ever after »); the cache key is the immutable path `library/v1/search/index`.
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-12-search-for-a-place.md`
+  summary: The selection outline (`selection-halo`, `selection-ink` deck.gl layers and `MapView.setSelection`) is an edit overlay: Story 4.5's export path must not draw it into export frames, and the preview-vs-export golden test should cover a selected entity.
+  evidence: The layers are added by `drawTerritories` in `src/render/map-view.ts` from UI state, not from the Scene; an export renderer that reuses that function would burn the outline into the video.
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-12-search-for-a-place.md`
+  summary: A Cliopatria entity whose main landmass crosses the antimeridian fits the whole world (its extent spans from near -180 to 180) when picked in the search.
+  evidence: `mainLandmassBounds` takes the plain bounding box of the largest polygon; Cliopatria 0.2.0 polygons stay within ±180 but one that straddles the 180° meridian would need wrapped bounds (centre and span across the seam).

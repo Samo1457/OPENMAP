@@ -3,6 +3,7 @@
 // camera is applied with `jumpTo`, and only the user's own wheel, drag or pinch motion moves the
 // edit camera (UI state, never in the Project). Loaded lazily by the Editor (`loadMapView`).
 
+import { PathStyleExtension } from '@deck.gl/extensions'
 import { GeoJsonLayer } from '@deck.gl/layers'
 import { MapLibreOverlay } from '@deck.gl/maplibre'
 import { LngLat, Map as MapLibreMap, Point, setWorkerUrl, type PaddingOptions } from 'maplibre-gl'
@@ -31,8 +32,19 @@ export interface MapViewOptions {
   readonly onEditCamera: (camera: SceneCamera) => void
 }
 
+/** The GeoEntity outlined as selected (Story 1.12): UI state, drawn above the Territories, never part of the Scene. */
+export interface MapSelection {
+  /** Canonical GeoEntity key, the `key` of its Scene Territory. */
+  readonly key: string
+  /** `canvas-ink` and `canvas-halo`, `#RRGGBB`: the selection is ink on a halo, never the UI accent. */
+  readonly ink: string
+  readonly halo: string
+}
+
 export interface MapView {
   setScene(scene: Scene): void
+  /** Outlines the selected GeoEntity (ink on halo), or nothing. A key with no Territory in the Scene draws nothing. */
+  setSelection(selection: MapSelection | undefined): void
   setLayout(layout: MapLayout): void
   /** Applies a camera given in reference zoom with `jumpTo`. */
   setCamera(camera: SceneCamera): void
@@ -50,6 +62,15 @@ export interface MapView {
 }
 
 setWorkerUrl(workerUrl)
+
+/**
+ * `canvas-selection` (DESIGN.md): a 4.5 px solid halo under a 1.6 px dashed ink line. Screen px: an edit
+ * overlay, not scaled by the output frame. The dash is `[dash, gap]` in multiples of the line width.
+ */
+const SELECTION_HALO_WIDTH = 4.5
+const SELECTION_INK_WIDTH = 1.6
+const SELECTION_INK_DASH: [number, number] = [5, 3]
+const SELECTION_DASH = [new PathStyleExtension({ dash: true })]
 
 const MIN_ZOOM = -2
 const MAX_ZOOM = 22
@@ -146,6 +167,7 @@ export function createMapView(options: MapViewOptions): MapView {
   // --- Territories: one GeoJsonLayer, outline only (AD-6). The Scene gives sizes in reference px; they
   // are scaled by `s` here, so a new Output Format or window size redraws them at the right width.
   let territories: { readonly items: readonly SceneTerritory[]; readonly features: GeoJSON.Feature[] } = { items: [], features: [] }
+  let selection: MapSelection | undefined
 
   function territoryItems(source: Scene): SceneTerritory[] {
     return source.items.filter((item): item is SceneTerritory => item.kind === 'territory').sort((a, b) => a.z - b.z)
@@ -164,6 +186,31 @@ export function createMapView(options: MapViewOptions): MapView {
     const style = items[0]?.outline
     const colour: [number, number, number, number] = style ? hexToRgba(style.colour) : [0, 0, 0, 255]
     const width = (style?.width ?? 0) * frameScale(layout.frame)
+    // The selected entity: its outline again, ink over a wider halo, above the Territories.
+    const selected = selection ? territories.features.find((feature) => feature.properties?.key === selection?.key) : undefined
+    const selectionLayers =
+      selection && selected
+        ? [
+            { id: 'selection-halo', colour: hexToRgba(selection.halo), width: SELECTION_HALO_WIDTH },
+            { id: 'selection-ink', colour: hexToRgba(selection.ink), width: SELECTION_INK_WIDTH },
+          ].map(
+            (line) =>
+              new GeoJsonLayer({
+                id: line.id,
+                data: [selected],
+                stroked: true,
+                filled: false,
+                getLineColor: line.colour,
+                getLineWidth: line.width,
+                lineWidthUnits: 'pixels',
+                lineJointRounded: true,
+                pickable: false,
+                // The halo is solid, the ink dashed.
+                ...(line.id === 'selection-ink' ? { extensions: SELECTION_DASH, getDashArray: SELECTION_INK_DASH } : {}),
+                updateTriggers: { getLineColor: [line.colour.join()], getLineWidth: [line.width] },
+              }),
+          )
+        : []
     overlay.setProps({
       layers:
         items.length === 0
@@ -181,8 +228,11 @@ export function createMapView(options: MapViewOptions): MapView {
                 pickable: false,
                 updateTriggers: { getLineColor: [colour.join()], getLineWidth: [width] },
               }),
+              ...selectionLayers,
             ],
     })
+    container.dataset.selection = selected && selection ? selection.key : ''
+    container.dataset.selectionColours = selected && selection ? `${selection.ink} ${selection.halo}` : ''
     container.dataset.territories = String(items.length)
     container.dataset.territoryKeys = items.map((item) => item.key).join(' ')
     container.dataset.outlineWidth = width.toFixed(3)
@@ -406,6 +456,11 @@ export function createMapView(options: MapViewOptions): MapView {
         if (!sameStructure) void loadStyle(next.basemap.id)
       }
       paint()
+      drawTerritories()
+    },
+    setSelection(next) {
+      if (next?.key === selection?.key && next?.ink === selection?.ink && next?.halo === selection?.halo) return
+      selection = next
       drawTerritories()
     },
     setLayout(next) {

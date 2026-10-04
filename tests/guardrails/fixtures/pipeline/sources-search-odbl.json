@@ -1,0 +1,49 @@
+{
+  "naturalEarthRelease": "5.1.2",
+  "sources": [
+    {
+      "id": "ne-10m-admin-0-countries",
+      "kind": "search",
+      "layer": "countries",
+      "version": "5.1.2",
+      "source": "Natural Earth",
+      "licence": "Public-Domain",
+      "attribution": "Made with Natural Earth.",
+      "creditRequired": false,
+      "files": [
+        {
+          "name": "ne_10m_admin_0_countries.shp",
+          "url": "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/10m_cultural/ne_10m_admin_0_countries.shp",
+          "sha256": "7ce119ef6342e43cff7c0c3004e0911ab7ec1988a14734372031d2012180e7bc"
+        },
+        {
+          "name": "ne_10m_admin_0_countries.dbf",
+          "url": "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/10m_cultural/ne_10m_admin_0_countries.dbf",
+          "sha256": "c5dbd3dd5fd7e2ef49051fc88562c03819e8ea63a382642df6eadd1243bf4b49"
+        }
+      ]
+    },
+    {
+      "id": "odbl-names",
+      "kind": "search",
+      "layer": "places",
+      "version": "5.1.2",
+      "source": "Natural Earth",
+      "licence": "ODbL-1.0",
+      "attribution": "Made with Natural Earth.",
+      "creditRequired": false,
+      "files": [
+        {
+          "name": "ne_10m_populated_places.shp",
+          "url": "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/10m_cultural/ne_10m_populated_places.shp",
+          "sha256": "f4073365d248dfe35a44cca6715bf5b4812fa723294ed6a37043d7a3e09cc998"
+        },
+        {
+          "name": "ne_10m_populated_places.dbf",
+          "url": "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/10m_cultural/ne_10m_populated_places.dbf",
+          "sha256": "eff834a8727e06f28fc52b04393c462d074aecf9a7acd1b870e766240a995b6c"
+        }
+      ]
+    }
+  ]
+}

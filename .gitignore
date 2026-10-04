@@ -42,3 +42,6 @@ pipeline/out.tmp/
 pipeline/out-geo/
 pipeline/out-geo.tmp/
 pipeline/out-geo.old/
+pipeline/out-search/
+pipeline/out-search.tmp/
+pipeline/out-search.old/

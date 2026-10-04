@@ -2,7 +2,8 @@
 title: 'Story 1.12: Search for a place'
 type: 'feature'
 created: '2026-10-03'
-status: 'draft'
+status: 'done'
+baseline_commit: 'f9d2d998c71ba60be6c782e700594a0ee08b9ee3'
 route: 'dispatch'
 review_loop_iteration: 0
 context:
@@ -75,9 +76,27 @@ context:
 
 ## Implementation Notes
 
+Decisions where the spec left latitude (all reversible, none touches a frozen section):
+
+- **Index format** (`/library/v1/search/index.json`, `src/core/search/search-index.ts`, written by `pipeline/search.ts`): `{schemaVersion: 1, dataset: {id: "places-search", version: "1", source, licence, attribution, creditRequired}, countries: [{en, fr, lon, lat, bounds, pop}], places: [[en, fr, lon, lat, popMax, country]]}`. `fr` is `""` when it equals `en`; `country` is an index into `countries` (matched by `ADM0_A3`, then by English name) or the country's English name as text when it is not in the list (2 places). Measured: 258 countries, 7,342 places (1,336 with a different French name), 327.9 KiB (141.1 KiB gzipped), byte-identical on a second run.
+- **Main landmass** = the polygon of largest area (longitude scaled by cos of the mean latitude, holes subtracted), `src/core/search/landmass.ts`, import-free so the pipeline reads the same file. Countries use it in the pipeline, entities in the client (`entityCandidates`).
+- **Folding** also turns every other non-letter, non-digit character (parentheses, full stops) into a space, a superset of « apostrophes and hyphens ». Needed so that Cliopatria's aggregate names « (Roman Empire) » and « St. Louis » match; aggregates are shown without their parentheses.
+- **Ranking then grouping**: the ten best by (quality, kind, population, name length) are taken, then listed by group, so an exact city can sit under a country that only starts with the query when ten results compete.
+- **Enter with no active option picks the first result**; Home/End move in the list only while it is open. After a pick the focus goes to the Map region, so that Escape clears the selection in one press and the arrows pan; `/` returns to the field.
+- **Camera**: north up (bearing 0), city zoom 6, country/entity fitted in 80 % of the frame (10 % margin each side), at most zoom 8 for a very small extent, never below `minEditZoom`; the jump goes through `setEditCamera` and the existing MapArea effect (`jumpTo`).
+- **Selection outline**: 4.5 px solid halo (`canvas-halo`) under a 1.6 px dashed ink line (`canvas-ink`), screen px, from `MapView.setSelection`; the colours are the mono tokens, passed by the UI. This adds `@deck.gl/extensions` 9.4.0 (MIT, `PathStyleExtension`, same version line as the other deck.gl packages) for the dash.
+- **Escape step** priority 10 (`SELECTION_ESCAPE_PRIORITY`), between the future drawing/drawer steps and « return to Select » (0). The selection is also cleared on Editor unmount and when the Map no longer draws the entity (Reference Date change, hidden Territories Layer).
+- **No tooltip on the field** (a focus tooltip would cover the results): a `/` hint in the field and `aria-keyshortcuts="/"` instead.
+- New `DomainErrorCode` `search_unavailable`; the client does not remember a failure, so a later focus tries again.
+- Tests: the e2e `fixtures.ts` serves a small search index by default (`src/core/testing/search-fixtures.ts`), so a focus on the field in any spec never reaches `pipeline/out-search`.
+
+Not verifiable today: « Read-only Project, opened elsewhere » depends on the edit lock of Story 1.14. The search never uses the dispatcher, a Command or the autosave (an e2e test checks the stored Project row is byte-identical after a pick), so it works the same in a read-only Project; a newer-than-app document opens without a Map, and its field is inert (no frame to centre on).
+
 ## Spec Change Log
 
 ## Review Triage Log
+
+Three independent reviewers (adversarial, edge cases, verification gaps) found 0 high, 8 medium and about 20 low items. Patched: announce "selected" only for entities the Scene draws, index load when the field is focused before the Scene arrives, 15 s fetch timeout, IME keyCode 229 and blur reset, popover mousedown guard, pipeline output validation with a sanity floor, Antarctica latitude clamp, input maxLength, plus tests (real-index check, map-view selection layers, dashed outline and no accent pixel, Settings dialog over a selection, unmount, French announcements and axe, Home/End). Measured entityCandidates 0.6 to 6.1 ms, left eager. Deferred (see deferred-work.md): index cache revalidation, selection layers in export frames, antimeridian entity extents. Rejected: north-up reset on pick, extra letter folding, duplicate-name disambiguation, `/` during a menu. Not testable yet: Pan/Draw tool Escape order (tools do not exist), Territories layer toggle (no UI).
 
 ## Design Notes
 

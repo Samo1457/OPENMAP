@@ -3,8 +3,13 @@
 
 import { readLibraryCache, writeLibraryCache } from '@/persistence'
 import { createGeoClient, type GeoClient } from './geo'
+import { createSearchClient, type SearchClient } from './search'
 
+export { createSearchClient, SEARCH_CACHE_KEY, SEARCH_INDEX_PATH, type SearchClient, type SearchClientOptions } from './search'
 export { createGeoClient, GEO_FETCH_CONCURRENCY, GEO_ROOT, type GeoClient, type GeoClientOptions, type GeoStateRequest, type LibraryCache } from './geo'
 
 /** The geo data client of the app: the app origin's `/library/v1/geo/…`, cached in Dexie. */
 export const geo: GeoClient = createGeoClient({ cache: { read: readLibraryCache, write: writeLibraryCache } })
+
+/** The place search client of the app: the app origin's `/library/v1/search/index.json`, cached in Dexie. */
+export const search: SearchClient = createSearchClient({ cache: { read: readLibraryCache, write: writeLibraryCache } })

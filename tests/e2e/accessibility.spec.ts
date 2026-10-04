@@ -54,6 +54,24 @@ for (const scheme of ['light', 'dark'] as const) {
       await expectNoViolations(page, 'Editor with a menu')
     })
 
+    test('the Editor place search: the open list with an active option, the empty message and the unavailable one', async ({ page }) => {
+      // The search index is the small fixture of `fixtures.ts`: no dependency on `pipeline/out-search`.
+      await openEditor(page)
+      const field = page.getByRole('combobox', { name: 'Search for a place' })
+      await field.click()
+      await field.fill('lo')
+      await expect(page.getByRole('listbox').getByRole('option').first()).toBeVisible()
+      await page.keyboard.press('ArrowDown')
+      await expect(field).toHaveAttribute('aria-activedescendant', /.+/)
+      await expectNoViolations(page, 'the place search list')
+      await field.fill('Marioupl')
+      await expect(page.getByTestId('place-search-message')).toBeVisible()
+      await expectNoViolations(page, 'the place search empty message')
+      await page.keyboard.press('Escape')
+      await page.keyboard.press('Escape')
+      await expectNoViolations(page, 'the Editor after the place search')
+    })
+
     test('the Editor Map, its zoom buttons and the Basemap picker and sliders', async ({ page }) => {
       // The data origin is mocked: the check does not depend on `pipeline/out`.
       await page.route('**/library/v1/styles/*.json', (route) =>

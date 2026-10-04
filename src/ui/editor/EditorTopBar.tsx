@@ -1,7 +1,7 @@
-import { ChevronDown, Play, Redo2, Search, Undo2, Upload } from 'lucide-react'
+import { ChevronDown, Play, Redo2, Undo2, Upload } from 'lucide-react'
 import { useCallback, useId, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { OUTPUT_FORMATS, type OutputFormat } from '@/core'
+import { type EntityCandidate, OUTPUT_FORMATS, type OutputFormat, type Size } from '@/core'
 import { buttonLook, iconProps } from '@/ui/components/button'
 import { Menu, type MenuPoint } from '@/ui/components/Menu'
 import { Tooltip } from '@/ui/components/Tooltip'
@@ -11,14 +11,26 @@ import { cn } from '@/ui/lib/utils'
 import { homeHref } from '@/ui/routing'
 import type { EditorActions, EditorModel } from './editor-model'
 import type { SaveIndicatorStore } from './save-status'
+import { PlaceSearch } from './PlaceSearch'
 import { SaveStatus } from './SaveStatus'
 
 /**
  * The Editor top bar (UX-DR30): breadcrumb, save status, Output Format menu, undo/redo, the place
- * search slot (Story 1.12), Presentation and Export (disabled until their stories) and the « ⋯ » menu
+ * place search (Story 1.12), Presentation and Export (disabled until their stories) and the « ⋯ » menu
  * (TopBar's default end slot).
  */
-export function EditorTopBar({ model, actions, saveStatus }: { model: EditorModel; actions?: EditorActions; saveStatus?: SaveIndicatorStore }) {
+export function EditorTopBar({
+  model,
+  actions,
+  saveStatus,
+  search,
+}: {
+  model: EditorModel
+  actions?: EditorActions
+  saveStatus?: SaveIndicatorStore
+  /** What the place search needs from the open Project: the output frame (reference px) and the GeoEntities valid at the data date. */
+  search?: { frame?: Size; entities: readonly EntityCandidate[] }
+}) {
   const { t } = useTranslation()
   const editable = !model.readOnly && actions !== undefined
   /** « Bientôt disponible », the description of the slots whose stories come later. */
@@ -78,7 +90,7 @@ export function EditorTopBar({ model, actions, saveStatus }: { model: EditorMode
       <span id={comingSoonId} hidden>
         {t('common.comingSoon')}
       </span>
-      <SearchSlot describedBy={comingSoonId} />
+      <PlaceSearch frame={search?.frame} entities={search?.entities ?? []} />
       <Tooltip label={t('common.comingSoon')} describedBy={comingSoonId}>
         {(tip) => (
           <button {...tip} type="button" aria-disabled className={buttonLook('secondary', true)}>
@@ -96,28 +108,6 @@ export function EditorTopBar({ model, actions, saveStatus }: { model: EditorMode
         )}
       </Tooltip>
     </TopBar>
-  )
-}
-
-/** « Rechercher un lieu »: the search itself, and its `/` shortcut, arrive in Story 1.12. */
-function SearchSlot({ describedBy }: { describedBy: string }) {
-  const { t } = useTranslation()
-  return (
-    <div className="flex h-control-height-sm w-55 min-w-24 shrink items-center gap-2 rounded-sm border border-om-border-input bg-om-surface-raised px-2 control-disabled">
-      <Search {...iconProps} className="icon-stroke shrink-0 text-om-text-secondary" />
-      <Tooltip label={t('common.comingSoon')} describedBy={describedBy}>
-        {(tip) => (
-          <input {...tip}
-            type="search"
-            readOnly
-            aria-disabled
-            aria-label={t('editor.search')}
-            placeholder={t('editor.search')}
-            className="min-w-0 flex-1 cursor-not-allowed bg-transparent type-label text-om-text-primary outline-none placeholder:text-om-text-muted"
-          />
-        )}
-      </Tooltip>
-    </div>
   )
 }
 

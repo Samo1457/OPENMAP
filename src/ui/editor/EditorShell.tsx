@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { useTranslation } from 'react-i18next'
-import { type Command, createDispatcher, type Dispatcher, type DispatcherState, evaluate, formatYear, type MapLocale, OUTPUT_FRAME_SIZES, type OutputFormat, type Scene } from '@/core'
+import { type Command, createDispatcher, type Dispatcher, type DispatcherState, drawnCandidates, entityCandidates, evaluate, formatYear, type MapLocale, OUTPUT_FRAME_SIZES, type OutputFormat, type Scene } from '@/core'
 import { type Autosave, createAutosave, openStoredProject } from '@/persistence'
 import { Banner } from '@/ui/components/Banner'
 import { useToast } from '@/ui/components/toast'
@@ -17,6 +17,7 @@ import { EditorTopBar } from './EditorTopBar'
 import { OptionsBar, PanelSkeleton, PropertiesPanel, TimelineArea, ToolRail } from './EditorRegions'
 import { clearBasemapPreview, useBasemapPreview } from './basemap-preview-store'
 import { MapArea } from './MapArea'
+import { clearSelection, selectionEscapeStep, useSelection } from './selection-store'
 import { useGeodata } from './use-geodata'
 import { ProjectSettingsPanel } from './ProjectSettingsPanel'
 import { createSaveIndicator, type SaveIndicatorStore } from './save-status'
@@ -93,6 +94,18 @@ export function EditorShell({ projectId }: { projectId: string }) {
   }, [project, preview, geoLoad])
   // A preview never outlives its Project or the Editor.
   useEffect(() => clearBasemapPreview, [projectId])
+
+  // The place search finds the GeoEntities the Map shows (the data date its data was loaded for), and
+  // the one it selected stays selected only while the Map still shows it (a new Reference Date may remove it).
+  const candidates = useMemo(() => entityCandidates(geoLoad.geodata, geoLoad.year), [geoLoad.geodata, geoLoad.year])
+  // Only what the Scene draws can be selected: not with the Territories Layer hidden.
+  const entities = useMemo(() => drawnCandidates(candidates, scene?.items ?? []), [candidates, scene])
+  const search = useMemo(() => ({ frame: scene?.frame, entities }), [scene?.frame, entities])
+  const selection = useSelection()
+  useEffect(() => {
+    if (selection && scene && !scene.items.some((item) => item.kind === 'territory' && item.key === selection.key)) clearSelection()
+  }, [selection, scene])
+  useEffect(() => () => void clearSelection(), [projectId])
 
   const model = useMemo<EditorModel>(() => {
     if (state.kind === 'editable' && current) {
@@ -179,10 +192,13 @@ export function EditorShell({ projectId }: { projectId: string }) {
     ])
     // The last step of the Escape chain: back to the Select tool.
     const unregisterEscape = registerEscapeStep({ id: 'tool.return', priority: 0, run: returnToSelect })
+    // Before it: Escape clears the selected GeoEntity (Story 1.12).
+    const unregisterSelection = registerEscapeStep(selectionEscapeStep(() => announce(t('placeSearch.selectionCleared'))))
     return () => {
       disposed = true
       unregister()
       unregisterEscape()
+      unregisterSelection()
     }
   }, [toast, t])
 
@@ -210,7 +226,7 @@ export function EditorShell({ projectId }: { projectId: string }) {
   return (
     <div className="om-editor bg-om-background">
       <div className="min-w-0 [grid-area:top]">
-        <EditorTopBar model={model} actions={actions} saveStatus={state.kind === 'editable' ? state.saveStatus : undefined} />
+        <EditorTopBar model={model} actions={actions} saveStatus={state.kind === 'editable' ? state.saveStatus : undefined} search={search} />
       </div>
       <div className="flex min-w-0 flex-col [grid-area:banner]">
         {/* Read-only: not dismissable (UX-DR66). */}

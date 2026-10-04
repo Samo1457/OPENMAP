@@ -2,7 +2,7 @@
 // MapLibre and deck.gl are heavy: they live in a separate chunk that only the Editor loads, through
 // `loadMapView`; Home never pays for them.
 
-export type { MapLayout, MapView, MapViewOptions } from './map-view'
+export type { MapLayout, MapSelection, MapView, MapViewOptions } from './map-view'
 export { OVERLAY_MODE } from './overlay-mode'
 export { fallbackStyle, paintTargets } from './style'
 

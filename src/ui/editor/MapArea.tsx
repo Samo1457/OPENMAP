@@ -13,6 +13,7 @@ import { registerShortcuts } from '@/ui/keyboard/registry'
 import { cn } from '@/ui/lib/utils'
 import { monoColors } from '@/ui/theme/tokens'
 import { resetEditCamera, setEditCamera, useEditCamera } from './edit-camera-store'
+import { useSelection } from './selection-store'
 
 /** `#RRGGBB` and an opacity as `rgb(r g b / a)`. */
 function withOpacity(hex: string, opacity: number): string {
@@ -42,6 +43,7 @@ export function MapArea({ scene, outputFormat }: { scene?: Scene; outputFormat?:
   const [area, setArea] = useState<Size | undefined>()
   const [view, setView] = useState<MapView | undefined>()
   const editCamera = useEditCamera()
+  const selection = useSelection()
 
   // A Project opens at the Scene camera; the edit camera never outlives the Map.
   useLayoutEffect(() => {
@@ -110,6 +112,11 @@ export function MapArea({ scene, outputFormat }: { scene?: Scene; outputFormat?:
   useEffect(() => {
     if (view && layout) view.setLayout(layout)
   }, [view, layout])
+
+  // The GeoEntity picked by the place search: ink on a halo, never the UI accent (DESIGN.md `canvas-selection`).
+  useEffect(() => {
+    view?.setSelection(selection ? { key: selection.key, ink: monoColors['canvas-ink'], halo: monoColors['canvas-halo'] } : undefined)
+  }, [view, selection])
 
   // The camera shown: the edit camera, else the Scene camera. Keyed by value so an edit elsewhere in
   // the Project (a new Scene object) does not jump the view.

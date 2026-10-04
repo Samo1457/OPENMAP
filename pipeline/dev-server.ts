@@ -15,6 +15,8 @@ export interface DataMiddlewareOptions {
   outDir?: string
   /** Historical borders pipeline output directory (Story 1.9). */
   geoOutDir?: string
+  /** Place search pipeline output directory (Story 1.12). */
+  searchOutDir?: string
   /** One-line hints for missing output. */
   hint?: (message: string) => void
 }
@@ -51,6 +53,7 @@ const SAFE_SEGMENT = /^[\w .-]+$/
 export function createDataMiddleware(options: DataMiddlewareOptions = {}): Middleware {
   const outDir = resolve(options.outDir ?? join(import.meta.dirname, 'out'))
   const geoOutDir = resolve(options.geoOutDir ?? join(import.meta.dirname, 'out-geo'))
+  const searchOutDir = resolve(options.searchOutDir ?? join(import.meta.dirname, 'out-search'))
   const hint = options.hint ?? ((message: string) => console.warn(message))
   const hinted = new Set<string>()
   const archives = new Map<string, { mtimeMs: number; archive: PMTiles }>()
@@ -73,6 +76,16 @@ export function createDataMiddleware(options: DataMiddlewareOptions = {}): Middl
     res.statusCode = 404
     res.setHeader('Content-Type', 'text/plain; charset=utf-8')
     res.end('Historical borders data not built')
+  }
+
+  const missingSearch = (res: ServerResponse) => {
+    if (!hinted.has('search')) {
+      hinted.add('search')
+      hint('[openmap] No place search index: run "npm run pipeline:search" once.')
+    }
+    res.statusCode = 404
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8')
+    res.end('Place search index not built')
   }
 
   const archiveFor = (id: TilesetId): PMTiles | undefined => {
@@ -121,6 +134,18 @@ export function createDataMiddleware(options: DataMiddlewareOptions = {}): Middl
       if (!existsSync(join(geoRoot, 'index.json'))) return missingGeo(res)
       const path = route[1] ? join(geoRoot, 'index.json') : join(geoRoot, route[2], `${route[3]}.json`)
       if (!existsSync(path)) return notFound()
+      return sendFile(res, path, 'application/json; charset=utf-8')
+    }
+
+    // Place search: the single index. Anything else below the prefix is a 404 here, never a fall-through to the app.
+    if (pathname === '/library/v1/search' || pathname.startsWith('/library/v1/search/')) {
+      if (pathname !== '/library/v1/search/index.json') {
+        res.statusCode = 404
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8')
+        return res.end('Not found')
+      }
+      const path = join(searchOutDir, 'library/v1/search/index.json')
+      if (!existsSync(path)) return missingSearch(res)
       return sendFile(res, path, 'application/json; charset=utf-8')
     }
 

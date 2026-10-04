@@ -126,6 +126,8 @@ test.describe('shortcuts help (UX-DR110)', () => {
       'Redo',
       'Save',
       'Select tool',
+      // The place search key (Story 1.12), registered by the top bar's field.
+      'Search for a place',
       'Go to the top bar',
       'Go to the tools',
       'Go to the tool options',
@@ -142,6 +144,7 @@ test.describe('shortcuts help (UX-DR110)', () => {
     ])
     await expect(helpDialog(page).getByText('Ctrl+Shift+Z')).toBeVisible()
     await expect(helpDialog(page).getByText('Alt+4')).toBeVisible()
+    await expect(helpDialog(page).locator('kbd', { hasText: /^\/$/ })).toBeVisible()
     await page.keyboard.press('Escape')
     await expect(helpDialog(page)).toHaveCount(0)
   })
@@ -274,8 +277,9 @@ test.describe('tooltips (UX-DR64, UX-DR116)', () => {
     await page.keyboard.press('Tab')
     await expect(tooltip(page)).toHaveText('Redo · Ctrl+Shift+Z')
     await page.keyboard.press('Tab')
-    await expect(page.getByRole('searchbox')).toBeFocused()
-    await expect(tooltip(page)).toHaveText('Coming soon')
+    // The place search is a text field with its own `/` hint: no tooltip over its results (Story 1.12).
+    await expect(page.getByRole('combobox', { name: 'Search for a place' })).toBeFocused()
+    await expect(tooltip(page)).toHaveCount(0)
   })
 
   test('the rail tool shows « Select · V »; a click does not leave a tooltip', async ({ page }) => {

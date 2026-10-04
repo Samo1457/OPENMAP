@@ -23,7 +23,7 @@ export interface SourceFile {
 
 export interface Source {
   id: string
-  kind: 'vector' | 'raster' | 'geo'
+  kind: 'vector' | 'raster' | 'geo' | 'search'
   layer: string
   version: string
   source: string
@@ -41,6 +41,12 @@ export interface Manifest {
 /** Manifest of the historical borders pipeline (Story 1.9): one pinned Cliopatria release. */
 export interface GeoManifest {
   cliopatriaRelease: string
+  sources: Source[]
+}
+
+/** Manifest of the place search pipeline (Story 1.12): Natural Earth countries and populated places, shapefiles pinned by checksum. */
+export interface SearchManifest {
+  naturalEarthRelease: string
   sources: Source[]
 }
 
@@ -83,8 +89,8 @@ const VECTOR_URL = /^https:\/\/raw\.githubusercontent\.com\/nvkelso\/natural-ear
 const RASTER_URL = /^https:\/\/naciscdn\.org\/naturalearth\//
 const GEO_URL = /^https:\/\/raw\.githubusercontent\.com\/Seshat-Global-History-Databank\/cliopatria\/v\d+\.\d+\.\d+\//
 
-const URL_PATTERN: Record<Source['kind'], RegExp> = { vector: VECTOR_URL, raster: RASTER_URL, geo: GEO_URL }
-const URL_LABEL: Record<Source['kind'], string> = { vector: 'Natural Earth', raster: 'Natural Earth', geo: 'Cliopatria' }
+const URL_PATTERN: Record<Source['kind'], RegExp> = { vector: VECTOR_URL, raster: RASTER_URL, geo: GEO_URL, search: VECTOR_URL }
+const URL_LABEL: Record<Source['kind'], string> = { vector: 'Natural Earth', raster: 'Natural Earth', geo: 'Cliopatria', search: 'Natural Earth' }
 
 /** Field, URL and checksum checks shared by both manifests. `kinds` are the source kinds the manifest accepts. */
 function validateSources(sources: unknown[], kinds: Source['kind'][], requirePinned: boolean): Source[] {
@@ -159,6 +165,34 @@ export function validateGeoManifest(data: unknown): GeoManifest {
   return { cliopatriaRelease, sources: [source] }
 }
 
+/** Layers of the search manifest: one source each, a `.shp` and a `.dbf` pinned by checksum. */
+export const SEARCH_LAYERS = ['countries', 'places'] as const
+
+/** Structural checks of the search manifest: the two Natural Earth layers, each a shapefile and its table, checksums pinned. */
+export function validateSearchManifest(data: unknown): SearchManifest {
+  if (!data || typeof data !== 'object') throw new ManifestError('manifest must be an object')
+  const { naturalEarthRelease, sources } = data as Partial<SearchManifest>
+  if (typeof naturalEarthRelease !== 'string' || !Array.isArray(sources) || sources.length !== SEARCH_LAYERS.length) {
+    throw new ManifestError('search manifest needs "naturalEarthRelease" and exactly one source for each of: ' + SEARCH_LAYERS.join(', '))
+  }
+  const valid = validateSources(sources, ['search'], true)
+  for (const layer of SEARCH_LAYERS) {
+    if (valid.filter((source) => source.layer === layer).length !== 1) throw new ManifestError(`search manifest needs exactly one "${layer}" source`)
+  }
+  for (const source of valid) {
+    const extensions = source.files.map((file) => file.name.slice(file.name.lastIndexOf('.'))).sort()
+    if (source.files.length !== 2 || extensions[0] !== '.dbf' || extensions[1] !== '.shp') {
+      throw new ManifestError(`source "${source.id}" needs exactly one .shp and one .dbf file`)
+    }
+    if (source.version !== naturalEarthRelease) throw new ManifestError(`source "${source.id}": version ${source.version} differs from naturalEarthRelease ${naturalEarthRelease}`)
+    for (const file of source.files) {
+      const tag = /\/natural-earth-vector\/v(\d+\.\d+\.\d+)\//.exec(file.url)?.[1]
+      if (tag !== naturalEarthRelease) throw new ManifestError(`source "${source.id}": URL ${file.url} is pinned to tag v${tag}, not release v${naturalEarthRelease}`)
+    }
+  }
+  return { naturalEarthRelease, sources: valid }
+}
+
 /** Reads, validates and licence-gates a manifest file. Nothing is downloaded. */
 export function loadManifest(path: string): Manifest {
   const manifest = validateManifest(JSON.parse(readFileSync(path, 'utf8')))
@@ -169,6 +203,13 @@ export function loadManifest(path: string): Manifest {
 /** Reads, validates and licence-gates the Cliopatria manifest. Nothing is downloaded. */
 export function loadGeoManifest(path: string): GeoManifest {
   const manifest = validateGeoManifest(JSON.parse(readFileSync(path, 'utf8')))
+  assertLicences(manifest)
+  return manifest
+}
+
+/** Reads, validates and licence-gates the place search manifest. Nothing is downloaded. */
+export function loadSearchManifest(path: string): SearchManifest {
+  const manifest = validateSearchManifest(JSON.parse(readFileSync(path, 'utf8')))
   assertLicences(manifest)
   return manifest
 }

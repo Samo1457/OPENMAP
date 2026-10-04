@@ -159,6 +159,28 @@
       "tintColourPicker": "Tint colour picker"
     }
   },
+  "placeSearch": {
+    "listLabel": "Place search results",
+    "groups": {
+      "country": "Countries",
+      "entity": "Historical entities",
+      "city": "Cities"
+    },
+    "kinds": {
+      "country": "Country",
+      "entity": "Historical entity",
+      "city": "City"
+    },
+    "kindIn": "{{kind}} · {{country}}",
+    "count_one": "{{count}} result",
+    "count_other": "{{count}} results",
+    "noneFound": "No place found",
+    "empty": "No place found for \"{{query}}\". Check the spelling or try a current name.",
+    "unavailable": "Place search is unavailable.",
+    "centred": "Map centred on {{name}}",
+    "selected": "{{name}} selected",
+    "selectionCleared": "Selection cleared"
+  },
   "keyboard": {
     "tooltip": "{{name}} · {{shortcut}}",
     "keys": {
@@ -196,6 +218,9 @@
         "zoomOut": "Zoom the Map out",
         "recentre": "Recentre the Map on the frame",
         "pan": "Pan the Map: arrow keys or WASD (ZQSD on an AZERTY keyboard)"
+      },
+      "search": {
+        "focus": "Search for a place"
       }
     }
   },

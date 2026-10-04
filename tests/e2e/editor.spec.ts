@@ -132,7 +132,7 @@ test.describe('layout (UX-DR30–33, UX-DR127, UX-DR159, NFR-8)', () => {
         formatMenuButton(page),
         undoButton(page),
         redoButton(page),
-        topBar(page).getByRole('searchbox', { name: 'Search for a place' }),
+        topBar(page).getByRole('combobox', { name: 'Search for a place' }),
         topBar(page).getByRole('button', { name: 'Presentation' }),
         topBar(page).getByRole('button', { name: 'Export' }),
         topBar(page).getByRole('button', { name: 'Menu' }),
@@ -144,7 +144,6 @@ test.describe('layout (UX-DR30–33, UX-DR127, UX-DR159, NFR-8)', () => {
       await expect(topBar(page).getByRole('button', { name: 'Presentation' })).toBeDisabled()
       await expect(topBar(page).getByRole('button', { name: 'Export' })).toBeDisabled()
       for (const slot of [
-        topBar(page).getByRole('searchbox', { name: 'Search for a place' }),
         topBar(page).getByRole('button', { name: 'Presentation' }),
         topBar(page).getByRole('button', { name: 'Export' }),
       ]) {
@@ -415,7 +414,7 @@ test.describe('keyboard and focus (UX-DR27, UX-DR8)', () => {
         formatMenuButton(page),
         undoButton(page),
         redoButton(page),
-        topBar(page).getByRole('searchbox', { name: 'Search for a place' }),
+        topBar(page).getByRole('combobox', { name: 'Search for a place' }),
         topBar(page).getByRole('button', { name: 'Presentation' }),
         topBar(page).getByRole('button', { name: 'Export' }),
         topBar(page).getByRole('button', { name: 'Menu' }),
@@ -518,7 +517,7 @@ test.describe('Projects the Editor cannot open', () => {
     await expect(page.getByText('Opening…')).toHaveCount(0)
     await expect(page.getByRole('navigation', { name: 'Breadcrumb' }).locator('[aria-current]')).toHaveCount(0)
     await expect(topBar(page).getByRole('button')).toHaveCount(0)
-    await expect(topBar(page).getByRole('searchbox')).toHaveCount(0)
+    await expect(topBar(page).getByRole('combobox')).toHaveCount(0)
     await page.getByRole('link', { name: 'Projects' }).click()
     await expect(page.getByRole('heading', { level: 1, name: 'Projects' })).toBeVisible()
   })

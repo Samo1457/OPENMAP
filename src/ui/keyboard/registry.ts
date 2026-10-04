@@ -217,6 +217,9 @@ export function runEscapeChain(steps: readonly EscapeStep[] = escapeSteps): bool
   return false
 }
 
+/** Priority of the selection's Escape step (Story 1.12): below the menu, dialog, drawing and drawer steps, above « return to Select » (0). */
+export const SELECTION_ESCAPE_PRIORITY = 10
+
 /** Priority of the tooltip's Escape step: above every dialog, menu and tool step. */
 export const TOOLTIP_ESCAPE_PRIORITY = 100
 

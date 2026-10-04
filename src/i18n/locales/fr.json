@@ -159,6 +159,28 @@
       "tintColourPicker": "Sélecteur de couleur de la teinte"
     }
   },
+  "placeSearch": {
+    "listLabel": "Résultats de la recherche de lieu",
+    "groups": {
+      "country": "Pays",
+      "entity": "Entités historiques",
+      "city": "Villes"
+    },
+    "kinds": {
+      "country": "Pays",
+      "entity": "Entité historique",
+      "city": "Ville"
+    },
+    "kindIn": "{{kind}} · {{country}}",
+    "count_one": "{{count}} résultat",
+    "count_other": "{{count}} résultats",
+    "noneFound": "Aucun lieu trouvé",
+    "empty": "Aucun lieu trouvé pour « {{query}} ». Vérifiez l'orthographe ou essayez un nom actuel.",
+    "unavailable": "La recherche de lieux est indisponible.",
+    "centred": "Carte centrée sur {{name}}",
+    "selected": "{{name}} sélectionné",
+    "selectionCleared": "Sélection retirée"
+  },
   "keyboard": {
     "tooltip": "{{name}} · {{shortcut}}",
     "keys": {
@@ -196,6 +218,9 @@
         "zoomOut": "Dézoomer la carte",
         "recentre": "Recentrer la carte sur le cadre",
         "pan": "Déplacer la Carte : flèches ou ZQSD (WASD sur un clavier QWERTY)"
+      },
+      "search": {
+        "focus": "Rechercher un lieu"
       }
     }
   },
