@@ -8,12 +8,15 @@ import { isSaveKey } from '@/ui/keyboard/registry'
 import { cn } from '@/ui/lib/utils'
 import type { EditorActions, EditorModel } from './editor-model'
 import { BasemapSettings } from './BasemapSettings'
+import { CreditSettings } from './CreditSettings'
 import { ReferenceDateField } from './ReferenceDateField'
+import { SourcesSection } from './SourcesSection'
 import { MoreOptions } from './MoreOptions'
 
 /**
  * The panel when nothing is selected: Project settings (UX-DR35). Essential settings only (NFR-9):
  * name, Reference Date, Output Format, Map language and Basemap (picker, brightness, saturation, tint); Region joins in a later story.
+ * Behind « Plus d'options »: the credit position and prominence, and « Sources et licences » (Story 1.13).
  * Every change is one Command, applied at once with no « Appliquer » button.
  */
 export function ProjectSettingsPanel({ model, actions }: { model: EditorModel; actions?: EditorActions }) {
@@ -75,8 +78,16 @@ export function ProjectSettingsPanel({ model, actions }: { model: EditorModel; a
         </div>
         {model.basemap && <BasemapSettings basemap={model.basemap} actions={actions} editable={editable} />}
       </div>
-      {/* No advanced Project setting yet: the row appears with the first one (Front Line, Sources…). */}
-      <MoreOptions panel="project" />
+      {/* The advanced group: the Map credit placement and « Sources et licences » (Story 1.13); Front Line joins later. */}
+      {/* A document newer than the app has no Map to credit. */}
+      <MoreOptions panel="project" summary={t('editor.sources.title')}>
+        {model.credit && (
+          <div className="flex flex-col gap-4">
+            <CreditSettings credit={model.credit} creditText={model.creditText} actions={actions} editable={editable} />
+            <SourcesSection sources={model.sources ?? []} />
+          </div>
+        )}
+      </MoreOptions>
     </>
   )
 }

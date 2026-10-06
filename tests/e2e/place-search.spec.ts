@@ -95,9 +95,15 @@ async function readyEditor(page: Page, baseURL: string, mode: IndexMode = 'data'
   return { ...mocks, problems }
 }
 
+/**
+ * Types a query and waits until the list (or the « no place found » message) shows it, so a key pressed
+ * next acts on the results of this query: the index loads on the first focus, and the list is built
+ * after that.
+ */
 async function search(page: Page, text: string) {
   await field(page).click()
   await field(page).fill(text)
+  if (text.trim() !== '') await expect(listbox(page).or(message(page))).toBeVisible()
 }
 
 const labels = (locator: Locator) => locator.evaluateAll((nodes) => nodes.map((node) => node.querySelector('span span')?.textContent ?? ''))

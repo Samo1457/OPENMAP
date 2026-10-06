@@ -131,7 +131,7 @@ test.describe('Home (UX-DR118–120, UX-DR136, FR-1, FR-52)', () => {
     const id = await createProject(page)
     const [row] = await readRows(page)
     expect(row).toMatchObject({ id, name: 'Untitled Project', outputFormat: '16:9' })
-    expect(row.document).toMatchObject({ id, schemaVersion: 2, revision: 0, mapLocale: 'en' })
+    expect(row.document).toMatchObject({ id, schemaVersion: 3, revision: 0, mapLocale: 'en' })
     await expect.poll(() => page.evaluate(() => (window as unknown as { persistCalls: { count: number } }).persistCalls.count)).toBe(1)
 
     await page.reload()
@@ -377,7 +377,7 @@ test.describe('autosave (NFR-5, FR-53, AD-8)', () => {
 test.describe('stored documents this app cannot edit (AD-9)', () => {
   test('a newer document opens read-only with a message and is never written', async ({ page }) => {
     await gotoHome(page)
-    const document = { schemaVersion: 3, id: 'newerDocument00000001', name: 'From the future' }
+    const document = { schemaVersion: 4, id: 'newerDocument00000001', name: 'From the future' }
     await putRow(page, { id: 'newerDocument00000001', document, name: 'From the future', outputFormat: '9:16', updatedAt: Date.now(), lockEpoch: 0 })
     await page.reload()
     await expect(card(page, 'From the future')).toContainText('· 9:16')

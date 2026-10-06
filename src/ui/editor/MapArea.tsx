@@ -12,6 +12,7 @@ import { installMapPan } from '@/ui/keyboard/map-pan'
 import { registerShortcuts } from '@/ui/keyboard/registry'
 import { cn } from '@/ui/lib/utils'
 import { monoColors } from '@/ui/theme/tokens'
+import { CREDIT_STYLE } from './credit-style'
 import { resetEditCamera, setEditCamera, useEditCamera } from './edit-camera-store'
 import { useSelection } from './selection-store'
 
@@ -117,6 +118,11 @@ export function MapArea({ scene, outputFormat }: { scene?: Scene; outputFormat?:
   useEffect(() => {
     view?.setSelection(selection ? { key: selection.key, ink: monoColors['canvas-ink'], halo: monoColors['canvas-halo'] } : undefined)
   }, [view, selection])
+
+  // The credit tokens: with them, the Scene's credit item is drawn (Story 1.13).
+  useEffect(() => {
+    view?.setCreditStyle(CREDIT_STYLE)
+  }, [view])
 
   // The camera shown: the edit camera, else the Scene camera. Keyed by value so an edit elsewhere in
   // the Project (a new Scene object) does not jump the view.

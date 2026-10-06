@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { useTranslation } from 'react-i18next'
-import { type Command, createDispatcher, type Dispatcher, type DispatcherState, drawnCandidates, entityCandidates, evaluate, formatYear, type MapLocale, OUTPUT_FRAME_SIZES, type OutputFormat, type Scene } from '@/core'
+import { type Command, createDispatcher, type Dispatcher, type DispatcherState, drawnCandidates, entityCandidates, evaluate, formatYear, geoSourceMeta, isCredit, isTerritory, listSources, type MapLocale, OUTPUT_FRAME_SIZES, type OutputFormat, type Scene } from '@/core'
 import { type Autosave, createAutosave, openStoredProject } from '@/persistence'
 import { Banner } from '@/ui/components/Banner'
 import { useToast } from '@/ui/components/toast'
@@ -18,6 +18,7 @@ import { OptionsBar, PanelSkeleton, PropertiesPanel, TimelineArea, ToolRail } fr
 import { clearBasemapPreview, useBasemapPreview } from './basemap-preview-store'
 import { MapArea } from './MapArea'
 import { clearSelection, selectionEscapeStep, useSelection } from './selection-store'
+import { useDatasets } from './use-datasets'
 import { useGeodata } from './use-geodata'
 import { ProjectSettingsPanel } from './ProjectSettingsPanel'
 import { createSaveIndicator, type SaveIndicatorStore } from './save-status'
@@ -80,6 +81,8 @@ export function EditorShell({ projectId }: { projectId: string }) {
   // The historical data of the pinned version for the Reference Date (Story 1.11), cached in Dexie.
   const geoProject = state.kind === 'editable' ? current?.project : undefined
   const geoLoad = useGeodata(geoProject?.pins.geo, geoProject?.referenceDate.year)
+  // The source metadata of the Basemap datasets (Story 1.13): credit and « Sources et licences ».
+  const datasets = useDatasets(state.kind === 'editable')
 
   // The Scene the Map draws (AD-1): the Project at t = 0 with a slider drag's live values laid over
   // its Basemap adjustments. The drag itself is UI state; the Command comes on release. While a new
@@ -90,8 +93,8 @@ export function EditorShell({ projectId }: { projectId: string }) {
     if (!project) return undefined
     let shown = preview ? { ...project, map: { ...project.map, basemap: { ...project.map.basemap, adjustments: preview } } } : project
     if (geoLoad.year !== undefined && geoLoad.year !== project.referenceDate.year) shown = { ...shown, referenceDate: { year: geoLoad.year } }
-    return evaluate(shown, 0, { geodata: geoLoad.geodata, frame: OUTPUT_FRAME_SIZES[project.outputFormat] })
-  }, [project, preview, geoLoad])
+    return evaluate(shown, 0, { geodata: geoLoad.geodata, frame: OUTPUT_FRAME_SIZES[project.outputFormat], datasets })
+  }, [project, preview, geoLoad, datasets])
   // A preview never outlives its Project or the Editor.
   useEffect(() => clearBasemapPreview, [projectId])
 
@@ -99,13 +102,25 @@ export function EditorShell({ projectId }: { projectId: string }) {
   // the one it selected stays selected only while the Map still shows it (a new Reference Date may remove it).
   const candidates = useMemo(() => entityCandidates(geoLoad.geodata, geoLoad.year), [geoLoad.geodata, geoLoad.year])
   // Only what the Scene draws can be selected: not with the Territories Layer hidden.
-  const entities = useMemo(() => drawnCandidates(candidates, scene?.items ?? []), [candidates, scene])
+  const entities = useMemo(() => drawnCandidates(candidates, scene?.items.filter(isTerritory) ?? []), [candidates, scene])
   const search = useMemo(() => ({ frame: scene?.frame, entities }), [scene?.frame, entities])
   const selection = useSelection()
   useEffect(() => {
     if (selection && scene && !scene.items.some((item) => item.kind === 'territory' && item.key === selection.key)) clearSelection()
   }, [selection, scene])
   useEffect(() => () => void clearSelection(), [projectId])
+
+  // Every source whose metadata is loaded, drawn or not (hidden Territories still list Cliopatria).
+  const geoIndex = geoLoad.geodata.index
+  // Only the dataset the Project pins: while a new pin loads, the previous index must not be listed.
+  const geoPin = geoProject?.pins.geo
+  const geoMeta = useMemo(
+    () => (geoIndex && geoPin && geoIndex.dataset.id === geoPin.dataset && geoIndex.dataset.version === geoPin.version ? geoSourceMeta(geoIndex) : undefined),
+    [geoIndex, geoPin],
+  )
+  const sources = useMemo(() => listSources(datasets, geoMeta), [datasets, geoMeta])
+
+  const creditText = scene?.items.find(isCredit)?.text
 
   const model = useMemo<EditorModel>(() => {
     if (state.kind === 'editable' && current) {
@@ -119,6 +134,9 @@ export function EditorShell({ projectId }: { projectId: string }) {
         referenceDate: project.referenceDate,
         dataDate: scene?.dataDate,
         geo: geoLoad.status,
+        credit: project.credit,
+        creditText,
+        sources,
         readOnly: current.readOnly,
         canUndo: current.canUndo,
         canRedo: current.canRedo,
@@ -128,7 +146,7 @@ export function EditorShell({ projectId }: { projectId: string }) {
       return { loading: false, name: state.name, outputFormat: state.outputFormat, mapLocale: state.mapLocale, readOnly: true, canUndo: false, canRedo: false }
     }
     return { loading: true, readOnly: true, canUndo: false, canRedo: false }
-  }, [state, current, scene, geoLoad.status])
+  }, [state, current, scene, geoLoad.status, sources, creditText])
 
   // « Données les plus proches : 2024 » is announced once each time the shown data stops being exact
   // or changes year while inexact; the chip itself is not live.

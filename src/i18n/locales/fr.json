@@ -157,6 +157,44 @@
       "adjusted": "{{name}} : {{value}} %",
       "resetDone": "Réglages du Fond rétablis",
       "tintColourPicker": "Sélecteur de couleur de la teinte"
+    },
+    "credit": {
+      "title": "Crédit sur la Carte",
+      "locked": "Crédit obligatoire, verrouillé",
+      "explanation": "Obligatoire : la licence d'une source de la Carte demande ce crédit. Vous choisissez sa position et sa discrétion.",
+      "none": "Aucune source affichée sur la Carte n'exige de crédit pour le moment.",
+      "position": "Position",
+      "positions": {
+        "bottom-left": "Bas à gauche",
+        "bottom-right": "Bas à droite",
+        "top-left": "Haut à gauche",
+        "top-right": "Haut à droite"
+      },
+      "at": {
+        "bottom-left": "en bas à gauche",
+        "bottom-right": "en bas à droite",
+        "top-left": "en haut à gauche",
+        "top-right": "en haut à droite"
+      },
+      "prominence": "Discrétion",
+      "prominences": {
+        "discreet": "Discrète",
+        "legible": "Lisible"
+      },
+      "prominenceNames": {
+        "discreet": "discrète",
+        "legible": "lisible"
+      },
+      "announce": "Crédit {{position}}, {{prominence}}",
+      "announcePosition": "Position du crédit : {{position}}",
+      "announceProminence": "Discrétion du crédit : {{prominence}}"
+    },
+    "sources": {
+      "title": "Sources et licences",
+      "list": "Sources des données",
+      "licence": "Licence : {{licence}}",
+      "required": "Crédit obligatoire",
+      "empty": "Aucune source n'est chargée pour le moment."
     }
   },
   "placeSearch": {

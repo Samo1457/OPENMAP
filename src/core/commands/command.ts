@@ -8,6 +8,10 @@ import {
   type BasemapAdjustments,
   type BasemapId,
   basemapIdSchema,
+  type CreditCorner,
+  creditCornerSchema,
+  type CreditProminence,
+  creditProminenceSchema,
   type MapLocale,
   mapLocaleSchema,
   type OutputFormat,
@@ -24,10 +28,18 @@ export type SetBasemapAdjustments = {
   readonly payload: { readonly adjustments: BasemapAdjustments }
 }
 export type SetReferenceDate = { readonly type: 'SET_REFERENCE_DATE'; readonly payload: { readonly referenceDate: HistoricalDate } }
+/**
+ * Changes where and how loudly the Map credit shows (Story 1.13, AD-17). At least one of the two keys; an
+ * absent key keeps its value. It cannot hide a credit: no payload field does that.
+ */
+export type SetCredit = {
+  readonly type: 'SET_CREDIT'
+  readonly payload: { readonly corner?: CreditCorner; readonly prominence?: CreditProminence }
+}
 /** A compound Command: one undo entry; any invalid member rejects the whole batch. */
 export type Batch = { readonly type: 'BATCH'; readonly payload: { readonly commands: readonly Command[] } }
 
-export type Command = SetProjectName | SetOutputFormat | SetMapLocale | SetBasemap | SetBasemapAdjustments | SetReferenceDate | Batch
+export type Command = SetProjectName | SetOutputFormat | SetMapLocale | SetBasemap | SetBasemapAdjustments | SetReferenceDate | SetCredit | Batch
 export type CommandType = Command['type']
 
 const command = <T extends string, P extends z.ZodRawShape>(type: T, payload: P) =>
@@ -55,6 +67,8 @@ const leafCommandSchema = z.discriminatedUnion('type', [
   command('SET_BASEMAP', { basemap: basemapIdSchema }),
   command('SET_BASEMAP_ADJUSTMENTS', { adjustments: payloadAdjustmentsSchema }),
   command('SET_REFERENCE_DATE', { referenceDate: historicalDateSchema }),
+  // At least one key is checked by the handler.
+  command('SET_CREDIT', { corner: creditCornerSchema.optional(), prominence: creditProminenceSchema.optional() }),
 ])
 
 const batchSchema: z.ZodType<Batch> = z.strictObject({

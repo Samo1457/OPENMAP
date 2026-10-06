@@ -1,4 +1,4 @@
-import type { Basemap, Command, DataDate, HistoricalDate, MapLocale, OutputFormat } from '@/core'
+import type { Basemap, Command, Credit, DataDate, HistoricalDate, MapLocale, OutputFormat, SourceEntry } from '@/core'
 import type { GeoStatus } from './use-geodata'
 
 /** What the Editor shell shows of the open Project. */
@@ -14,6 +14,12 @@ export interface EditorModel {
   readonly dataDate?: DataDate
   /** Whether the historical data is loading, shown or could not be loaded. */
   readonly geo?: GeoStatus
+  /** Where and how loudly the Map credit shows (Story 1.13). */
+  readonly credit?: Credit
+  /** The credit line on the Map, when a source drawn requires one (its own wording); shown locked. */
+  readonly creditText?: string
+  /** Every source whose metadata is loaded, with licence and attribution (« Sources et licences »). */
+  readonly sources?: readonly SourceEntry[]
   /** Editing is off: loading, a document newer than the app (AD-9), or a read-only dispatcher. */
   readonly readOnly: boolean
   readonly canUndo: boolean

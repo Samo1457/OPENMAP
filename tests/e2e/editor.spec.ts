@@ -154,8 +154,8 @@ test.describe('layout (UX-DR30–33, UX-DR127, UX-DR159, NFR-8)', () => {
       await expect(page.getByRole('button', { name: 'Select' })).toHaveAttribute('aria-pressed', 'true')
       await expect(page.getByRole('region', { name: 'Timeline' })).toHaveText('Timeline')
       await expect(panel(page).getByRole('heading', { name: 'Project settings' })).toBeVisible()
-      // No advanced Project setting yet, so no « More options » row.
-      await expect(panel(page).getByRole('button', { name: /More options/ })).toHaveCount(0)
+      // The advanced group (Story 1.13: credit placement, sources) is collapsed by default.
+      await expect(panel(page).getByRole('button', { name: /More options/ })).toHaveAttribute('aria-expanded', 'false')
       await expectFormat(page, '16:9', '1920 × 1080')
     })
   }
@@ -369,7 +369,7 @@ test.describe('read-only document (AD-9)', () => {
   test('a newer document opens the shell read-only with the banner, every editing control disabled', async ({ page }) => {
     await page.goto('/')
     await expect(page.getByRole('heading', { level: 1, name: 'Projects' })).toBeVisible()
-    const document = { schemaVersion: 3, id: 'newerDocument00000001', name: 'From the future', mapLocale: 'fr' }
+    const document = { schemaVersion: 4, id: 'newerDocument00000001', name: 'From the future', mapLocale: 'fr' }
     await putRow(page, { id: 'newerDocument00000001', document, name: 'From the future', outputFormat: '9:16', updatedAt: Date.now(), lockEpoch: 0 })
     await page.goto('/#/p/newerDocument00000001')
 

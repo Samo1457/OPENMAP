@@ -250,11 +250,12 @@ describe('schema snapshot check (AD-9)', () => {
     expect(schemaSnapshotIssues({ dir, currentVersion: 1, schema: committedV1, migrationVersions: [] })).toEqual([])
   })
 
-  it('the committed v1 and v2 snapshots pass the check for the current version, with the v1 → v2 migration', () => {
-    const committedV2 = readSnapshot(join(ROOT, 'schemas/project-v2.schema.json'))
-    expect(schemaSnapshotIssues({ dir: join(ROOT, 'schemas'), currentVersion: 2, schema: committedV2, migrationVersions: [1] })).toEqual([])
-    // Without the migration the same snapshots fail: a version bump needs its migration (AD-9).
-    expect(schemaSnapshotIssues({ dir: join(ROOT, 'schemas'), currentVersion: 2, schema: committedV2, migrationVersions: [] })).toEqual(['The v1 → v2 migration is missing (AD-9).'])
+  it('the committed v1, v2 and v3 snapshots pass the check for the current version, with the v1 → v2 and v2 → v3 migrations', () => {
+    const committedV3 = readSnapshot(join(ROOT, 'schemas/project-v3.schema.json'))
+    expect(schemaSnapshotIssues({ dir: join(ROOT, 'schemas'), currentVersion: 3, schema: committedV3, migrationVersions: [1, 2] })).toEqual([])
+    // Without a migration the same snapshots fail: a version bump needs its migration (AD-9).
+    expect(schemaSnapshotIssues({ dir: join(ROOT, 'schemas'), currentVersion: 3, schema: committedV3, migrationVersions: [1] })).toEqual(['The v2 → v3 migration is missing (AD-9).'])
+    expect(schemaSnapshotIssues({ dir: join(ROOT, 'schemas'), currentVersion: 3, schema: committedV3, migrationVersions: [] })).toEqual(['The v1 → v2 migration is missing (AD-9).', 'The v2 → v3 migration is missing (AD-9).'])
   })
 
   it('drifted: a v1 snapshot that differs from the v1 schema fails with instructions', () => {

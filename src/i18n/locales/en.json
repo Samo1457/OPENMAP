@@ -157,6 +157,44 @@
       "adjusted": "{{name}}: {{value}} %",
       "resetDone": "Basemap settings reset",
       "tintColourPicker": "Tint colour picker"
+    },
+    "credit": {
+      "title": "Map credit",
+      "locked": "Required credit, locked",
+      "explanation": "Required: a map source licence asks for this credit. You choose its position and how discreet it is.",
+      "none": "No source drawn on the map requires a credit at the moment.",
+      "position": "Position",
+      "positions": {
+        "bottom-left": "Bottom left",
+        "bottom-right": "Bottom right",
+        "top-left": "Top left",
+        "top-right": "Top right"
+      },
+      "at": {
+        "bottom-left": "at the bottom left",
+        "bottom-right": "at the bottom right",
+        "top-left": "at the top left",
+        "top-right": "at the top right"
+      },
+      "prominence": "Discretion",
+      "prominences": {
+        "discreet": "Discreet",
+        "legible": "Legible"
+      },
+      "prominenceNames": {
+        "discreet": "discreet",
+        "legible": "legible"
+      },
+      "announce": "Credit {{position}}, {{prominence}}",
+      "announcePosition": "Credit position: {{position}}",
+      "announceProminence": "Credit discretion: {{prominence}}"
+    },
+    "sources": {
+      "title": "Sources and licences",
+      "list": "Data sources",
+      "licence": "Licence: {{licence}}",
+      "required": "Required credit",
+      "empty": "No source is loaded at the moment."
     }
   },
   "placeSearch": {

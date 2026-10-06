@@ -6,7 +6,7 @@ import { sameHistoricalDate } from '../dates/historical-date'
 import { deepEqual } from '../equal'
 import { type BasemapAdjustments, type Project, projectNameSchema } from '../model/project'
 import { type Result, err, ok } from '../result'
-import type { Batch, Command, SetBasemap, SetBasemapAdjustments, SetMapLocale, SetOutputFormat, SetProjectName, SetReferenceDate } from './command'
+import type { Batch, Command, SetBasemap, SetBasemapAdjustments, SetCredit, SetMapLocale, SetOutputFormat, SetProjectName, SetReferenceDate } from './command'
 
 export interface Change {
   readonly project: Project
@@ -94,6 +94,19 @@ const setReferenceDate: Handler<SetReferenceDate> = (project, { referenceDate })
   })
 }
 
+/** Only `corner` and `prominence` can change: a required credit stays drawn whatever the payload. */
+const setCredit: Handler<SetCredit> = (project, { corner, prominence }) => {
+  if (corner === undefined && prominence === undefined) return err('invalid_payload', { type: 'SET_CREDIT', field: 'corner' })
+  const next = { corner: corner ?? project.credit.corner, prominence: prominence ?? project.credit.prominence }
+  if (next.corner === project.credit.corner && next.prominence === project.credit.prominence) return ok(null)
+  return ok({
+    project: produce(project, (draft) => {
+      draft.credit = next
+    }),
+    inverse: { type: 'SET_CREDIT', payload: { corner: project.credit.corner, prominence: project.credit.prominence } },
+  })
+}
+
 /** Applies members in order; the inverse replays their inverses in reverse order. */
 const batch: Handler<Batch> = (project, { commands }) => {
   let current = project
@@ -125,6 +138,8 @@ export function applyChange(project: Project, command: Command): Result<Change |
       return setBasemapAdjustments(project, command.payload)
     case 'SET_REFERENCE_DATE':
       return setReferenceDate(project, command.payload)
+    case 'SET_CREDIT':
+      return setCredit(project, command.payload)
     case 'BATCH':
       return batch(project, command.payload)
     default: {

@@ -94,7 +94,7 @@ describe('list and load (AD-9)', () => {
   })
 
   it('marks a newer document too_new and an invalid one unreadable', async () => {
-    await db.projects.add({ id: 'newer', document: { schemaVersion: 3, name: 'Future' }, name: 'Future', outputFormat: '9:16', updatedAt: 5, lockEpoch: 0 })
+    await db.projects.add({ id: 'newer', document: { schemaVersion: 4, name: 'Future' }, name: 'Future', outputFormat: '9:16', updatedAt: 5, lockEpoch: 0 })
     await db.projects.add({ id: 'broken', document: { schemaVersion: 1, name: 42 }, name: 'Broken', outputFormat: '16:9', updatedAt: 4, lockEpoch: 0 })
     await db.projects.add({ id: 'garbage', document: 'not a document', name: 7 as unknown as string, outputFormat: '', updatedAt: 3, lockEpoch: 0 })
     expect((await listProjects(db)).map(({ id, name, state }) => ({ id, name, state }))).toEqual([
@@ -108,15 +108,15 @@ describe('list and load (AD-9)', () => {
   })
 
   it('keeps the known Output Format and Map language of a newer document, and drops unknown ones', async () => {
-    await db.projects.add({ id: 'known', document: { schemaVersion: 3, mapLocale: 'en' }, name: 'Known', outputFormat: '1:1', updatedAt: 5, lockEpoch: 0 })
-    await db.projects.add({ id: 'unknown', document: { schemaVersion: 3, mapLocale: 'de' }, name: 'Unknown', outputFormat: '4:3', updatedAt: 4, lockEpoch: 0 })
+    await db.projects.add({ id: 'known', document: { schemaVersion: 4, mapLocale: 'en' }, name: 'Known', outputFormat: '1:1', updatedAt: 5, lockEpoch: 0 })
+    await db.projects.add({ id: 'unknown', document: { schemaVersion: 4, mapLocale: 'de' }, name: 'Unknown', outputFormat: '4:3', updatedAt: 4, lockEpoch: 0 })
     expect(await openStoredProject(db, 'known')).toEqual({ kind: 'too_new', name: 'Known', outputFormat: '1:1', mapLocale: 'en' })
     expect(await openStoredProject(db, 'unknown')).toEqual({ kind: 'too_new', name: 'Unknown' })
   })
 
   it('never writes a newer document, even with a current epoch', async () => {
     const p = project('a')
-    const document = { ...p, schemaVersion: 3 }
+    const document = { ...p, schemaVersion: 4 }
     await db.projects.add({ id: p.id, document, name: p.name, outputFormat: '16:9', updatedAt: 5, lockEpoch: 0 })
     expect(await saveProject(db, now, p, 99)).toEqual({ ok: false, reason: 'read_only' })
     expect((await db.projects.get(p.id))?.document).toEqual(document)
@@ -200,7 +200,7 @@ describe('page-hide snapshots (AD-8)', () => {
     expect((await db.projects.get(p.id))?.name).toBe(p.name)
     expect(await db.pendingSaves.count()).toBe(0)
 
-    const document = { ...p, schemaVersion: 3 }
+    const document = { ...p, schemaVersion: 4 }
     await db.projects.update(p.id, { document })
     writePendingSaveNow(db, now, renamed(p, 'Over a newer document', 9), 1)
     await expect.poll(() => db.pendingSaves.count()).toBe(1)
@@ -282,7 +282,7 @@ describe('delete: tombstone, restore, purge (AD-8, FR-52)', () => {
   })
 
   it('keeps every media when a stored document cannot be read', async () => {
-    await db.projects.add({ id: 'newer', document: { schemaVersion: 3 }, name: 'Future', outputFormat: '16:9', updatedAt: 5, lockEpoch: 0 })
+    await db.projects.add({ id: 'newer', document: { schemaVersion: 4 }, name: 'Future', outputFormat: '16:9', updatedAt: 5, lockEpoch: 0 })
     await db.media.add({ sha256: 'maybe-used', blob: new Blob(['x']) })
     expect(await gcMedia(db)).toBe(0)
     expect(await db.media.count()).toBe(1)

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { GEO_INDEX } from '@/core/testing/geo-fixtures'
+import { GEO_INDEX_WITH_META } from '@/core/testing/geo-fixtures'
 import { createGeoClient, type GeoStateRequest, type LibraryCache } from './geo'
 
 const PIN = { dataset: 'cliopatria', version: '0.2.0' }
@@ -31,7 +31,7 @@ function fakeFetch(route: Route) {
 }
 const json = (body: unknown) => new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json' } })
 const happy: Route = (path) => {
-  if (path === '/library/v1/geo/index.json') return json(GEO_INDEX)
+  if (path === '/library/v1/geo/index.json') return json(GEO_INDEX_WITH_META)
   const match = /^\/library\/v1\/geo\/([^/]+)\/(-?\d+)\.json$/.exec(path)
   return match ? json(stateFile(match[1], Number(match[2]))) : new Response('nope', { status: 404 })
 }
@@ -42,10 +42,10 @@ describe('geo client: index', () => {
     const cache = memoryCache()
     const { fetch, calls } = fakeFetch(happy)
     const client = createGeoClient({ cache, fetch })
-    expect(await client.loadIndex(PIN)).toEqual({ ok: true, value: GEO_INDEX })
+    expect(await client.loadIndex(PIN)).toEqual({ ok: true, value: GEO_INDEX_WITH_META })
     expect(calls).toEqual(['/library/v1/geo/index.json'])
     expect([...cache.rows.keys()]).toEqual(['cliopatria@0.2.0/index'])
-    expect(await client.loadIndex(PIN)).toEqual({ ok: true, value: GEO_INDEX })
+    expect(await client.loadIndex(PIN)).toEqual({ ok: true, value: GEO_INDEX_WITH_META })
     expect(fetch).toHaveBeenCalledTimes(1)
   })
 
@@ -54,7 +54,7 @@ describe('geo client: index', () => {
     ['the HTML fallback with status 200', () => new Response('<!doctype html><html></html>', { status: 200, headers: { 'content-type': 'text/html' } })],
     ['invalid JSON', () => new Response('{"schemaVersion": ', { status: 200 })],
     ['a JSON document of another shape', () => json({ hello: 'world' })],
-    ['another dataset version', () => json({ ...GEO_INDEX, dataset: { id: 'cliopatria', version: '0.3.0' } })],
+    ['another dataset version', () => json({ ...GEO_INDEX_WITH_META, dataset: { id: 'cliopatria', version: '0.3.0' } })],
   ])('is unavailable on %s, and stores nothing', async (_label, respond) => {
     const cache = memoryCache()
     const client = createGeoClient({ cache, fetch: fakeFetch(respond).fetch })
@@ -75,7 +75,7 @@ describe('geo client: index', () => {
   it('treats a throwing cache as a miss on read and ignores a failed write', async () => {
     const broken: LibraryCache = { read: () => Promise.reject(new Error('idb')), write: () => Promise.reject(new Error('idb')) }
     const client = createGeoClient({ cache: broken, fetch: fakeFetch(happy).fetch })
-    expect(await client.loadIndex(PIN)).toEqual({ ok: true, value: GEO_INDEX })
+    expect(await client.loadIndex(PIN)).toEqual({ ok: true, value: GEO_INDEX_WITH_META })
     expect(await client.loadStates(PIN, wanted(2))).toMatchObject({ ok: true })
   })
 
@@ -94,16 +94,53 @@ describe('geo client: index', () => {
     const cache = memoryCache()
     cache.rows.set('cliopatria@0.2.0/index', { broken: true })
     const { fetch } = fakeFetch(happy)
-    expect(await createGeoClient({ cache, fetch }).loadIndex(PIN)).toEqual({ ok: true, value: GEO_INDEX })
+    expect(await createGeoClient({ cache, fetch }).loadIndex(PIN)).toEqual({ ok: true, value: GEO_INDEX_WITH_META })
     expect(fetch).toHaveBeenCalledTimes(1)
-    expect(cache.rows.get('cliopatria@0.2.0/index')).toEqual(GEO_INDEX)
+    expect(cache.rows.get('cliopatria@0.2.0/index')).toEqual(GEO_INDEX_WITH_META)
   })
 
   it('reads the index from the cache offline', async () => {
     const cache = memoryCache()
     await createGeoClient({ cache, fetch: fakeFetch(happy).fetch }).loadIndex(PIN)
     const offline = createGeoClient({ cache, fetch: () => Promise.reject(new TypeError('offline')) })
-    expect(await offline.loadIndex(PIN)).toEqual({ ok: true, value: GEO_INDEX })
+    expect(await offline.loadIndex(PIN)).toEqual({ ok: true, value: GEO_INDEX_WITH_META })
+  })
+})
+
+
+describe('geo client: source metadata (Story 1.13)', () => {
+  const legacy = { ...GEO_INDEX_WITH_META, dataset: { id: 'cliopatria', version: '0.2.0' } }
+
+  it('keeps the dataset block, so the index carries the source metadata of the pipeline', async () => {
+    const client = createGeoClient({ cache: memoryCache(), fetch: fakeFetch(happy).fetch })
+    const result = await client.loadIndex(PIN)
+    expect(result.ok && result.value.dataset).toMatchObject({ source: GEO_INDEX_WITH_META.dataset.source, licence: 'CC-BY-4.0', creditRequired: true })
+  })
+
+  it('refuses a served index without the metadata: no Territory is drawn without its credit (AD-17)', async () => {
+    const cache = memoryCache()
+    const client = createGeoClient({ cache, fetch: fakeFetch((path) => (path.endsWith('index.json') ? json(legacy) : happy(path))).fetch })
+    expect(await client.loadIndex(PIN)).toMatchObject({ ok: false, error: { code: 'geo_unavailable', params: { reason: 'invalid_index' } } })
+    expect(cache.rows.size).toBe(0)
+  })
+
+  it('refetches an index cached before the metadata was kept, replaces the row, and then reads the cache: once, not on every open', async () => {
+    const cache = memoryCache()
+    cache.rows.set('cliopatria@0.2.0/index', legacy)
+    const { fetch } = fakeFetch(happy)
+    expect(await createGeoClient({ cache, fetch }).loadIndex(PIN)).toEqual({ ok: true, value: GEO_INDEX_WITH_META })
+    expect(fetch).toHaveBeenCalledTimes(1)
+    expect(cache.rows.get('cliopatria@0.2.0/index')).toEqual(GEO_INDEX_WITH_META)
+    // The next session (a new client) finds the fresh row.
+    expect(await createGeoClient({ cache, fetch }).loadIndex(PIN)).toEqual({ ok: true, value: GEO_INDEX_WITH_META })
+    expect(fetch).toHaveBeenCalledTimes(1)
+  })
+
+  it('an old cached index with the network down is unavailable, not drawn uncredited', async () => {
+    const cache = memoryCache()
+    cache.rows.set('cliopatria@0.2.0/index', legacy)
+    const offline = createGeoClient({ cache, fetch: () => Promise.reject(new TypeError('offline')) })
+    expect(await offline.loadIndex(PIN)).toMatchObject({ ok: false, error: { code: 'geo_unavailable' } })
   })
 })
 

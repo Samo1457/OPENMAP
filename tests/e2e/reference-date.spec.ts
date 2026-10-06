@@ -1,6 +1,6 @@
 import { createCanvas, loadImage } from '@napi-rs/canvas'
 import { type Page, type Route } from '@playwright/test'
-import { GEO_INDEX, GEO_STATES } from '../../src/core/testing/geo-fixtures'
+import { GEO_INDEX_WITH_META as GEO_INDEX, GEO_STATES } from '../../src/core/testing/geo-fixtures'
 import { expect, test } from './fixtures'
 
 // Story 1.11: the Reference Date field, the neutral Territories drawn at that date, the nearest-data
@@ -46,7 +46,7 @@ async function mockGeo(page: Page, initial: Mode = 'data'): Promise<Geo> {
     if (mode === 'html') return route.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><html><body>OPENMAP</body></html>' })
     if (mode === 'bad-json') return route.fulfill({ status: 200, contentType: 'application/json', body: '{"schemaVersion": 1, "entities": [' })
     if (path === '/library/v1/geo/index.json') {
-      return route.fulfill({ json: mode === 'other-version' ? { ...GEO_INDEX, dataset: { id: 'cliopatria', version: '0.3.0' } } : GEO_INDEX })
+      return route.fulfill({ json: mode === 'other-version' ? { ...GEO_INDEX, dataset: { ...GEO_INDEX.dataset, version: '0.3.0' } } : GEO_INDEX })
     }
     const match = /^\/library\/v1\/geo\/([^/]+)\/(-?\d+)\.json$/.exec(path)
     const geometry = match && GEO_STATES[`${match[1]}/${match[2]}`]
@@ -180,7 +180,8 @@ test.describe('Reference Date and Territories', () => {
     await expect(page.getByTestId('nearest-data-chip')).toHaveCount(0)
     await expect(unavailable(page)).toHaveCount(0)
     expect(geo.requests).toEqual(['/library/v1/geo/index.json', '/library/v1/geo/solo/1900.json'])
-    expect(await cacheKeys(page)).toEqual(['cliopatria@0.2.0/index', 'cliopatria@0.2.0/solo/1900'])
+    // The datasets metadata (Story 1.13) is cached too.
+    expect(await cacheKeys(page)).toEqual(['cliopatria@0.2.0/index', 'cliopatria@0.2.0/solo/1900', 'library/v1/datasets'])
     // The outline is drawn where the data says: the square of `solo` starts at longitude 28.
     await expect(canvas(page)).toHaveAttribute('data-idle', 'true')
     const edge = await westEdge(page, 28)
@@ -448,13 +449,17 @@ test.describe('Library cache (AD-27)', () => {
     await setDate(page, '1900')
     await territories(page, 1)
     expect(geo.requests).toHaveLength(1 + 1 + 2) // index, solo, rome and gaul
-    await expect.poll(() => cacheKeys(page)).toHaveLength(4)
+    await expect.poll(() => cacheKeys(page)).toHaveLength(5) // index, solo, rome, gaul and the datasets metadata
     const url = page.url()
     // Wait for the autosave of the date, then cut the network for every data path.
     await expect(page.getByText('Saved', { exact: true })).toBeVisible()
     await page.unroute('**/library/v1/geo/**')
     const offline: string[] = []
     await page.route('**/library/v1/geo/**', (route) => {
+      offline.push(route.request().url())
+      return route.abort('internetdisconnected')
+    })
+    await page.route('**/library/v1/datasets.json', (route) => {
       offline.push(route.request().url())
       return route.abort('internetdisconnected')
     })
@@ -467,6 +472,11 @@ test.describe('Library cache (AD-27)', () => {
     await territories(page, 2)
     await expect(unavailable(page)).toHaveCount(0)
     expect(offline).toEqual([])
+    // The credit and « Sources and licences » come from the cached metadata, with the network cut.
+    await expect(canvas(page)).toHaveAttribute('data-credit-state', 'drawn')
+    await panel(page).getByRole('button', { name: /More options/ }).click()
+    await expect(panel(page).getByTestId('credit-locked-text')).toHaveText('Historical borders: Cliopatria, Seshat Global History Databank, CC BY 4.0.')
+    await expect(panel(page).getByTestId('sources-section').getByRole('listitem')).toHaveCount(3)
   })
 
   test('an entity data file is fetched once even when its date is revisited', async ({ page, baseURL }) => {
@@ -563,7 +573,7 @@ test.describe('Projects and Output Format', () => {
             }),
         ),
       )
-      .toEqual({ schemaVersion: 2, pins: { geo: { dataset: 'cliopatria', version: '0.2.0' } }, referenceDate: { year: 1050 } })
+      .toEqual({ schemaVersion: 3, pins: { geo: { dataset: 'cliopatria', version: '0.2.0' } }, referenceDate: { year: 1050 } })
   })
 
   test('changing the Output Format redraws the outlines with the new frame scale', async ({ page, baseURL }) => {

@@ -3,6 +3,7 @@
 // `src/library`'s job, and the evaluator reads the result through `ctx.geodata` (AD-1).
 
 import { z } from 'zod'
+import { type SourceMeta, sourceMetaSchema } from '../credit/sources'
 import { type Result, err, ok } from '../result'
 
 export const ENTITY_KINDS = ['polity', 'group', 'relation'] as const
@@ -22,13 +23,32 @@ export const geoEntitySchema = z.object({
 })
 export type GeoEntity = Readonly<z.infer<typeof geoEntitySchema>>
 
-/** `index.json` of a dataset version; the keys this client does not use are dropped. */
+/**
+ * `index.json` of a dataset version; the keys this client does not use are dropped. The `dataset` block
+ * must carry the four source metadata fields the pipeline writes (AD-17): drawing the borders and
+ * crediting them are atomic, so an index without (or with an incomplete) block is invalid and nothing
+ * is drawn from it.
+ */
 export const geoIndexSchema = z.object({
   schemaVersion: z.literal(1),
-  dataset: z.object({ id: z.string().min(1), version: z.string().min(1) }),
+  dataset: z.object({
+    id: z.string().min(1),
+    version: z.string().min(1),
+    source: sourceMetaSchema.shape.source,
+    licence: sourceMetaSchema.shape.licence,
+    attribution: sourceMetaSchema.shape.attribution,
+    creditRequired: sourceMetaSchema.shape.creditRequired,
+  }),
   entities: z.array(geoEntitySchema),
 })
 export type GeoIndex = Readonly<z.infer<typeof geoIndexSchema>>
+
+/** The source metadata of a loaded geo index (always complete: the schema requires it). */
+export function geoSourceMeta(index: GeoIndex | undefined): SourceMeta | undefined {
+  const dataset = index?.dataset
+  if (!dataset) return undefined
+  return { id: dataset.id, source: dataset.source, licence: dataset.licence, attribution: dataset.attribution, creditRequired: dataset.creditRequired }
+}
 
 type Position = readonly [number, number]
 export type GeoGeometry =

@@ -4,13 +4,13 @@
 
 import { freeze } from 'immer'
 import { z } from 'zod'
-import { type Project, projectSchemaV2 } from '../model/project'
+import { type Project, projectSchemaV3 } from '../model/project'
 import { type Result, err, ok } from '../result'
 
-export const CURRENT_SCHEMA_VERSION = 2
+export const CURRENT_SCHEMA_VERSION = 3
 
 /** The Zod schema of the current schemaVersion. */
-export const projectSchema = projectSchemaV2
+export const projectSchema = projectSchemaV3
 
 /** A migration turns a document of version N into one of version N + 1. Pure; never deleted. */
 export type Migration = (doc: Readonly<Record<string, unknown>>) => Record<string, unknown>
@@ -23,6 +23,8 @@ export const migrations: Readonly<Record<number, Migration>> = {
   /** v1 → v2: pins the geo dataset the Project was made with (Story 1.11, AD-12). */
   // The literal, not DEFAULT_GEO_PIN: a migration must never follow a later default.
   1: (doc) => ({ ...doc, pins: { geo: { dataset: 'cliopatria', version: '0.2.0' } } }),
+  /** v2 → v3: the credit placement, at its default (Story 1.13, AD-17). */
+  2: (doc) => ({ ...doc, credit: { corner: 'bottom-left', prominence: 'discreet' } }),
 }
 
 export type UnknownDocument = Record<string, unknown> & { schemaVersion: number }

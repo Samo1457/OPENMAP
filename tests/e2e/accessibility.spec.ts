@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright'
 import { devices, type Page } from '@playwright/test'
+import { CLIOPATRIA_META } from '../../src/core/testing/geo-fixtures'
 import { expect, test } from './fixtures'
 
 // Story 1.7: automated axe check (WCAG 2.2 AA, UX-DR157) on Home, the Editor, Settings, the
@@ -20,6 +21,27 @@ async function openEditor(page: Page) {
   await page.getByRole('button', { name: 'New Project', exact: true }).first().click()
   await expect(page).toHaveURL(/#\/p\//)
   await expect(page.getByRole('textbox', { name: 'Project name' })).toHaveValue('Untitled Project')
+}
+
+/** One entity at 1900 with the full dataset block, so the Map draws a Territory and the credit (Story 1.13). */
+async function mockCreditData(page: Page) {
+  await page.route('**/library/v1/styles/*.json', (route) =>
+    route.fulfill({ json: { version: 8, sources: {}, layers: [{ id: 'background', type: 'background', paint: { 'background-color': '#FF00FF' } }] } }),
+  )
+  const square = { type: 'Polygon', coordinates: [[[0, 0], [10, 0], [10, 10], [0, 10], [0, 0]]] }
+  await page.route('**/library/v1/geo/**', (route) => {
+    const path = new URL(route.request().url()).pathname
+    if (path.endsWith('/index.json')) {
+      return route.fulfill({
+        json: {
+          schemaVersion: 1,
+          dataset: { ...CLIOPATRIA_META, version: '0.2.0' },
+          entities: [{ id: 'a', name: 'A', kind: 'polity', memberOf: [], states: [[1900, 1900]] }],
+        },
+      })
+    }
+    return route.fulfill({ json: { type: 'Feature', id: 'cliopatria@0.2.0:a', properties: { fromYear: 1900, toYear: 1900, area: 1 }, geometry: square } })
+  })
 }
 
 for (const scheme of ['light', 'dark'] as const) {
@@ -105,7 +127,7 @@ for (const scheme of ['light', 'dark'] as const) {
         const path = new URL(route.request().url()).pathname
         if (path.endsWith('/index.json')) {
           return route.fulfill({
-            json: { schemaVersion: 1, dataset: { id: 'cliopatria', version: '0.2.0' }, entities: [{ id: 'a', name: 'A', kind: 'polity', memberOf: [], states: [[1900, 1900]] }] },
+            json: { schemaVersion: 1, dataset: { ...CLIOPATRIA_META, version: '0.2.0' }, entities: [{ id: 'a', name: 'A', kind: 'polity', memberOf: [], states: [[1900, 1900]] }] },
           })
         }
         return route.fulfill({ json: { type: 'Feature', id: 'cliopatria@0.2.0:a', properties: { fromYear: 1900, toYear: 1900, area: 1 }, geometry: square } })
@@ -143,6 +165,58 @@ for (const scheme of ['light', 'dark'] as const) {
       await expectNoViolations(page, 'Reference Date field with the unavailable caption')
     })
 
+    test('the credit and « Sources and licences » section of Project settings, locked credit and each state of its controls', async ({ page }) => {
+      await mockCreditData(page)
+      await openEditor(page)
+      const panel = page.getByRole('complementary', { name: 'Properties' })
+      await panel.getByRole('button', { name: /More options/ }).click()
+      await expect(page.getByTestId('map-canvas')).toHaveAttribute('data-credit-state', 'drawn')
+      await expect(panel.getByTestId('credit-locked-text')).toBeVisible()
+      await expect(panel.getByTestId('sources-section').getByRole('listitem')).toHaveCount(3)
+      await expectNoViolations(page, 'the credit and Sources section (Cliopatria credit locked)')
+      await panel.getByRole('combobox', { name: 'Position' }).selectOption({ label: 'Top right' })
+      await panel.getByRole('radiogroup', { name: 'Discretion' }).getByRole('radio', { name: 'Legible' }).click()
+      await expectNoViolations(page, 'the credit section after a change (Top right, Legible)')
+      await panel.getByRole('combobox', { name: 'Position' }).focus()
+      await expectNoViolations(page, 'the credit section with the Position field focused')
+    })
+
+    test('the credit section with no required source (plain sentence, no padlock) and with an empty Sources list', async ({ page }) => {
+      await page.route('**/library/v1/styles/*.json', (route) =>
+        route.fulfill({ json: { version: 8, sources: {}, layers: [{ id: 'background', type: 'background', paint: { 'background-color': '#FF00FF' } }] } }),
+      )
+      // No Territories data: nothing on the Map requires a credit, but the Basemap sources are listed.
+      await page.route('**/library/v1/geo/**', (route) => route.fulfill({ status: 404, contentType: 'text/plain', body: 'Data not built' }))
+      await openEditor(page)
+      const panel = page.getByRole('complementary', { name: 'Properties' })
+      await panel.getByRole('button', { name: /More options/ }).click()
+      await expect(panel).toContainText('No source drawn on the map requires a credit at the moment.')
+      await expect(panel.getByTestId('credit-locked-text')).toHaveCount(0)
+      await expect(panel.getByTestId('sources-section').getByRole('listitem')).toHaveCount(2)
+      await expectNoViolations(page, 'the credit section without a required source')
+      // And with no metadata at all: the empty Sources sentence.
+      await page.route('**/library/v1/datasets.json', (route) => route.fulfill({ status: 404, contentType: 'text/plain', body: 'Data not built' }))
+      await page.evaluate(
+        () =>
+          new Promise<void>((resolve, reject) => {
+            const open = indexedDB.open('openmap')
+            open.onerror = () => reject(open.error)
+            open.onsuccess = () => {
+              const transaction = open.result.transaction('libraryCache', 'readwrite')
+              transaction.objectStore('libraryCache').clear()
+              transaction.oncomplete = () => {
+                open.result.close()
+                resolve()
+              }
+            }
+          }),
+      )
+      await page.reload()
+      await panel.getByRole('button', { name: /More options/ }).click()
+      await expect(panel.getByTestId('sources-section')).toContainText('No source is loaded at the moment.')
+      await expectNoViolations(page, 'the Sources section with no source loaded')
+    })
+
     test('Settings (each tab) and the shortcuts help', async ({ page }) => {
       await page.goto('/')
       await page.getByRole('button', { name: 'Menu' }).click()
@@ -159,6 +233,25 @@ for (const scheme of ['light', 'dark'] as const) {
       await page.keyboard.press('?')
       await expect(page.getByRole('dialog', { name: 'Keyboard shortcuts' })).toBeVisible()
       await expectNoViolations(page, 'Shortcuts help')
+    })
+  })
+}
+
+for (const scheme of ['light', 'dark'] as const) {
+  test.describe(`axe, French credit section, ${scheme} theme`, () => {
+    test.use({ locale: 'fr-FR' })
+
+    test('the credit and « Sources et licences » section in French', async ({ page }) => {
+      await page.emulateMedia({ colorScheme: scheme })
+      await mockCreditData(page)
+      await page.goto('/')
+      await page.getByRole('button', { name: 'Nouveau Projet', exact: true }).first().click()
+      await expect(page.getByRole('textbox', { name: 'Nom du Projet' })).toHaveValue('Projet sans titre')
+      const panel = page.getByRole('complementary', { name: 'Propriétés' })
+      await panel.getByRole('button', { name: /Plus d'options/ }).click()
+      await expect(page.getByTestId('map-canvas')).toHaveAttribute('data-credit-state', 'drawn')
+      await expect(panel.getByTestId('credit-locked-text')).toBeVisible()
+      await expectNoViolations(page, 'the credit and Sources section (French)')
     })
   })
 }

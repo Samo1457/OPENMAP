@@ -2,6 +2,7 @@
 // the shape of Story 1.12's index, a few countries and cities with both names, and a few GeoEntities.
 
 import { type GeoGeometry, type GeoIndex, stateKey } from '../geo/geo'
+import { CLIOPATRIA_META } from './geo-fixtures'
 import { SEARCH_DATASET_ID, SEARCH_DATASET_VERSION, type SearchIndex } from '../search/search-index'
 
 const country = (en: string, fr: string, lon: number, lat: number, bounds: [number, number, number, number], pop: number) => ({ en, fr, lon, lat, bounds, pop })
@@ -53,7 +54,7 @@ const twoParts = (x: number, y: number): GeoGeometry => ({
  */
 export const SEARCH_GEO_INDEX: GeoIndex = {
   schemaVersion: 1,
-  dataset: { id: 'cliopatria', version: '0.2.0' },
+  dataset: { ...CLIOPATRIA_META, version: '0.2.0' },
   entities: [
     { id: 'ottoman-empire', name: 'Ottoman Empire', kind: 'polity', memberOf: [], states: [[1300, 1922]] },
     { id: 'kingdom-of-france', name: 'Kingdom of France', kind: 'polity', memberOf: [], states: [[987, 1500], [1501, 1792]] },

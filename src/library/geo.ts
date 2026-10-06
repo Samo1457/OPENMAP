@@ -102,7 +102,8 @@ export function createGeoClient(options: GeoClientOptions): GeoClient {
     if (cached !== undefined) {
       const index = parseGeoIndex(cached, pin)
       if (index.ok) return index
-      // A damaged cache row is a miss.
+      // A damaged row, or one cached before the source metadata was kept (Story 1.13, invalid now), is a
+      // miss: it is fetched again and the row replaced, so this happens once, not on every open.
     }
     const json = await fetchJson(`${GEO_ROOT}/index.json`, signal)
     if (!json.ok) return json

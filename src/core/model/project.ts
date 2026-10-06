@@ -1,4 +1,4 @@
-// The Project document (AD-3, AD-4, AD-9, AD-12, AD-13, AD-24, AD-25). v2 adds the geo data pin.
+// The Project document (AD-3, AD-4, AD-9, AD-12, AD-13, AD-17, AD-24, AD-25). v2 adds the geo data pin, v3 the credit position.
 // Fields beyond (Territories, Factions, Step durations, the tileset pin…) arrive with a new
 // schemaVersion and a migration (AD-9), never as speculative optional fields here.
 
@@ -143,5 +143,37 @@ export const projectSchemaV2 = z
   })
   .superRefine(checkUniqueIds)
 
+export const CREDIT_CORNERS = ['bottom-left', 'bottom-right', 'top-left', 'top-right'] as const
+/** The frame corner the credit line sits in. */
+export const creditCornerSchema = z.enum(CREDIT_CORNERS)
+export type CreditCorner = z.infer<typeof creditCornerSchema>
+
+export const CREDIT_PROMINENCES = ['discreet', 'legible'] as const
+/** « Discrète » (map-credit-discreet, with halo) or « Lisible » (map-credit-legible, on a halo band). */
+export const creditProminenceSchema = z.enum(CREDIT_PROMINENCES)
+export type CreditProminence = z.infer<typeof creditProminenceSchema>
+
+/**
+ * Where and how loudly the Map credit shows (AD-17, UX-DR108). Only the placement is stored: whether a
+ * credit shows follows from the sources drawn, so no field can hide a required one. The margin is the
+ * fixed `map-credit-margin`.
+ */
+export const creditSchema = z.strictObject({ corner: creditCornerSchema, prominence: creditProminenceSchema })
+export type Credit = z.infer<typeof creditSchema>
+
+/** What every new Project and every migrated v2 Project has. */
+export const DEFAULT_CREDIT: Credit = { corner: 'bottom-left', prominence: 'discreet' }
+
+/** v3: adds `credit` (Story 1.13). */
+export const projectSchemaV3 = z
+  .strictObject({
+    schemaVersion: z.literal(3),
+    ...projectFields,
+    pins: pinsSchema,
+    /** Position and prominence of the Map credit (Story 1.13). */
+    credit: creditSchema,
+  })
+  .superRefine(checkUniqueIds)
+
 /** The current Project document. Immutable: change it only through Commands (AD-3). */
-export type Project = Immutable<z.infer<typeof projectSchemaV2>>
+export type Project = Immutable<z.infer<typeof projectSchemaV3>>

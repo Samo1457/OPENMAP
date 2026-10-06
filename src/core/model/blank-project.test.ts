@@ -8,9 +8,9 @@ const ids = () => generateBlankProjectIds(createDeterministicIdSource('p'))
 describe('createBlankProject', () => {
   const project = createBlankProject({ ...ids(), name: 'Projet sans titre', mapLocale: 'fr' })
 
-  it('creates the v2 default document', () => {
+  it('creates the v3 default document', () => {
     expect(project).toEqual({
-      schemaVersion: 2,
+      schemaVersion: 3,
       id: 'p00000000000000000001',
       seed: 'p00000000000000000002',
       revision: 0,
@@ -29,6 +29,7 @@ describe('createBlankProject', () => {
       ],
       factions: [],
       pins: { geo: { dataset: 'cliopatria', version: '0.2.0' } },
+      credit: { corner: 'bottom-left', prominence: 'discreet' },
     })
   })
 

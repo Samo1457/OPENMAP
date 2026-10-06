@@ -22,6 +22,8 @@ export type DomainErrorCode =
   | 'geo_unavailable'
   /** The place search index cannot be loaded: not found, not JSON, or invalid (AD-16, AD-27). */
   | 'search_unavailable'
+  /** The datasets metadata (`datasets.json`) cannot be loaded: not found, not JSON, or invalid (AD-17, AD-27). */
+  | 'datasets_unavailable'
 
 export type DomainErrorParams = Readonly<Record<string, string | number | boolean>>
 

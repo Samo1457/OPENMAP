@@ -3,14 +3,16 @@
 // camera is applied with `jumpTo`, and only the user's own wheel, drag or pinch motion moves the
 // edit camera (UI state, never in the Project). Loaded lazily by the Editor (`loadMapView`).
 
+import { MapView as DeckMapView } from '@deck.gl/core'
 import { PathStyleExtension } from '@deck.gl/extensions'
-import { GeoJsonLayer } from '@deck.gl/layers'
+import { GeoJsonLayer, TextLayer } from '@deck.gl/layers'
 import { MapLibreOverlay } from '@deck.gl/maplibre'
 import { LngLat, Map as MapLibreMap, Point, setWorkerUrl, type PaddingOptions } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 // MapLibre 6 runs its worker from a separate module that imports a shared chunk: Vite bundles both into one worker file served by the app origin.
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
-import { clampCenterLat, frameScale, minEditZoom, zoomOffset, type Rect, type Scene, type SceneCamera, type SceneTerritory, type Size } from '@/core'
+import { clampCenterLat, frameScale, isCredit, isTerritory, mapColors, minEditZoom, zoomOffset, type Rect, type Scene, type SceneCamera, type SceneCredit, type SceneTerritory, type Size } from '@/core'
+import { createMeasure, type CreditLayout, type CreditStyle, layoutCredit, LEGIBLE_BAND_OPACITY, type MeasureText } from './credit-layout'
 import { OVERLAY_MODE } from './overlay-mode'
 import { fallbackStyle, loadBasemapStyle, paintTargets, type BasemapStyle } from './style'
 
@@ -45,6 +47,11 @@ export interface MapView {
   setScene(scene: Scene): void
   /** Outlines the selected GeoEntity (ink on halo), or nothing. A key with no Territory in the Scene draws nothing. */
   setSelection(selection: MapSelection | undefined): void
+  /**
+   * The credit tokens (`map-credit-*`, read by the UI from the theme tokens), without which the credit is
+   * not drawn. The text itself, its corner and its prominence come from the Scene's credit item.
+   */
+  setCreditStyle(style: CreditStyle | undefined): void
   setLayout(layout: MapLayout): void
   /** Applies a camera given in reference zoom with `jumpTo`. */
   setCamera(camera: SceneCamera): void
@@ -163,14 +170,251 @@ export function createMapView(options: MapViewOptions): MapView {
 
   const overlay = new MapLibreOverlay({ interleaved: OVERLAY_MODE === 'interleaved', layers: [] })
   map.addControl(overlay as never)
+  // The credit has its own overlay, one that does not repeat in world copies: deck.gl repeats every layer of
+  // an overlay in each copy of the world MapLibre draws, and a frame wider than the world (16:9 at the default
+  // view) would show the credit twice inside it. It is drawn above the Territories, which is where its z band is.
+  const creditOverlay = new MapLibreOverlay({ interleaved: false, layers: [], views: new DeckMapView({ id: 'maplibre', repeat: false }) as never })
+  map.addControl(creditOverlay as never)
+  // Its canvas is decoration like the Map's: out of the tab order (the Map region is the focusable element).
+  // deck.gl creates it a little later and sets `tabindex="0"` on it, so it is watched for from the container.
+  const hideCreditCanvas = () => {
+    for (const element of Array.from(container.querySelectorAll?.('.deck-widget-container canvas') ?? [])) {
+      if (element.getAttribute('tabindex') !== '-1') element.setAttribute('tabindex', '-1')
+      if (element.getAttribute('role') !== 'presentation') element.setAttribute('role', 'presentation')
+    }
+  }
+  hideCreditCanvas()
+  const creditCanvasObserver = new MutationObserver(hideCreditCanvas)
+  creditCanvasObserver.observe(container, { subtree: true, childList: true, attributes: true, attributeFilter: ['tabindex'] })
 
   // --- Territories: one GeoJsonLayer, outline only (AD-6). The Scene gives sizes in reference px; they
   // are scaled by `s` here, so a new Output Format or window size redraws them at the right width.
   let territories: { readonly items: readonly SceneTerritory[]; readonly features: GeoJSON.Feature[] } = { items: [], features: [] }
   let selection: MapSelection | undefined
+  /** The Territory and selection layers; the credit layer is added to them by `pushLayers`. */
+  let baseLayers: unknown[] = []
+  let creditStyle: CreditStyle | undefined
 
   function territoryItems(source: Scene): SceneTerritory[] {
-    return source.items.filter((item): item is SceneTerritory => item.kind === 'territory').sort((a, b) => a.z - b.z)
+    return source.items.filter(isTerritory).sort((a, b) => a.z - b.z)
+  }
+
+  // --- The credit (Story 1.13): one deck.gl TextLayer, the app's first. It hangs from a corner of the
+  // output frame (screen px, unprojected to the map each time the camera moves, so it stays in the frame
+  // while the Map moves under it). Sizes and margin are reference px times `s` (AD-23); the text is wrapped
+  // to the frame by `layoutCredit`. It is drawn once its font is ready, never before: the text appears
+  // without a jump, and no layout depends on it. Nothing here animates.
+  const measures = new Map<string, MeasureText>()
+  const fontsReady = new Set<string>()
+  const fontsPending = new Set<string>()
+
+  /** Whether `family` at `weight` can draw `text`; starts loading it when not, and redraws when it is. */
+  function creditFontReady(family: string, weight: number, text: string): boolean {
+    // Keyed by the characters of the text too: another text may need another unicode-range subset.
+    const key = `${weight}|${family}|${Array.from(new Set(text)).sort().join('')}`
+    if (fontsReady.has(key)) return true
+    const fonts = typeof document !== 'undefined' ? document.fonts : undefined
+    if (!fonts) {
+      fontsReady.add(key)
+      return true
+    }
+    if (!fontsPending.has(key)) {
+      fontsPending.add(key)
+      const done = () => {
+        fontsPending.delete(key)
+        fontsReady.add(key)
+        if (!destroyed) pushCredit()
+      }
+      // A font that cannot load (offline, blocked) still ends the wait: the fallback face is drawn.
+      void fonts.load(`${weight} 100px ${family}`, text).then(done, done)
+    }
+    return false
+  }
+
+  function creditMeasure(family: string, weight: number): MeasureText {
+    const key = `${weight}|${family}`
+    let measure = measures.get(key)
+    if (!measure) {
+      measure = createMeasure(family, weight)
+      measures.set(key, measure)
+    }
+    return measure
+  }
+
+  /** The placement of the credit, recomputed only when its inputs change (the camera does not enter it). */
+  let creditPlacement: { readonly key: string; readonly placed: CreditLayout | undefined } | undefined
+  /** One stable data row: only its content and the update triggers change, so deck.gl does not rebuild the layer. */
+  const creditRow = { text: '', position: [0, 0] as [number, number] }
+  const creditData = [creditRow]
+  let lastCreditPosition: readonly [number, number] | undefined
+  let lastCreditLayout = ''
+
+  function placeCredit(item: SceneCredit, style: CreditStyle, type: { fontWeight: number }): CreditLayout | undefined {
+    const { frame } = layout
+    const scale = frameScale(frame)
+    const key = [item.text, item.corner, item.prominence, style.fontFamily, frame.x, frame.y, frame.width, frame.height, scale].join('|')
+    if (creditPlacement?.key !== key) {
+      creditPlacement = {
+        key,
+        placed: layoutCredit({
+          text: item.text,
+          corner: item.corner,
+          prominence: item.prominence,
+          style,
+          frame,
+          scale,
+          measure: creditMeasure(style.fontFamily, type.fontWeight),
+        }),
+      }
+    }
+    return creditPlacement.placed
+  }
+
+  /**
+   * The scissor rectangle of the frame in drawing-buffer px (origin bottom-left), clamped to the buffer, or
+   * nothing when it is empty. The buffer is the Map area times the device pixel ratio; the canvas, once sized,
+   * can only make it smaller.
+   */
+  function frameScissor(): [number, number, number, number] | undefined {
+    const ratio = window.devicePixelRatio || 1
+    const canvasWidth = map.getCanvas().width
+    const canvasHeight = map.getCanvas().height
+    const bufferWidth = Math.min(layout.area.width * ratio, canvasWidth > 0 ? canvasWidth : Infinity)
+    const bufferHeight = Math.min(layout.area.height * ratio, canvasHeight > 0 ? canvasHeight : Infinity)
+    const { frame } = layout
+    const left = Math.max(0, Math.round(frame.x * ratio))
+    const right = Math.min(bufferWidth, Math.round((frame.x + frame.width) * ratio))
+    // Top and bottom of the frame measured from the bottom of the buffer.
+    const top = Math.min(bufferHeight, Math.round(layout.area.height * ratio - frame.y * ratio))
+    const bottom = Math.max(0, Math.round(layout.area.height * ratio - (frame.y + frame.height) * ratio))
+    const width = right - left
+    const height = top - bottom
+    return width > 0 && height > 0 ? [left, bottom, width, height] : undefined
+  }
+
+  function noCredit(state: string): unknown[] {
+    container.dataset.creditState = state
+    container.dataset.creditLayout = ''
+    lastCreditLayout = ''
+    lastCreditPosition = undefined
+    return []
+  }
+
+  function creditLayers(): unknown[] {
+    const item: SceneCredit | undefined = scene.items.find(isCredit)
+    const dataset = container.dataset
+    if (!item || !creditStyle) {
+      dataset.credit = ''
+      return noCredit('none')
+    }
+    const style = creditStyle
+    const type = item.prominence === 'legible' ? style.legible : style.discreet
+    dataset.credit = item.text
+    if (!creditFontReady(style.fontFamily, type.fontWeight, item.text)) return noCredit('pending')
+    const placed = placeCredit(item, style, type)
+    const scissor = frameScissor()
+    // An empty frame (a degenerate window) has nowhere to draw the credit.
+    if (!placed || !scissor) return noCredit('none')
+    const { lng, lat } = creditAnchor(placed)
+    lastCreditPosition = [lng, lat]
+    // The scissor keeps the credit inside the output frame, whatever the camera does.
+    const palette = mapColors[scene.basemap.id]
+    const ink = hexToRgba(palette['map-label'])
+    const halo = hexToRgba(palette['map-label-halo'])
+    const description = JSON.stringify({
+      corner: item.corner,
+      prominence: item.prominence,
+      lines: placed.lines,
+      fontPx: Math.round(placed.fontPx * 1000) / 1000,
+      fontWeight: placed.fontWeight,
+      anchor: placed.anchor.map((value) => Math.round(value * 100) / 100),
+      offset: placed.offset.map((value) => Math.round(value * 100) / 100),
+      padding: placed.padding.map((value) => Math.round(value * 100) / 100),
+      maxWidth: Math.round(placed.maxWidth * 100) / 100,
+      band: placed.legible,
+    })
+    dataset.creditState = 'drawn'
+    if (description !== lastCreditLayout) {
+      lastCreditLayout = description
+      dataset.creditLayout = description
+    }
+    const text = placed.lines.join('\n')
+    creditRow.text = text
+    creditRow.position = [lng, lat]
+    return [
+      new TextLayer({
+        id: 'credit-text',
+        data: creditData,
+        getText: (row: typeof creditRow) => row.text,
+        getPosition: (row: typeof creditRow) => row.position,
+        getColor: ink,
+        getSize: placed.fontPx,
+        sizeUnits: 'pixels',
+        fontFamily: style.fontFamily,
+        fontWeight: placed.fontWeight,
+        lineHeight: placed.lineHeight,
+        characterSet: 'auto',
+        fontSettings: { sdf: true },
+        getTextAnchor: placed.textAnchor,
+        getAlignmentBaseline: placed.alignment,
+        getPixelOffset: [placed.offset[0], placed.offset[1]],
+        // « Discrète »: a halo around the text. « Lisible »: a halo band behind it.
+        outlineWidth: placed.haloPx > 0 ? placed.haloPx / placed.fontPx : 0,
+        outlineColor: halo,
+        background: placed.legible,
+        getBackgroundColor: [halo[0], halo[1], halo[2], Math.round(LEGIBLE_BAND_OPACITY * 255)],
+        backgroundPadding: [placed.padding[0], placed.padding[1]],
+        billboard: true,
+        pickable: false,
+        parameters: { scissorTest: true, scissor },
+        // deck.gl lays the text out again only when a trigger says so: everything that shapes the layout
+        // (text, anchor, baseline, size, line height, font) goes into `getText`'s, so a new corner or
+        // prominence is laid out anew. Only the position changes while the Map moves.
+        updateTriggers: {
+          getText: [text, placed.textAnchor, placed.alignment, placed.fontPx, placed.lineHeight, placed.fontWeight, style.fontFamily],
+          getTextAnchor: [placed.textAnchor],
+          getAlignmentBaseline: [placed.alignment],
+          getSize: [placed.fontPx],
+          getPixelOffset: [placed.offset[0], placed.offset[1]],
+          getPosition: [lng, lat],
+        },
+      }),
+    ]
+  }
+
+  /**
+   * Where the frame corner is on the map, in the world copy the view is centred on: deck.gl's view state
+   * wraps the centre to [-180, 180), so the position must be given in that same copy.
+   */
+  function creditAnchor(placed: CreditLayout): { lng: number; lat: number } {
+    const { lng, lat } = map.unproject([placed.anchor[0], placed.anchor[1]])
+    const centre = map.getCenter().lng
+    return { lng: lng - (centre - (((centre + 540) % 360) - 180)), lat }
+  }
+
+  /** Whether the credit's anchor has moved on the map since it was last drawn (the camera moved). */
+  function creditAnchorMoved(): boolean {
+    const placed = creditPlacement?.placed
+    if (!placed || !lastCreditPosition) return false
+    const { lng, lat } = creditAnchor(placed)
+    return lng !== lastCreditPosition[0] || lat !== lastCreditPosition[1]
+  }
+
+  /** Hands the overlay the Territory and selection layers. */
+  function pushBase() {
+    overlay.setProps({ layers: baseLayers as never })
+  }
+
+  /** Hands the credit overlay the credit layer, which follows the camera. */
+  function pushCredit() {
+    creditOverlay.setProps({ layers: creditLayers() as never })
+    // The credit overlay redraws with the Map's render: `data-idle` waits for it.
+    busy()
+  }
+
+  function pushLayers() {
+    pushBase()
+    pushCredit()
   }
 
   function drawTerritories() {
@@ -211,11 +455,10 @@ export function createMapView(options: MapViewOptions): MapView {
               }),
           )
         : []
-    overlay.setProps({
-      layers:
-        items.length === 0
-          ? []
-          : [
+    baseLayers =
+      items.length === 0
+        ? []
+        : [
               new GeoJsonLayer({
                 id: 'territories',
                 data: territories.features,
@@ -229,8 +472,8 @@ export function createMapView(options: MapViewOptions): MapView {
                 updateTriggers: { getLineColor: [colour.join()], getLineWidth: [width] },
               }),
               ...selectionLayers,
-            ],
-    })
+            ]
+    pushLayers()
     container.dataset.selection = selected && selection ? selection.key : ''
     container.dataset.selectionColours = selected && selection ? `${selection.ink} ${selection.halo}` : ''
     container.dataset.territories = String(items.length)
@@ -279,6 +522,8 @@ export function createMapView(options: MapViewOptions): MapView {
       onEditCamera(actual)
     }
     publish()
+    // A new camera or frame moves where the credit hangs on the map.
+    if (scene.items.some(isCredit)) pushCredit()
   }
 
   /** The user's own motion: remember it and report it as the edit camera. */
@@ -352,6 +597,8 @@ export function createMapView(options: MapViewOptions): MapView {
     // Every camera change we make is a `jumpTo` flagged `programmatic`; any other motion is
     // MapLibre's own wheel or pinch handler, i.e. the user's.
     if (!(event as { programmatic?: boolean }).programmatic) userMoved()
+    // The credit hangs from the frame, which does not move: its map position follows the camera.
+    if (scene.items.some(isCredit) && creditAnchorMoved()) pushCredit()
   })
   map.once('load', () => {
     container.dataset.ready = 'true'
@@ -463,6 +710,10 @@ export function createMapView(options: MapViewOptions): MapView {
       selection = next
       drawTerritories()
     },
+    setCreditStyle(next) {
+      creditStyle = next
+      pushCredit()
+    },
     setLayout(next) {
       layout = next
       apply()
@@ -493,6 +744,7 @@ export function createMapView(options: MapViewOptions): MapView {
       if (frameId !== undefined) cancelAnimationFrame(frameId)
       aborter.abort()
       canvasObserver.disconnect()
+      creditCanvasObserver.disconnect()
       keyTarget.removeEventListener('keydown', onKeyDown)
       keyTarget.removeEventListener('keyup', onKeyUp)
       keyTarget.removeEventListener('blur', resetSpace)

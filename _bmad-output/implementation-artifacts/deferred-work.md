@@ -61,3 +61,7 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-1-12-search-for-a-place.md`
   summary: A Cliopatria entity whose main landmass crosses the antimeridian fits the whole world (its extent spans from near -180 to 180) when picked in the search.
   evidence: `mainLandmassBounds` takes the plain bounding box of the largest polygon; Cliopatria 0.2.0 polygons stay within ±180 but one that straddles the 180° meridian would need wrapped bounds (centre and span across the seam).
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-13-sources-licences-and-map-credit.md`
+  summary: e2e `readyEditor` waits only 5 s for the Map style; under heavy parallel load (10x repeat, 4 workers) 3 of 530 place-search runs timed out with `data-style="loading"`.
+  evidence: same tests pass 50/50 at lower load and the full check passes (262 e2e); consider a longer readiness timeout or fewer workers for repeat runs.

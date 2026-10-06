@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { geoEntityKey, parseGeoIndex, parseGeoState, stateKey } from './geo'
-import { GEO_INDEX } from '../testing/geo-fixtures'
+import { geoEntityKey, geoSourceMeta, parseGeoIndex, parseGeoState, stateKey } from './geo'
+import { CLIOPATRIA_META, GEO_INDEX, GEO_INDEX_WITH_META } from '../testing/geo-fixtures'
 
 const PIN = { dataset: 'cliopatria', version: '0.2.0' }
 const ring = [[0, 0], [1, 0], [1, 1], [0, 0]]
@@ -21,8 +21,36 @@ describe('keys', () => {
 
 describe('parseGeoIndex', () => {
   it('accepts the pinned dataset and drops the keys it does not use', () => {
-    const raw = { ...GEO_INDEX, extra: 1, dataset: { ...GEO_INDEX.dataset, licence: 'CC-BY-4.0' } }
+    const raw = { ...GEO_INDEX, extra: 1, dataset: { ...GEO_INDEX.dataset, simplification: { tolerance: 0.005 }, counts: { entities: 5 } } }
     expect(parseGeoIndex(raw, PIN)).toEqual({ ok: true, value: GEO_INDEX })
+  })
+
+  it('keeps the source metadata of the dataset block (AD-17)', () => {
+    const parsed = parseGeoIndex({ ...GEO_INDEX_WITH_META, dataset: { ...GEO_INDEX_WITH_META.dataset, counts: {} } }, PIN)
+    expect(parsed).toEqual({ ok: true, value: GEO_INDEX_WITH_META })
+    expect(parsed.ok && geoSourceMeta(parsed.value)).toEqual(CLIOPATRIA_META)
+  })
+
+  it.each([['source', 1], ['licence', ''], ['attribution', null], ['creditRequired', 'yes']])('refuses a malformed %s in the dataset block', (key, value) => {
+    expect(parseGeoIndex({ ...GEO_INDEX_WITH_META, dataset: { ...GEO_INDEX_WITH_META.dataset, [key]: value } }, PIN)).toMatchObject({ ok: false, error: { code: 'geo_unavailable' } })
+  })
+
+  it('refuses an index whose dataset block lacks any of the four metadata fields, or has none (AD-17)', () => {
+    expect(parseGeoIndex({ ...GEO_INDEX, dataset: { id: 'cliopatria', version: '0.2.0' } }, PIN)).toMatchObject({ ok: false, error: { code: 'geo_unavailable' } })
+    for (const key of ['source', 'licence', 'attribution', 'creditRequired'] as const) {
+      const { [key]: _removed, ...partial } = GEO_INDEX.dataset
+      expect(parseGeoIndex({ ...GEO_INDEX, dataset: partial }, PIN), key).toMatchObject({ ok: false })
+    }
+  })
+
+  it('refuses a blank attribution and trims a padded one', () => {
+    expect(parseGeoIndex({ ...GEO_INDEX, dataset: { ...GEO_INDEX.dataset, attribution: '   ' } }, PIN)).toMatchObject({ ok: false })
+    const padded = parseGeoIndex({ ...GEO_INDEX, dataset: { ...GEO_INDEX.dataset, attribution: ' Credit. ' } }, PIN)
+    expect(padded.ok && geoSourceMeta(padded.value)?.attribution).toBe('Credit.')
+  })
+
+  it('gives no source metadata without an index', () => {
+    expect(geoSourceMeta(undefined)).toBeUndefined()
   })
 
   it('refuses another dataset version', () => {
