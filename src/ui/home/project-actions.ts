@@ -11,7 +11,7 @@ import {
   type Project,
   toProjectId,
 } from '@/core'
-import { createProject, loadStoredProject, requestPersistOnce, saveProject } from '@/persistence'
+import { changeUnlockedProject, createProject, loadProjectForView, type ProjectChange, requestPersistOnce, saveProject } from '@/persistence'
 import { newId } from '@/ui/ids'
 
 /** Creates and stores a blank Project; requests persistent storage on the first one (AD-8). */
@@ -30,22 +30,32 @@ function applyCommand(project: Project, command: Command): Project | undefined {
   return result.ok ? result.value : undefined
 }
 
-/** Renames a stored Project with SET_PROJECT_NAME and saves it with its current epoch. */
-export async function renameStored(id: string, name: string): Promise<boolean> {
-  const loaded = await loadStoredProject(id)
-  if (loaded?.kind !== 'editable') return false
-  const renamed = applyCommand(loaded.project, { type: 'SET_PROJECT_NAME', payload: { name } })
-  if (!renamed) return false
-  if (renamed === loaded.project) return true
-  return (await saveProject(renamed, loaded.lockEpoch)).ok
+/**
+ * Renames a stored Project with SET_PROJECT_NAME and saves it with its current epoch. Refused
+ * (`locked`) while another tab edits it: the edit lock is taken for the change (AD-15).
+ */
+export function renameStored(id: string, name: string): Promise<ProjectChange> {
+  return changeUnlockedProject(id, async () => {
+    const loaded = await loadProjectForView(id)
+    if (loaded?.kind !== 'editable') return false
+    const renamed = applyCommand(loaded.project, { type: 'SET_PROJECT_NAME', payload: { name } })
+    if (!renamed) return false
+    if (renamed === loaded.project) return true
+    return (await saveProject(renamed, loaded.lockEpoch)).ok
+  })
 }
 
-/** Stores a copy under a new id with the same seed (AD-2), named by `nameOf(original name)`. */
-export async function duplicateStored(id: string, nameOf: (name: string) => string): Promise<boolean> {
-  const loaded = await loadStoredProject(id)
-  if (loaded?.kind !== 'editable') return false
-  const copy = duplicateProject(loaded.project, toProjectId(newId()))
-  const named = applyCommand(copy, { type: 'SET_PROJECT_NAME', payload: { name: nameOf(loaded.project.name) } })
-  if (!named) return false
-  return (await createProject(named)).ok
+/**
+ * Stores a copy under a new id with the same seed (AD-2), named by `nameOf(original name)`.
+ * Refused (`locked`) while another tab edits it, whose latest changes the copy would miss (AD-15).
+ */
+export function duplicateStored(id: string, nameOf: (name: string) => string): Promise<ProjectChange> {
+  return changeUnlockedProject(id, async () => {
+    const loaded = await loadProjectForView(id)
+    if (loaded?.kind !== 'editable') return false
+    const copy = duplicateProject(loaded.project, toProjectId(newId()))
+    const named = applyCommand(copy, { type: 'SET_PROJECT_NAME', payload: { name: nameOf(loaded.project.name) } })
+    if (!named) return false
+    return (await createProject(named)).ok
+  })
 }

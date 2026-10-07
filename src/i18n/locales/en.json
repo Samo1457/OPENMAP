@@ -58,6 +58,7 @@
       "meta": "{{modified}} · {{format}}",
       "modified": "Modified {{when}}",
       "unreadable": "Unreadable Project",
+      "openElsewhere": "Open in another tab",
       "menu": "Actions for Project {{name}}",
       "rename": "Rename",
       "duplicate": "Duplicate",
@@ -70,7 +71,8 @@
       "create": "The Project could not be created on this device.",
       "change": "The change could not be saved on this device.",
       "detail": "Your saved Projects are unchanged.",
-      "restore": "The Project could not be restored."
+      "restore": "The Project could not be restored.",
+      "locked": "This Project is open in another tab."
     }
   },
   "time": {
@@ -90,6 +92,16 @@
     "map": "Map",
     "saveError": "The latest changes to this Project were not saved on this device.",
     "renameError": "This name cannot be used. The Project keeps its previous name.",
+    "lock": {
+      "otherTab": "This project is open in another tab. You are viewing it read-only.",
+      "takenOver": "This project is now being edited in another tab.",
+      "holderClosed": "The other tab was closed. You are still viewing this project read-only.",
+      "takeOver": "Take over here",
+      "taking": "Taking over…",
+      "editing": "You are now editing this project.",
+      "refused": "Cannot take over: the other tab could not save.",
+      "unresponsive": "The other tab is not responding."
+    },
     "regions": {
       "topBar": "Top bar",
       "tools": "Tools",

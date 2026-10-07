@@ -29,7 +29,7 @@ afterEach(async () => {
 async function openEditable(name: string, prefix: string) {
   const project = blankProject({ prefix, name })
   expect(await persistence.createProject(project)).toEqual({ ok: true })
-  const opened = await persistence.openStoredProject(project.id)
+  const opened = await persistence.loadProjectForEdit(project.id)
   if (opened?.kind !== 'editable') throw new Error('expected an editable Project')
   const dispatcher = createDispatcher(opened.project)
   const autosave = persistence.createAutosave({ source: dispatcher, lockEpoch: opened.lockEpoch })

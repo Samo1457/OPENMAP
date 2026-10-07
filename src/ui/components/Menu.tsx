@@ -16,6 +16,11 @@ export interface MenuItem {
    */
   readonly checked?: boolean
   readonly onSelect: () => void
+  /**
+   * Why the item is unavailable (it stays listed and focusable, but does nothing): read out as its
+   * description and shown as its tooltip. Absent: the item is available.
+   */
+  readonly disabledReason?: string
 }
 
 export interface MenuPoint {
@@ -115,13 +120,17 @@ export function Menu({
           role={item.checked === undefined ? 'menuitem' : 'menuitemradio'}
           aria-checked={item.checked}
           tabIndex={-1}
+          aria-disabled={item.disabledReason ? true : undefined}
+          aria-description={item.disabledReason}
+          title={item.disabledReason}
           onClick={() => {
+            if (item.disabledReason) return
             onClose()
             item.onSelect()
           }}
           className={cn(
             'flex h-control-height items-center gap-2 px-3 text-left type-body hover:bg-om-selection focus-visible:bg-om-selection',
-            item.danger ? 'text-om-danger' : 'text-om-text-primary',
+            item.disabledReason ? 'control-disabled cursor-not-allowed' : item.danger ? 'text-om-danger' : 'text-om-text-primary',
           )}
         >
           {radio && <span className="flex size-4 shrink-0 items-center justify-center">{item.checked && <Check {...iconProps} />}</span>}

@@ -29,14 +29,8 @@
   summary: Add a committed corpus of valid and invalid Project documents run through `validate`, so refinement-only schema changes (day-in-month, unique ids, name rules) also fail CI.
   evidence: The JSON Schema snapshot cannot express Zod refinements, so AD-9's drift check misses them.
 - source_spec: `_bmad-output/implementation-artifacts/spec-1-4-home-create-and-manage-my-projects-locally.md`
-  summary: Prevent a Home rename/duplicate from being overwritten by an Editor tab open on the same Project (Story 1.14 lock, or a revision check in saveProject).
-  evidence: Home edits save with the row's current lockEpoch, the same as the open Editor, and saveProject does not compare revisions.
-- source_spec: `_bmad-output/implementation-artifacts/spec-1-4-home-create-and-manage-my-projects-locally.md`
   summary: List Home cards from the row summary fields instead of loading and validating every whole document; index deletedAt for the start-up purge.
   evidence: listProjects runs migrate+validate on every document per Home load; cost grows with Map content.
-- source_spec: `_bmad-output/implementation-artifacts/spec-1-5-editor-shell-with-undo-redo.md`
-  summary: Switch the Editor shell to read-only with a banner when another tab takes the Project (wire Dispatcher.setReadOnly to the lock), instead of letting edits fail as « Non enregistré ».
-  evidence: Nothing calls setReadOnly for a live Project; Story 1.14 owns the lock and takeover banner.
 - source_spec: `_bmad-output/implementation-artifacts/spec-1-5-editor-shell-with-undo-redo.md`
   summary: Show « Projet sauvegardé » on the first save of a new Project, as EXPERIENCE.md's toast table says.
   evidence: Only Ctrl+S shows the toast today; no story AC carries the first-save rule yet.
@@ -65,3 +59,13 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-1-13-sources-licences-and-map-credit.md`
   summary: e2e `readyEditor` waits only 5 s for the Map style; under heavy parallel load (10x repeat, 4 workers) 3 of 530 place-search runs timed out with `data-style="loading"`.
   evidence: same tests pass 50/50 at lower load and the full check passes (262 e2e); consider a longer readiness timeout or fewer workers for repeat runs.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-14-one-editing-tab-per-project.md`
+  summary: Commit the Reference Date field draft (not only the Project name draft) before the lock holder yields on a takeover.
+  evidence: Only the name draft is committed at handover; an uncommitted date draft is dropped when the tab turns read-only.
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-14-one-editing-tab-per-project.md`
+  summary: A requester tab that hard-crashes cannot post `cancel`, so a holder may still yield to a dead requester; add a liveness check (ack with timeout) when this matters.
+  evidence: Closing a tab posts cancel via pagehide, a renderer crash does not; no data is lost but nobody edits until a tab takes over.
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-14-one-editing-tab-per-project.md`
+  summary: Add a scrubbing check to the read-only-tab e2e once the Timeline exists (Epic 3).
+  evidence: The spec lists scrubbing as available in a read-only tab but there is no Timeline yet, only the map camera is tested.

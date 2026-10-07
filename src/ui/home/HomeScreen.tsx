@@ -1,7 +1,7 @@
 import { Plus } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { flushPendingSaves, listProjects, purgeProject, restoreProject, tombstoneProject, type ProjectSummary } from '@/persistence'
+import { flushPendingSaves, listProjects, type ProjectChange, purgeProject, restoreProject, tombstoneProject, type ProjectSummary } from '@/persistence'
 import { buttonClass, iconProps } from '@/ui/components/button'
 import { useToast } from '@/ui/components/toast'
 import { TopBar } from '@/ui/components/TopBar'
@@ -10,6 +10,7 @@ import { editorHref, navigate } from '@/ui/routing'
 import { copyName } from './copy-name'
 import { createBlank, duplicateStored, renameStored } from './project-actions'
 import { ProjectCard } from './ProjectCard'
+import { useLockedProjects } from './use-locked-projects'
 
 type HomeState = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; projects: readonly ProjectSummary[] }
 
@@ -41,6 +42,7 @@ export function HomeScreen() {
   const { t, i18n } = useTranslation()
   const toast = useToast()
   const now = useNow()
+  const lockedIds = useLockedProjects()
   const [state, setState] = useState<HomeState>({ kind: 'loading' })
   const [creating, setCreating] = useState(false)
   const newProjectButton = useRef<HTMLButtonElement>(null)
@@ -79,7 +81,10 @@ export function HomeScreen() {
     else cardFocus.current.delete(id)
   }, [])
 
-  const showChangeError = () => toast({ tone: 'error', title: t('home.errors.change'), description: t('home.errors.detail') })
+  /** A refused change: because another tab edits the Project (AD-15), or because saving failed. */
+  function showChangeError(change: ProjectChange) {
+    toast({ tone: 'error', title: t(change === 'locked' ? 'home.errors.locked' : 'home.errors.change'), description: t('home.errors.detail') })
+  }
 
   async function onNewProject() {
     if (creating) return
@@ -97,19 +102,21 @@ export function HomeScreen() {
   }
 
   async function onRename(id: string, name: string) {
-    if (!(await renameStored(id, name))) showChangeError()
+    const renamed = await renameStored(id, name)
+    if (renamed !== 'done') showChangeError(renamed)
     await refresh(false)
   }
 
   async function onDuplicate(id: string) {
-    const ok = await duplicateStored(id, (name) => copyName(name, (base) => t('home.copyName', { name: base })))
-    if (!ok) showChangeError()
+    const duplicated = await duplicateStored(id, (name) => copyName(name, (base) => t('home.copyName', { name: base })))
+    if (duplicated !== 'done') showChangeError(duplicated)
     await refresh(false)
   }
 
   async function onDelete(id: string) {
-    if (!(await tombstoneProject(id))) {
-      showChangeError()
+    const deleted = await tombstoneProject(id)
+    if (deleted !== 'done') {
+      showChangeError(deleted)
       return
     }
     // Functional update: a second delete before this render must not bring the first card back.
@@ -209,6 +216,7 @@ export function HomeScreen() {
                 key={project.id}
                 project={project}
                 now={now}
+                locked={lockedIds.has(project.id)}
                 onFocusTarget={registerFocusTarget}
                 onOpen={(id) => navigate(editorHref(id))}
                 onRename={(id, name) => void onRename(id, name)}

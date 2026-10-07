@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { useTranslation } from 'react-i18next'
-import { type Command, createDispatcher, type Dispatcher, type DispatcherState, drawnCandidates, entityCandidates, evaluate, formatYear, geoSourceMeta, isCredit, isTerritory, listSources, type MapLocale, OUTPUT_FRAME_SIZES, type OutputFormat, type Scene } from '@/core'
-import { type Autosave, createAutosave, openStoredProject } from '@/persistence'
+import { type Command, type DispatcherState, drawnCandidates, entityCandidates, evaluate, formatYear, geoSourceMeta, isCredit, isTerritory, listSources, OUTPUT_FRAME_SIZES, type Scene } from '@/core'
 import { Banner } from '@/ui/components/Banner'
 import { useToast } from '@/ui/components/toast'
 import { TopBar } from '@/ui/components/TopBar'
@@ -21,15 +20,18 @@ import { clearSelection, selectionEscapeStep, useSelection } from './selection-s
 import { useDatasets } from './use-datasets'
 import { useGeodata } from './use-geodata'
 import { ProjectSettingsPanel } from './ProjectSettingsPanel'
-import { createSaveIndicator, type SaveIndicatorStore } from './save-status'
+import { commitPendingEdits } from './pending-edits'
+import { type EditSession, type EditSessionState, type LockStateAnnouncement, startEditSession, type TakeoverNotice } from './edit-session'
 
-type EditorState =
-  | { kind: 'loading' }
-  | { kind: 'editable'; dispatcher: Dispatcher; autosave: Autosave; saveStatus: SaveIndicatorStore }
-  | { kind: 'too_new'; name: string; outputFormat?: OutputFormat; mapLocale?: MapLocale }
-  | { kind: 'unreadable' }
-  | { kind: 'not_found' }
-  | { kind: 'error' }
+const lockBannerKey = {
+  other_tab: 'editor.lock.otherTab',
+  taken_over: 'editor.lock.takenOver',
+  holder_closed: 'editor.lock.holderClosed',
+} as const
+
+const lockAnnouncementKey = { ...lockBannerKey, editing: 'editor.lock.editing', taking: 'editor.lock.taking' } as const satisfies Record<LockStateAnnouncement, string>
+
+const takeoverNoticeKey = { refused: 'editor.lock.refused', unresponsive: 'editor.lock.unresponsive' } as const satisfies Record<TakeoverNotice, string>
 
 const NO_DISPATCHER = { subscribe: () => () => undefined, getState: () => undefined }
 
@@ -37,58 +39,76 @@ const NO_DISPATCHER = { subscribe: () => () => undefined, getState: () => undefi
  * The Editor shell (UX-DR127), opened at `#/p/<id>`: top bar, tool rail, options bar above the
  * Map, properties panel and the collapsed Timeline. Every Project change is a Command through the
  * dispatcher (AD-3), autosaved (AD-8); undo and redo use the in-memory history, lost on reload. A
- * document newer than the app opens read-only (AD-9).
+ * document newer than the app opens read-only (AD-9), and so does a Project another tab is editing:
+ * one tab holds its edit lock, the others show it read-only until « Reprendre ici » (AD-15).
  */
 export function EditorShell({ projectId }: { projectId: string }) {
   const { t } = useTranslation()
   const toast = useToast()
-  const [state, setState] = useState<EditorState>({ kind: 'loading' })
-  /** Shows a save failure until closed; a ref so the open effect does not rerun when the language changes. */
+  const [state, setState] = useState<EditSessionState>({ kind: 'loading' })
+  const session = useRef<EditSession | undefined>(undefined)
+  const focusAfterTakeover = useRef(false)
+  const mapRegion = useRef<HTMLElement>(null)
+  /** Shown or announced by the edit session; refs so the open effect does not rerun when the language changes. */
   const showSaveError = useRef(() => undefined as void)
+  const showNotice = useRef<(notice: TakeoverNotice) => void>(() => undefined)
+  const announceLock = useRef<(announcement: LockStateAnnouncement) => void>(() => undefined)
   useEffect(() => {
+    // A failed or refused save (storage, newer epoch, deleted Project) shows « Non enregistré » and an
+    // error toast that stays until closed.
     showSaveError.current = () => toast({ tone: 'error', title: t('editor.saveError') })
+    showNotice.current = (notice) => toast({ tone: 'error', title: t(takeoverNoticeKey[notice]) })
+    announceLock.current = (announcement) => {
+      // The takeover succeeded and the banner is about to unmount with the focus on it: keep the focus in the Editor.
+      if (announcement === 'editing') focusAfterTakeover.current = true
+      announce(t(lockAnnouncementKey[announcement]))
+    }
   }, [toast, t])
 
   useEffect(() => {
-    let cancelled = false
-    let close: (() => Promise<void>) | undefined
-    void openStoredProject(projectId).then((loaded) => {
-      if (cancelled) return
-      if (!loaded) return setState({ kind: 'error' })
-      if (loaded.kind === 'too_new') return setState({ ...loaded })
-      if (loaded.kind !== 'editable') return setState({ kind: loaded.kind })
-      const dispatcher = createDispatcher(loaded.project)
-      const autosave = createAutosave({ source: dispatcher, lockEpoch: loaded.lockEpoch })
-      // A failed or refused save (storage, newer epoch, deleted Project) shows « Non enregistré »
-      // and an error toast that stays until closed.
-      const saveStatus = createSaveIndicator(autosave, () => showSaveError.current())
-      close = async () => {
-        saveStatus.dispose()
-        await autosave.close()
-      }
-      setState({ kind: 'editable', dispatcher, autosave, saveStatus })
+    let live = true
+    // The lock is requested before the document is read: no editable flash in a second tab (AD-15).
+    const started = startEditSession({
+      projectId,
+      commitPendingEdits,
+      onState: (next) => live && setState(next),
+      onNotice: (notice) => live && showNotice.current(notice),
+      onAnnounce: (announcement) => live && announceLock.current(announcement),
+      onSaveFailure: () => live && showSaveError.current(),
     })
+    session.current = started
     return () => {
-      cancelled = true
-      // Leaving the Editor writes what is pending (Home flushes again before listing).
-      void close?.()
+      live = false
+      session.current = undefined
+      // Leaving the Editor writes what is pending, then releases the lock (Home flushes again before listing).
+      started.dispose()
     }
   }, [projectId])
 
-  const dispatcher = state.kind === 'editable' ? state.dispatcher : NO_DISPATCHER
+  // After « Reprendre ici » the banner (and its focused button) disappears: the focus goes to the Map region
+  // instead of falling to the page, and only then (focus is never moved otherwise).
+  useEffect(() => {
+    if (state.kind !== 'editable' || !focusAfterTakeover.current) return
+    focusAfterTakeover.current = false
+    if (document.activeElement === null || document.activeElement === document.body) mapRegion.current?.focus()
+  }, [state])
+
+  /** A dispatcher exists once the Project is shown, editable or read-only. */
+  const shown = state.kind === 'editable' || state.kind === 'readOnly'
+  const dispatcher = shown ? state.dispatcher : NO_DISPATCHER
   const current: DispatcherState | undefined = useSyncExternalStore(dispatcher.subscribe, dispatcher.getState)
 
   // The historical data of the pinned version for the Reference Date (Story 1.11), cached in Dexie.
-  const geoProject = state.kind === 'editable' ? current?.project : undefined
+  const geoProject = shown ? current?.project : undefined
   const geoLoad = useGeodata(geoProject?.pins.geo, geoProject?.referenceDate.year)
   // The source metadata of the Basemap datasets (Story 1.13): credit and « Sources et licences ».
-  const datasets = useDatasets(state.kind === 'editable')
+  const datasets = useDatasets(shown)
 
   // The Scene the Map draws (AD-1): the Project at t = 0 with a slider drag's live values laid over
   // its Basemap adjustments. The drag itself is UI state; the Command comes on release. While a new
   // Reference Date loads, the Scene keeps the date its data was loaded for (the previous Territories stay).
   const preview = useBasemapPreview()
-  const project = state.kind === 'editable' ? current?.project : undefined
+  const project = shown ? current?.project : undefined
   const scene = useMemo<Scene | undefined>(() => {
     if (!project) return undefined
     let shown = preview ? { ...project, map: { ...project.map, basemap: { ...project.map.basemap, adjustments: preview } } } : project
@@ -123,7 +143,7 @@ export function EditorShell({ projectId }: { projectId: string }) {
   const creditText = scene?.items.find(isCredit)?.text
 
   const model = useMemo<EditorModel>(() => {
-    if (state.kind === 'editable' && current) {
+    if (shown && current) {
       const { project } = current
       return {
         loading: false,
@@ -146,7 +166,7 @@ export function EditorShell({ projectId }: { projectId: string }) {
       return { loading: false, name: state.name, outputFormat: state.outputFormat, mapLocale: state.mapLocale, readOnly: true, canUndo: false, canRedo: false }
     }
     return { loading: true, readOnly: true, canUndo: false, canRedo: false }
-  }, [state, current, scene, geoLoad.status, sources, creditText])
+  }, [state, shown, current, scene, geoLoad.status, sources, creditText])
 
   // « Données les plus proches : 2024 » is announced once each time the shown data stops being exact
   // or changes year while inexact; the chip itself is not live.
@@ -249,10 +269,16 @@ export function EditorShell({ projectId }: { projectId: string }) {
       <div className="flex min-w-0 flex-col [grid-area:banner]">
         {/* Read-only: not dismissable (UX-DR66). */}
         {state.kind === 'too_new' && <Banner tone="info">{t('editor.newerVersion')}</Banner>}
+        {/* Another tab holds the edit lock (AD-15): one action, never taken automatically. The text is announced through the live region below. */}
+        {state.kind === 'readOnly' && (
+          <Banner tone="info" live={false} action={{ label: t('editor.lock.takeOver'), onClick: () => session.current?.takeOver(), busy: state.taking }}>
+            {t(lockBannerKey[state.reason])}
+          </Banner>
+        )}
         <SmallWindowBanner />
       </div>
       <ToolRail disabled={model.loading} />
-      <main className="flex min-h-0 min-w-0 flex-col [grid-area:scene]">
+      <main ref={mapRegion} tabIndex={-1} className="flex min-h-0 min-w-0 flex-col outline-none [grid-area:scene]">
         <OptionsBar outputFormat={model.outputFormat} dataDate={model.dataDate} mapLocale={model.mapLocale} />
         <MapArea scene={scene} outputFormat={model.outputFormat} />
       </main>

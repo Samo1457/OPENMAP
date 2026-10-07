@@ -3,7 +3,7 @@ import { useCallback, useSyncExternalStore, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/ui/lib/utils'
 import { sessionDismissals } from './banner-dismissals'
-import { buttonClass, iconProps } from './button'
+import { buttonClass, buttonLook, iconProps } from './button'
 import { Tooltip } from './Tooltip'
 
 export interface BannerAction {
@@ -11,20 +11,36 @@ export interface BannerAction {
   readonly onClick: () => void
   /** Id of the element that describes the action's result (e.g. « Lien copié. »). */
   readonly describedBy?: string
+  /** The action is under way: shown disabled and busy, and further presses are ignored (the button keeps its focus). */
+  readonly busy?: boolean
 }
 
 /**
  * A full-width banner under the top bar (DESIGN.md `banner-warning`, `banner-info`, UX-DR66):
  * surface-raised, 3 px left border, icon, `body` text, at most one action (compact secondary
  * button) and, when `onDismiss` is given, a dismiss cross. Warning: icon and text in the warning
- * colour; info: info icon in text-secondary, accent border.
+ * colour; info: info icon in text-secondary, accent border. A banner is a polite live region
+ * (`role="status"`) unless `live` is false: its text is then announced by the caller (the lock banners
+ * of Story 1.14 announce each state change themselves, once).
  */
-export function Banner({ tone, children, action, onDismiss }: { tone: 'info' | 'warning'; children: ReactNode; action?: BannerAction; onDismiss?: () => void }) {
+export function Banner({
+  tone,
+  children,
+  action,
+  onDismiss,
+  live = true,
+}: {
+  tone: 'info' | 'warning'
+  children: ReactNode
+  action?: BannerAction
+  onDismiss?: () => void
+  live?: boolean
+}) {
   const { t } = useTranslation()
   const Icon = tone === 'warning' ? TriangleAlert : Info
   return (
     <div
-      role="status"
+      role={live ? 'status' : undefined}
       data-tone={tone}
       className={cn(
         'flex min-h-11 items-center gap-3 border-b border-l-3 border-om-border bg-om-surface-raised py-2 pr-2 pl-4',
@@ -34,7 +50,14 @@ export function Banner({ tone, children, action, onDismiss }: { tone: 'info' | '
       <Icon {...iconProps} className={cn('icon-stroke shrink-0', tone === 'warning' ? 'text-om-warning' : 'text-om-text-secondary')} />
       <p className={cn('min-w-0 flex-1 type-body', tone === 'warning' ? 'text-om-warning' : 'text-om-text-primary')}>{children}</p>
       {action && (
-        <button type="button" onClick={action.onClick} aria-describedby={action.describedBy} className={buttonClass.secondarySmall}>
+        <button
+          type="button"
+          onClick={() => !action.busy && action.onClick()}
+          aria-describedby={action.describedBy}
+          aria-busy={action.busy || undefined}
+          aria-disabled={action.busy || undefined}
+          className={buttonLook('secondarySmall', action.busy === true)}
+        >
           {action.label}
         </button>
       )}

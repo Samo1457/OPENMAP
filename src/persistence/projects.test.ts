@@ -7,8 +7,8 @@ import {
   createProject,
   gcMedia,
   listProjects,
-  loadStoredProject,
-  openStoredProject,
+  loadForView,
+  loadForEdit,
   purgeExpiredTombstones,
   purgeProject,
   requestPersistOnce,
@@ -87,8 +87,8 @@ describe('list and load (AD-9)', () => {
     await store(p, 1_000)
     vi.mocked(loadProject).mockClear()
     await listProjects(db)
-    const loaded = await loadStoredProject(db, p.id)
-    expect(loaded).toEqual({ kind: 'editable', project: p, lockEpoch: 0 })
+    const loaded = await loadForView(db, p.id)
+    expect(loaded).toEqual({ kind: 'editable', project: p, lockEpoch: 0, updatedAt: 1_000 })
     expect(vi.mocked(loadProject).mock.calls.length).toBe(2)
     expect(vi.mocked(loadProject).mock.calls[1][0]).toEqual(p)
   })
@@ -102,16 +102,16 @@ describe('list and load (AD-9)', () => {
       { id: 'broken', name: 'Broken', state: 'unreadable' },
       { id: 'garbage', name: '', state: 'unreadable' },
     ])
-    expect(await loadStoredProject(db, 'newer')).toEqual({ kind: 'too_new', name: 'Future', outputFormat: '9:16' })
-    expect(await openStoredProject(db, 'broken')).toEqual({ kind: 'unreadable' })
-    expect(await openStoredProject(db, 'missing')).toEqual({ kind: 'not_found' })
+    expect(await loadForView(db, 'newer')).toEqual({ kind: 'too_new', name: 'Future', outputFormat: '9:16' })
+    expect(await loadForEdit(db, 'broken')).toEqual({ kind: 'unreadable' })
+    expect(await loadForEdit(db, 'missing')).toEqual({ kind: 'not_found' })
   })
 
   it('keeps the known Output Format and Map language of a newer document, and drops unknown ones', async () => {
     await db.projects.add({ id: 'known', document: { schemaVersion: 4, mapLocale: 'en' }, name: 'Known', outputFormat: '1:1', updatedAt: 5, lockEpoch: 0 })
     await db.projects.add({ id: 'unknown', document: { schemaVersion: 4, mapLocale: 'de' }, name: 'Unknown', outputFormat: '4:3', updatedAt: 4, lockEpoch: 0 })
-    expect(await openStoredProject(db, 'known')).toEqual({ kind: 'too_new', name: 'Known', outputFormat: '1:1', mapLocale: 'en' })
-    expect(await openStoredProject(db, 'unknown')).toEqual({ kind: 'too_new', name: 'Unknown' })
+    expect(await loadForEdit(db, 'known')).toEqual({ kind: 'too_new', name: 'Known', outputFormat: '1:1', mapLocale: 'en' })
+    expect(await loadForEdit(db, 'unknown')).toEqual({ kind: 'too_new', name: 'Unknown' })
   })
 
   it('never writes a newer document, even with a current epoch', async () => {
@@ -129,22 +129,47 @@ describe('save and lockEpoch (AD-8)', () => {
     await store(p, 1_000)
     const renamed = { ...p, name: 'Renamed', outputFormat: '1:1' as const, revision: 1 }
     clock = 9_000
-    expect(await saveProject(db, now, renamed, 0)).toEqual({ ok: true })
+    expect(await saveProject(db, now, renamed, 0)).toEqual({ ok: true, updatedAt: expect.any(Number) })
     expect(await db.projects.get(p.id)).toEqual({ id: p.id, document: renamed, name: 'Renamed', outputFormat: '1:1', updatedAt: 9_000, lockEpoch: 0 })
   })
 
   it('gives each opening tab a newer epoch and refuses writes from an older one', async () => {
     const p = project('a')
     await store(p, 1_000)
-    const first = await openStoredProject(db, p.id)
-    const second = await openStoredProject(db, p.id)
+    const first = await loadForEdit(db, p.id)
+    const second = await loadForEdit(db, p.id)
     expect(first).toMatchObject({ kind: 'editable', lockEpoch: 1 })
     expect(second).toMatchObject({ kind: 'editable', lockEpoch: 2 })
     const stale = { ...p, name: 'From the older tab', revision: 1 }
     expect(await saveProject(db, now, stale, 1)).toEqual({ ok: false, reason: 'stale_epoch' })
     expect((await db.projects.get(p.id))?.name).toBe(p.name)
-    expect(await saveProject(db, now, { ...p, name: 'From the newer tab', revision: 1 }, 2)).toEqual({ ok: true })
+    expect(await saveProject(db, now, { ...p, name: 'From the newer tab', revision: 1 }, 2)).toEqual({ ok: true, updatedAt: expect.any(Number) })
     expect((await db.projects.get(p.id))?.name).toBe('From the newer tab')
+  })
+
+  it('a view read takes no epoch, an edit read takes the next one, and a document that cannot be edited takes none', async () => {
+    const p = project('a')
+    await store(p, 1_000)
+    expect(await loadForView(db, p.id)).toMatchObject({ kind: 'editable', lockEpoch: 0, updatedAt: 1_000 })
+    expect(await loadForView(db, p.id)).toMatchObject({ lockEpoch: 0 })
+    expect(await loadForEdit(db, p.id)).toMatchObject({ kind: 'editable', lockEpoch: 1 })
+    expect(await loadForView(db, p.id)).toMatchObject({ lockEpoch: 1 })
+    await db.projects.update(p.id, { document: { ...p, schemaVersion: 4 } })
+    expect(await loadForEdit(db, p.id)).toMatchObject({ kind: 'too_new' })
+    expect((await db.projects.get(p.id))?.lockEpoch).toBe(1)
+    expect(await loadForEdit(db, 'missing')).toEqual({ kind: 'not_found' })
+  })
+
+  it('reports the stored updatedAt of a save, strictly newer than the previous one even within one millisecond', async () => {
+    const p = project('a')
+    await store(p, 1_000)
+    clock = 5_000
+    const first = await saveProject(db, now, { ...p, revision: 1 }, 0)
+    const second = await saveProject(db, now, { ...p, revision: 2 }, 0)
+    expect(first).toEqual({ ok: true, updatedAt: 5_000 })
+    expect(second).toEqual({ ok: true, updatedAt: 5_001 })
+    expect((await db.projects.get(p.id))?.updatedAt).toBe(5_001)
+    expect(await loadForView(db, p.id)).toMatchObject({ updatedAt: 5_001 })
   })
 
   it('refuses to create over an existing id and to save a missing Project', async () => {
@@ -168,7 +193,7 @@ describe('save and lockEpoch (AD-8)', () => {
     await store(copy, 2_000)
     const listed = await listProjects(db)
     expect(listed.map((summary) => summary.id)).toEqual([copy.id, p.id])
-    const loaded = await loadStoredProject(db, copy.id)
+    const loaded = await loadForView(db, copy.id)
     expect(loaded.kind === 'editable' && loaded.project.seed).toBe(p.seed)
   })
 })
@@ -191,12 +216,12 @@ describe('page-hide snapshots (AD-8)', () => {
     const p = project('a')
     await store(p, 1_000)
     await db.open()
-    const second = await openStoredProject(db, p.id)
+    const second = await loadForEdit(db, p.id)
     expect(second).toMatchObject({ lockEpoch: 1 })
     writePendingSaveNow(db, now, renamed(p, 'Stale tab', 5), 0)
     writePendingSaveNow(db, now, renamed(p, 'Not newer', 0), 1)
     await expect.poll(() => db.pendingSaves.count()).toBe(2)
-    await loadStoredProject(db, p.id)
+    await loadForView(db, p.id)
     expect((await db.projects.get(p.id))?.name).toBe(p.name)
     expect(await db.pendingSaves.count()).toBe(0)
 
@@ -214,12 +239,12 @@ describe('page-hide snapshots (AD-8)', () => {
     await db.open()
     writePendingSaveNow(db, now, renamed(p, 'Older snapshot', 1), 0)
     await expect.poll(() => db.pendingSaves.count()).toBe(1)
-    expect(await saveProject(db, now, renamed(p, 'Saved', 2), 0)).toEqual({ ok: true })
+    expect(await saveProject(db, now, renamed(p, 'Saved', 2), 0)).toEqual({ ok: true, updatedAt: expect.any(Number) })
     expect(await db.pendingSaves.count()).toBe(0)
 
     writePendingSaveNow(db, now, renamed(p, 'Newer snapshot', 4), 0)
     await expect.poll(() => db.pendingSaves.count()).toBe(1)
-    expect(await saveProject(db, now, renamed(p, 'Older save', 3), 0)).toEqual({ ok: true })
+    expect(await saveProject(db, now, renamed(p, 'Older save', 3), 0)).toEqual({ ok: true, updatedAt: expect.any(Number) })
     expect((await listProjects(db))[0].name).toBe('Newer snapshot')
   })
 
@@ -236,7 +261,7 @@ describe('delete: tombstone, restore, purge (AD-8, FR-52)', () => {
     clock = 2_000
     expect(await tombstoneProject(db, now, p.id)).toBe(true)
     expect(await listProjects(db)).toEqual([])
-    expect(await loadStoredProject(db, p.id)).toEqual({ kind: 'not_found' })
+    expect(await loadForView(db, p.id)).toEqual({ kind: 'not_found' })
     expect((await db.projects.get(p.id))?.deletedAt).toBe(2_000)
 
     expect(await restoreProject(db, p.id)).toBe(true)

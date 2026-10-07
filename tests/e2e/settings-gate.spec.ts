@@ -166,16 +166,34 @@ test.describe('Settings dialog (UX-DR134, UX-DR67)', () => {
     expect(await page.evaluate(() => document.querySelectorAll('[inert]').length)).toBe(0)
   })
 
-  test('a toast raised while Settings is open stays usable above it', async ({ page, context }) => {
+  test('a toast raised while Settings is open stays usable above it', async ({ page }) => {
     await gotoHome(page)
     await page.getByRole('button', { name: 'New Project', exact: true }).first().click()
     await expect(page).toHaveURL(/#\/p\//)
-    const id = new URL(page.url()).hash.slice('#/p/'.length)
-    // A newer tab takes the Project, so this tab's next save fails with an error toast (AD-8).
-    const second = await context.newPage()
-    await second.goto(`/#/p/${id}`)
-    await expect(second.getByRole('complementary', { name: 'Properties' }).getByRole('textbox', { name: 'Project name' })).toHaveValue('Untitled Project')
-    await page.bringToFront()
+    await expect(page.getByRole('complementary', { name: 'Properties' }).getByRole('textbox', { name: 'Project name' })).toHaveValue('Untitled Project')
+    // A newer epoch is stored, as a takeover by another tab would leave it (a second tab no longer
+    // edits freely since Story 1.14), so this tab's next save fails with an error toast (AD-8).
+    await page.evaluate(
+      () =>
+        new Promise<void>((resolve, reject) => {
+          const open = indexedDB.open('openmap')
+          open.onerror = () => reject(open.error)
+          open.onsuccess = () => {
+            const db = open.result
+            const transaction = db.transaction('projects', 'readwrite')
+            const store = transaction.objectStore('projects')
+            const all = store.getAll()
+            all.onsuccess = () => {
+              for (const row of all.result) store.put({ ...row, lockEpoch: row.lockEpoch + 1 })
+            }
+            transaction.oncomplete = () => {
+              db.close()
+              resolve()
+            }
+            transaction.onerror = () => reject(transaction.error)
+          }
+        }),
+    )
 
     await page.getByRole('complementary', { name: 'Properties' }).getByRole('radio', { name: '9:16' }).click()
     await openSettingsByKeyboard(page)

@@ -12,6 +12,7 @@ import { CreditSettings } from './CreditSettings'
 import { ReferenceDateField } from './ReferenceDateField'
 import { SourcesSection } from './SourcesSection'
 import { MoreOptions } from './MoreOptions'
+import { registerPendingEdit } from './pending-edits'
 
 /**
  * The panel when nothing is selected: Project settings (UX-DR35). Essential settings only (NFR-9):
@@ -140,6 +141,8 @@ function ProjectNameField({ name, readOnly, onCommit, onPageHide }: { name: stri
   useLayoutEffect(() => {
     latestPageHide.current = onPageHide
   })
+  // A takeover commits the draft before the holder's last save.
+  useLayoutEffect(() => registerPendingEdit(() => latestCommit.current()), [])
   useLayoutEffect(() => {
     const onPageHideEvent = () => {
       latestCommit.current()

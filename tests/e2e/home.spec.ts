@@ -359,18 +359,18 @@ test.describe('autosave (NFR-5, FR-53, AD-8)', () => {
     expect(row.document).toMatchObject({ name: 'Flushed on pagehide', revision: 1 })
   })
 
-  test('a newer epoch makes an older tab unable to overwrite the Project', async ({ page, context }) => {
+  test('a newer epoch makes an older tab unable to overwrite the Project', async ({ page }) => {
     await gotoHome(page)
     const id = await createProject(page)
-    const second = await context.newPage()
-    await second.goto(`/#/p/${id}`)
-    await expect(editorName(second, 'Untitled Project')).toBeVisible()
+    // A newer epoch is stored, as a takeover by another tab would leave it (a second tab no longer
+    // edits freely since Story 1.14, so it is written straight into IndexedDB): the safety net of AD-8.
+    const [stored] = await readRows(page)
+    await putRow(page, { ...stored, lockEpoch: stored.lockEpoch + 1 })
 
     await renameInEditor(page, 'Untitled Project', 'From the older tab')
     await expect(page.getByRole('alert').filter({ hasText: 'The latest changes to this Project were not saved on this device.' })).toBeVisible()
-    expect((await readRows(page))[0].name).toBe('Untitled Project')
-    await renameInEditor(second, 'Untitled Project', 'From the newer tab')
-    await expect.poll(async () => (await readRows(page))[0].name).toBe('From the newer tab')
+    const [row] = await readRows(page)
+    expect(row).toMatchObject({ id, name: 'Untitled Project', lockEpoch: stored.lockEpoch + 1 })
   })
 })
 

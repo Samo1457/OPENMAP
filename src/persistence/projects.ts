@@ -17,8 +17,11 @@ export interface ProjectSummary {
 }
 
 export type LoadedProject =
-  /** A valid document after migration; `lockEpoch` is the epoch this caller writes with. */
-  | { readonly kind: 'editable'; readonly project: Project; readonly lockEpoch: number }
+  /**
+   * A valid document after migration; `lockEpoch` is the epoch this caller writes with and
+   * `updatedAt` the stored revision (the row's last save time) the document was read at.
+   */
+  | { readonly kind: 'editable'; readonly project: Project; readonly lockEpoch: number; readonly updatedAt: number }
   /**
    * Written by a newer app: opens read-only and is never written (AD-9). The Output Format and Map
    * language are shown when the stored values are ones this app knows.
@@ -40,6 +43,9 @@ export type SaveFailure =
   | 'storage'
 
 export type SaveOutcome = { readonly ok: true } | { readonly ok: false; readonly reason: SaveFailure }
+
+/** A save that succeeded also says the `updatedAt` it stored: the revision other tabs refresh to (AD-15). */
+export type SavedOutcome = { readonly ok: true; readonly updatedAt: number } | { readonly ok: false; readonly reason: SaveFailure }
 
 type Classified = { state: 'ok'; project: Project } | { state: 'too_new' } | { state: 'unreadable' }
 
@@ -96,22 +102,27 @@ export async function listProjects(db: OpenmapDatabase): Promise<ProjectSummary[
 function loaded(row: ProjectRow | undefined, lockEpoch: (row: ProjectRow) => number): LoadedProject {
   if (!row || row.deletedAt !== undefined) return { kind: 'not_found' }
   const classified = classify(row.document)
-  if (classified.state === 'ok') return { kind: 'editable', project: classified.project, lockEpoch: lockEpoch(row) }
+  if (classified.state === 'ok') return { kind: 'editable', project: classified.project, lockEpoch: lockEpoch(row), updatedAt: row.updatedAt }
   if (classified.state === 'too_new') return tooNew(row)
   return { kind: 'unreadable' }
 }
 
-/** Reads a Project without taking an epoch: for a one-off Home edit with the current epoch. */
-export async function loadStoredProject(db: OpenmapDatabase, id: string): Promise<LoadedProject> {
+/**
+ * Reads a Project without taking an epoch (a read-only tab, a one-off Home edit): the epoch it
+ * returns is the stored one, which this caller must not write with unless it holds the edit lock.
+ */
+export async function loadForView(db: OpenmapDatabase, id: string): Promise<LoadedProject> {
   await applyPendingSaves(db)
   return loaded(await db.projects.get(id), (row) => row.lockEpoch)
 }
 
 /**
  * Opens a Project for editing: takes the next `lockEpoch`, so writes from a tab that opened it
- * earlier are refused from now on (AD-8). Story 1.14 puts this behind the Web Locks lock.
+ * earlier are refused from now on (AD-8). Called only once the tab holds the edit lock (AD-15,
+ * `project-lock.ts`): the increment and the read are one transaction. A Project that is not
+ * editable (newer, unreadable, missing) takes no epoch.
  */
-export async function openStoredProject(db: OpenmapDatabase, id: string): Promise<LoadedProject> {
+export async function loadForEdit(db: OpenmapDatabase, id: string): Promise<LoadedProject> {
   await applyPendingSaves(db)
   return db.transaction('rw', db.projects, async () => {
     const row = await db.projects.get(id)
@@ -121,7 +132,7 @@ export async function openStoredProject(db: OpenmapDatabase, id: string): Promis
   })
 }
 
-async function guarded(write: () => Promise<SaveOutcome>): Promise<SaveOutcome> {
+async function guarded<T extends SaveOutcome>(write: () => Promise<T>): Promise<T | { ok: false; reason: 'storage' }> {
   try {
     return await write()
   } catch {
@@ -145,22 +156,24 @@ export function createProject(db: OpenmapDatabase, now: () => number, project: P
  * when the stored document is newer than this app (AD-9), or when the row is gone or deleted.
  * Never rejects.
  */
-export function saveProject(db: OpenmapDatabase, now: () => number, project: Project, lockEpoch: number): Promise<SaveOutcome> {
+export function saveProject(db: OpenmapDatabase, now: () => number, project: Project, lockEpoch: number): Promise<SavedOutcome> {
   return guarded(() =>
-    db.transaction('rw', db.projects, db.pendingSaves, async (): Promise<SaveOutcome> => {
+    db.transaction('rw', db.projects, db.pendingSaves, async (): Promise<SavedOutcome> => {
       const row = await db.projects.get(project.id)
       // A deleted Project (tombstone) is not written back.
       if (!row || row.deletedAt !== undefined) return { ok: false, reason: 'not_found' }
       if (row.lockEpoch > lockEpoch) return { ok: false, reason: 'stale_epoch' }
       if (isNewerThanApp(row.document)) return { ok: false, reason: 'read_only' }
       const epoch = Math.max(row.lockEpoch, lockEpoch)
-      await db.projects.put(rowFor(project, now(), epoch))
+      // Strictly increasing, so a refreshing tab can tell a newer save from the one it shows.
+      const updatedAt = Math.max(now(), row.updatedAt + 1)
+      await db.projects.put(rowFor(project, updatedAt, epoch))
       // Page-hide snapshots this save supersedes (older epoch, or not newer) are dropped.
       const superseded = (await db.pendingSaves.where('projectId').equals(project.id).toArray()).filter(
         (entry) => entry.lockEpoch < epoch || revisionOf(entry.document) <= project.revision,
       )
       await db.pendingSaves.bulkDelete(superseded.map((entry) => entry.key))
-      return { ok: true }
+      return { ok: true, updatedAt }
     }),
   )
 }

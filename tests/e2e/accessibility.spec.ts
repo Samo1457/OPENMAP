@@ -256,6 +256,116 @@ for (const scheme of ['light', 'dark'] as const) {
   })
 }
 
+/** Story 1.14: the read-only banner of a Project open in another tab, and the locked Home card with its menu, EN and FR. */
+for (const [locale, scheme] of [
+  ['en-US', 'light'],
+  ['en-US', 'dark'],
+  ['fr-FR', 'light'],
+  ['fr-FR', 'dark'],
+] as const) {
+  test.describe(`axe, edit lock, ${locale} ${scheme} theme`, () => {
+    test.use({ locale })
+
+    test('the read-only banner of a second tab and a locked Project card', async ({ page, context }) => {
+      const fr = locale === 'fr-FR'
+      await page.emulateMedia({ colorScheme: scheme })
+      await page.goto('/')
+      await page.getByRole('button', { name: fr ? 'Nouveau Projet' : 'New Project', exact: true }).first().click()
+      await expect(page.getByRole('textbox', { name: fr ? 'Nom du Projet' : 'Project name' })).toBeEditable()
+      const id = new URL(page.url()).hash.slice('#/p/'.length)
+
+      const second = await context.newPage()
+      await second.emulateMedia({ colorScheme: scheme })
+      await second.goto(`/#/p/${id}`)
+      const action = second.getByRole('button', { name: fr ? 'Reprendre ici' : 'Take over here' })
+      await expect(action).toBeVisible()
+      await expect(second.locator('[data-tone="info"]')).toContainText(fr ? 'Vous le consultez en lecture seule.' : 'You are viewing it read-only.')
+      await expectNoViolations(second, `the read-only banner (${locale}, ${scheme})`)
+
+      const home = await context.newPage()
+      await home.emulateMedia({ colorScheme: scheme })
+      await home.goto('/')
+      const name = fr ? 'Projet sans titre' : 'Untitled Project'
+      const locked = home.getByRole('list', { name: fr ? 'Projets' : 'Projects' }).getByRole('listitem').filter({ has: home.getByText(name, { exact: true }) })
+      await expect(locked).toContainText(fr ? 'Ouvert dans un autre onglet' : 'Open in another tab')
+      await expectNoViolations(home, `a locked Project card (${locale}, ${scheme})`)
+
+      await locked.hover()
+      await home.getByRole('button', { name: fr ? `Actions du Projet ${name}` : `Actions for Project ${name}`, exact: true }).click()
+      await expect(home.getByRole('menuitem', { name: fr ? 'Supprimer' : 'Delete' })).toHaveAttribute('aria-disabled', 'true')
+      await expectNoViolations(home, `the menu of a locked Project card (${locale}, ${scheme})`)
+    })
+  })
+}
+
+/** The banner of a tab that gave way (`taken_over`) and the toast of a refused takeover, EN and FR, light and dark. */
+for (const [locale, scheme] of [
+  ['en-US', 'light'],
+  ['en-US', 'dark'],
+  ['fr-FR', 'light'],
+  ['fr-FR', 'dark'],
+] as const) {
+  test.describe(`axe, takeover states, ${locale} ${scheme} theme`, () => {
+    test.use({ locale })
+
+    test('the taken_over banner and the refusal toast', async ({ page, context }) => {
+      const fr = locale === 'fr-FR'
+      const action = fr ? 'Reprendre ici' : 'Take over here'
+      await page.emulateMedia({ colorScheme: scheme })
+      await page.goto('/')
+      await page.getByRole('button', { name: fr ? 'Nouveau Projet' : 'New Project', exact: true }).first().click()
+      await expect(page.getByRole('textbox', { name: fr ? 'Nom du Projet' : 'Project name' })).toBeEditable()
+      const id = new URL(page.url()).hash.slice('#/p/'.length)
+      const second = await context.newPage()
+      await second.emulateMedia({ colorScheme: scheme })
+      await second.goto(`/#/p/${id}`)
+      await expect(second.getByRole('button', { name: action })).toBeVisible()
+
+      // The refusal first: the holder cannot save (the Project is deleted behind its back).
+      await page.evaluate(
+        () =>
+          new Promise<void>((resolve, reject) => {
+            const open = indexedDB.open('openmap')
+            open.onerror = () => reject(open.error)
+            open.onsuccess = () => {
+              const db = open.result
+              const transaction = db.transaction('projects', 'readwrite')
+              const store = transaction.objectStore('projects')
+              const all = store.getAll()
+              all.onsuccess = () => {
+                for (const row of all.result) store.put({ ...row, deletedAt: Date.now() })
+              }
+              transaction.oncomplete = () => {
+                db.close()
+                resolve()
+              }
+              transaction.onerror = () => reject(transaction.error)
+            }
+          }),
+      )
+      await page.getByRole('radio', { name: '9:16' }).click()
+      await expect(page.locator('[data-save-status]')).toHaveText(fr ? 'Non enregistré' : 'Not saved')
+      await second.getByRole('button', { name: action }).click()
+      await expect(second.getByRole('alert').filter({ hasText: fr ? 'Impossible de reprendre' : 'Cannot take over' })).toBeVisible()
+      await expectNoViolations(second, `the refusal toast (${locale}, ${scheme})`)
+    })
+
+    test('the banner of a tab that gave way', async ({ page, context }) => {
+      const fr = locale === 'fr-FR'
+      await page.emulateMedia({ colorScheme: scheme })
+      await page.goto('/')
+      await page.getByRole('button', { name: fr ? 'Nouveau Projet' : 'New Project', exact: true }).first().click()
+      await expect(page.getByRole('textbox', { name: fr ? 'Nom du Projet' : 'Project name' })).toBeEditable()
+      const id = new URL(page.url()).hash.slice('#/p/'.length)
+      const second = await context.newPage()
+      await second.goto(`/#/p/${id}`)
+      await second.getByRole('button', { name: fr ? 'Reprendre ici' : 'Take over here' }).click()
+      await expect(page.locator('[data-tone="info"]')).toContainText(fr ? 'maintenant modifié dans un autre onglet' : 'now being edited in another tab')
+      await expectNoViolations(page, `the taken_over banner (${locale}, ${scheme})`)
+    })
+  })
+}
+
 test.describe('gate pages', () => {
   for (const scheme of ['light', 'dark'] as const) {
     test(`the unsupported-browser page (${scheme})`, async ({ browser }) => {

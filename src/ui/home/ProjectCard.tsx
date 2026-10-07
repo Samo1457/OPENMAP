@@ -15,6 +15,8 @@ const THUMBNAIL_COLOR = mapColors.parchment['map-land-neutral']
 export interface ProjectCardProps {
   project: ProjectSummary
   now: number
+  /** Another tab edits this Project (AD-15): rename, duplicate and delete are unavailable; opening it is read-only. */
+  locked?: boolean
   onOpen: (id: string) => void
   onRename: (id: string, name: string) => void
   onDuplicate: (id: string) => void
@@ -24,7 +26,7 @@ export interface ProjectCardProps {
 }
 
 /** A Project card (DESIGN.md `project-card`, UX-DR119): open on click or Enter, menu by its button, right-click or Shift+F10. */
-export function ProjectCard({ project, now, onOpen, onRename, onDuplicate, onDelete, onFocusTarget }: ProjectCardProps) {
+export function ProjectCard({ project, now, locked = false, onOpen, onRename, onDuplicate, onDelete, onFocusTarget }: ProjectCardProps) {
   const { t, i18n } = useTranslation()
   const metaId = useId()
   const nameId = useId()
@@ -52,16 +54,17 @@ export function ProjectCard({ project, now, onOpen, onRename, onDuplicate, onDel
               ? t('time.yesterday')
               : t('time.date', { date: when.date }),
   })
-  const meta = project.state === 'unreadable' ? t('home.card.unreadable') : t('home.card.meta', { modified, format: project.outputFormat })
+  const meta = project.state === 'unreadable' ? t('home.card.unreadable') : locked ? t('home.card.openElsewhere') : t('home.card.meta', { modified, format: project.outputFormat })
+  const disabledReason = locked ? t('home.card.openElsewhere') : undefined
 
   const items: MenuItem[] = [
     ...(readable
       ? [
-          { id: 'rename', label: t('home.card.rename'), icon: <Pencil {...iconProps} />, onSelect: () => setRenaming(true) },
-          { id: 'duplicate', label: t('home.card.duplicate'), icon: <Copy {...iconProps} />, onSelect: () => onDuplicate(project.id) },
+          { id: 'rename', label: t('home.card.rename'), icon: <Pencil {...iconProps} />, onSelect: () => setRenaming(true), disabledReason },
+          { id: 'duplicate', label: t('home.card.duplicate'), icon: <Copy {...iconProps} />, onSelect: () => onDuplicate(project.id), disabledReason },
         ]
       : []),
-    { id: 'delete', label: t('home.card.delete'), icon: <Trash2 {...iconProps} />, danger: true, onSelect: () => onDelete(project.id) },
+    { id: 'delete', label: t('home.card.delete'), icon: <Trash2 {...iconProps} />, danger: true, onSelect: () => onDelete(project.id), disabledReason },
   ]
 
   function openMenu(at: MenuPoint, opener: HTMLElement | null) {

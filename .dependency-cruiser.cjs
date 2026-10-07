@@ -53,6 +53,13 @@ module.exports = {
       to: { path: '^src/core/testing/' },
     },
     {
+      name: 'testing-only-from-tests',
+      comment: 'src/testing holds test doubles (fake Web Locks, BroadcastChannel): only *.test.ts files, tests/ and src/testing itself may import it, never app code.',
+      severity: 'error',
+      from: { pathNot: ['\\.test\\.ts$', '^tests/', '^src/testing/'] },
+      to: { path: '^src/testing/' },
+    },
+    {
       name: 'adapter-imports-other-adapter-index-only',
       comment: 'An adapter imports another adapter only through its index.ts.',
       severity: 'error',

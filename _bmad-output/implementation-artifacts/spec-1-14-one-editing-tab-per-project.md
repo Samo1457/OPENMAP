@@ -2,7 +2,8 @@
 title: 'Story 1.14: One editing tab per Project'
 type: 'feature'
 created: '2026-10-06'
-status: 'draft'
+status: 'done'
+baseline_commit: '6b44786a8b580b4137f822f3ae640217eb89d5ac'
 route: 'dispatch'
 review_loop_iteration: 0
 context:
@@ -54,6 +55,10 @@ context:
 | Deleted meanwhile | read-only tab, Project deleted | `not_found` on next reload/takeover | no crash |
 | Third tab | A holds, B and C read-only | both can take over, one wins, the other becomes `taken_over`-like read-only | N/A |
 
+**Decisions (owner, 2026-10-06):**
+- Full spec kept; Sonnet subagents for implementation and review.
+- Planning decisions in Design Notes accepted: a failed flush blocks the takeover, a 5 s handshake timeout leaves the requesting tab read-only, `saved` carries `updatedAt`, one wording for closed and crashed holders.
+
 </frozen-after-approval>
 
 ## Code Map
@@ -81,9 +86,36 @@ context:
 
 ## Implementation Notes
 
+**Closed deferred-work items** (to be removed from `deferred-work.md` by the orchestrator; this story did not edit that file):
+- Story 1.4: a Home rename/duplicate can no longer be overwritten by an Editor tab on the same Project. Home rename, duplicate and delete now run under `changeUnlockedProject` (the real exclusive lock, taken `ifAvailable` for the duration of the change), so they are refused at call time with `locked` while a tab edits the Project, and an Editor opening meanwhile cannot interleave.
+- Story 1.5: `Dispatcher.setReadOnly` is wired to the lock. The Editor shows a Project another tab edits read-only with the banner, and a tab that gave way is read-only too, instead of failing saves as « Non enregistré ».
+
+**Files.** New: `src/persistence/project-lock.ts` (lock, watch, channel, handshake, announcements; exported through `src/persistence/index.ts`), `src/ui/editor/edit-session.ts` (the per-Editor controller: states, takeover, saved refresh, release), `src/ui/home/use-locked-projects.ts`, `src/testing/fake-web-locks.ts` (fake `navigator.locks` + `BroadcastChannel`), `tests/e2e/edit-lock.spec.ts`; unit tests `project-lock.test.ts`, `edit-session.test.ts`, `project-actions.test.ts`. Changed: `projects.ts` (`loadForEdit` takes the epoch, `loadForView` takes none, both return the stored `updatedAt`; `saveProject` returns the stored `updatedAt`, strictly newer than the previous one), `index.ts`, `EditorShell.tsx`, `Banner.tsx` (`live` prop), `Menu.tsx` (`disabledReason`), `ProjectCard.tsx`, `HomeScreen.tsx`, `project-actions.ts`, i18n fr/en, `docs/keyboard.md`, the two rewritten e2e tests, axe tests for the banner and a locked card (EN/FR, light/dark).
+
+**Decisions where the spec left latitude.**
+- `edit-session.ts` lives in `src/ui/editor` (React-free, unit-tested) and owns all orchestration; `project-lock.ts` stays free of IndexedDB and of the document.
+- `acquire` also waits for a lock this tab is still releasing, and retries a `busy` answer that crossed one of this tab's own grants or releases. Needed for React StrictMode (the dev server and the e2e run it) and for quick Editor remounts; `release(after)` writes the pending save first.
+- « Reprendre ici » first tries `acquire` (no handshake) whatever the reason, so a holder that vanished between the watch and the click is taken directly.
+- A takeover request carries a `requestId` and the `lockEpoch` of the holder it is addressed to (known from the stored row on open and from each `took`); a holder ignores a request addressed to another epoch, and answers every request received while flushing, yielding once. A tab that becomes holder posts `took{epoch}`: tabs waiting to take over from an older holder withdraw their queued lock request and show `taken_over` (third tab), and a `holder_closed` tab goes back to `other_tab`. Found by the 10x repeat run: without the epoch address a request posted before a handover could be served later by the new holder after the requester had given way, leaving nobody editing. Timeout and `refused` withdraw the queued request, so nothing is ever taken later by surprise.
+- A read-only tab whose watch fires re-checks the lock before saying « L'autre onglet a été fermé » (the lock may have passed straight to a tab that asked for it) and folds in the holder's page-hide snapshot first.
+- The holder's flush success is `autosave.getStatus() !== 'error'` after the tab's own `flush()`.
+- The lock banners use `Banner live={false}`; each state change is announced once through the Editor's live region (`announce`), not twice.
+- A refused or unanswered takeover shows an error toast (stays until closed) and the banner action stays.
+- Home: the card state is re-read from `navigator.locks.query()` on mount, on visibility, on every `acquired`/`released` broadcast, and when a per-Project shared watch fires (a crashed holder broadcasts nothing). Locked menu items stay focusable with `aria-disabled` and `aria-description`. `home.errors.locked` is the toast when a change is refused.
+- Without `navigator.locks` (unit tests of other modules, never in the app: the gate requires it) `acquire` degrades to a no-op hold.
+- `src/testing/` holds the fake browser helper; no dependency-cruiser rule restricts it to tests (core's `src/core/testing` has one), noted for review.
+
+**Review patches (second pass).** Requests are withdrawn (`cancel`) on timeout, refusal, cancel, dispose and `pagehide`, and a holder whose requesters all withdrew keeps the lock and says nothing; `knownEpoch` follows every `took` and is re-read from the row before a request, and a requester is superseded only by a `took` above the epoch it asked; `acquire` answers `error` (Editor `error` state) for a failing lock manager, and retries a `busy` that only a transient shared grant caused (a failing case reproduced with the fake, fixed); the `taking` state (busy action, announcement « Reprise en cours… »), focus to the Map region after a takeover, the uncommitted name draft committed before yielding (`pending-edits.ts`), `locked-projects.ts` store (re-arms its watch after every grant), `testing-only-from-tests` dependency-cruiser rule with fixtures. The reload race was looked for (10 reloads and hard navigations per run, repeated) and did not occur: the browser frees a dying document's lock before the new one asks.
+
+**Spec gap.** A third existing e2e test assumed a free second editor and had to be rewritten too (`settings-gate.spec.ts` « a toast raised while Settings is open stays usable above it », same `lockEpoch + 1` technique); the spec named only two.
+
+**Limits.** The camera, selection and preview are untouched by a refresh (a refresh only calls `dispatcher.reset`), verified by unit test on the dispatcher state, not by an e2e on the camera. A real renderer crash (`Page.crash`) was not exercised; `page.close({runBeforeUnload:false})` stands for it.
+
 ## Spec Change Log
 
 ## Review Triage Log
+
+Three independent reviewers (adversarial, edge cases, verification gaps) found 0 high-severity defects, no data-loss path, and several medium issues. Patched: epoch addressing (`knownEpoch` from every `took`, stored epoch re-read before a takeover request), `cancel` of withdrawn requests so a holder never yields to an abandoned request, third-tab supersede by requested epoch, lock-manager failure shown as an error (not `other_tab`), focus moved to a stable target after « Reprendre ici », pending state while taking over, Home watch re-armed after the lock passes to another tab, name draft committed before yielding, `src/testing` guardrail with fixtures; a real false `busy` from transient shared grants fixed in `acquire` and Home's refusal path; a false « autre onglet fermé » during handover fixed (queued exclusive request counts as claimed). Tests: isolated module per tab, per-tab fake with randomised message delivery, reload loop landing editable, FR takeover strings, axe on the other states, Space/Tab, exactly-once announcements, camera kept, read-only controls. The flaky reload test now waits for « Saved ». Not done: scrubbing (no Timeline yet), Reference Date draft at yield, `cancel` after a renderer crash; all recorded in deferred-work.md.
 
 ## Design Notes
 

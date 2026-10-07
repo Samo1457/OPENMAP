@@ -108,13 +108,14 @@ describe('dependency-cruiser layer rules', () => {
     ['adapter-imports-ui', 'adapters-no-ui'],
     ['ui-imports-adapter-internal', 'ui-imports-adapter-index-only'],
     ['ui-imports-core-testing', 'core-testing-only-from-tests'],
+    ['ui-imports-src-testing', 'testing-only-from-tests'],
   ])('%s fails with rule %s', (fixture, rule) => {
     const result = depcruise(fixture)
     expect(result.status, result.output).not.toBe(0)
     expect(result.output).toContain(rule)
   })
 
-  it.each(['adapter-imports-adapter-index', 'core-imports-core', 'core-test-imports-vitest', 'core-test-imports-core-testing'])('%s passes', (fixture) => {
+  it.each(['adapter-imports-adapter-index', 'core-imports-core', 'core-test-imports-vitest', 'core-test-imports-core-testing', 'test-imports-src-testing'])('%s passes', (fixture) => {
     const result = depcruise(fixture)
     expect(result.status, result.output).toBe(0)
   })

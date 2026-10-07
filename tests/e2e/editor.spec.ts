@@ -291,7 +291,11 @@ test.describe('Project settings through Commands, undo and redo (AD-3, FR-55, UX
     await openNewProject(page)
     await formatGroup(page).getByRole('radio', { name: '1:1' }).click()
     await expect(undoButton(page)).toBeEnabled()
+    // Reloading right after the change would race the autosave: wait for it (no sleep).
+    await expect(saveStatus(page)).toHaveText('Saved')
     await page.reload()
+    // The reloaded tab is the editor again, not a read-only « other tab ».
+    await expect(nameField(page)).toBeEditable()
     await expectFormat(page, '1:1', '1080 × 1080')
     await expect(undoButton(page)).toBeDisabled()
     await expect(redoButton(page)).toBeDisabled()
@@ -343,12 +347,13 @@ test.describe('save status and Ctrl+S (UX-DR137, UX-DR115, AD-8)', () => {
     expect(foreign).toEqual([])
   })
 
-  test('a failed save shows « Not saved » and an error toast; Ctrl+S then confirms nothing', async ({ page, context }) => {
-    const id = await openNewProject(page)
-    // A newer tab takes the Project: this tab's writes are refused (AD-8).
-    const second = await context.newPage()
-    await second.goto(`/#/p/${id}`)
-    await expect(nameField(second)).toHaveValue('Untitled Project')
+  test('a failed save shows « Not saved » and an error toast; Ctrl+S then confirms nothing', async ({ page }) => {
+    await openNewProject(page)
+    // A newer epoch is stored, as a takeover by another tab would leave it (Story 1.14: a second
+    // tab no longer edits freely, so the refusal is provoked straight in IndexedDB): this tab's
+    // writes are refused with `stale_epoch` (AD-8).
+    const [stored] = await readRows(page)
+    await putRow(page, { ...stored, lockEpoch: stored.lockEpoch + 1 })
 
     await formatGroup(page).getByRole('radio', { name: '9:16' }).click()
     await expect(saveStatus(page)).toHaveText('Not saved')

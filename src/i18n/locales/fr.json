@@ -58,6 +58,7 @@
       "meta": "{{modified}} · {{format}}",
       "modified": "Modifié {{when}}",
       "unreadable": "Projet illisible",
+      "openElsewhere": "Ouvert dans un autre onglet",
       "menu": "Actions du Projet {{name}}",
       "rename": "Renommer",
       "duplicate": "Dupliquer",
@@ -70,7 +71,8 @@
       "create": "Le Projet n'a pas pu être créé sur cet appareil.",
       "change": "La modification n'a pas pu être enregistrée sur cet appareil.",
       "detail": "Vos Projets enregistrés n'ont pas changé.",
-      "restore": "Le Projet n'a pas pu être restauré."
+      "restore": "Le Projet n'a pas pu être restauré.",
+      "locked": "Ce Projet est ouvert dans un autre onglet."
     }
   },
   "time": {
@@ -90,6 +92,16 @@
     "map": "Carte",
     "saveError": "Les dernières modifications de ce Projet n'ont pas été enregistrées sur cet appareil.",
     "renameError": "Ce nom ne convient pas. Le Projet garde son nom précédent.",
+    "lock": {
+      "otherTab": "Ce Projet est ouvert dans un autre onglet. Vous le consultez en lecture seule.",
+      "takenOver": "Ce Projet est maintenant modifié dans un autre onglet.",
+      "holderClosed": "L'autre onglet a été fermé. Vous consultez toujours ce Projet en lecture seule.",
+      "takeOver": "Reprendre ici",
+      "taking": "Reprise en cours…",
+      "editing": "Vous modifiez ce Projet.",
+      "refused": "Impossible de reprendre : l'autre onglet n'a pas pu enregistrer.",
+      "unresponsive": "L'autre onglet ne répond pas."
+    },
     "regions": {
       "topBar": "Barre haute",
       "tools": "Outils",
